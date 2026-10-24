@@ -265,28 +265,62 @@ function renderLocations(){
 function openLocation(loc){if(aisleFor(loc)!==activeAisle)return;savedFeedback='';activeLoc=loc;const d=getLoc(loc);if(d.closed){go('closed')}else if(d.verified){go('articles')}else{verifyValue='';go('verify')}}
 function renderVerify(){place(`<div class="title"><div class="overline">PASO 1 · UBICACIÓN</div><h1>${activeLoc}</h1><p class="muted">Comprueba que estás delante de la ubicación correcta. Puedes leer su etiqueta con un escáner que escriba el código, o confirmarla visualmente.</p></div><div class="card"><div class="field"><label for="locationBarcode">Código de ubicación</label><input class="input" id="locationBarcode" autocapitalize="characters" autocomplete="off" placeholder="${activeLoc}" value="${esc(verifyValue)}"></div><button class="btn" onclick="confirmLocation(false)">Verificar código →</button><div style="height:11px"></div><button class="btn btn-light" onclick="confirmLocation(true)">Confirmar visualmente</button><p id="verifyError" class="muted" style="margin-top:9px"></p></div>`,`<button class="back" onclick="go('locations')">← Ubicaciones del pasillo</button>`);$('locationBarcode').addEventListener('keydown',e=>{if(e.key==='Enter')confirmLocation(false)});}
 function confirmLocation(manual){if(!manual&&$('locationBarcode').value.trim().toUpperCase()!==activeLoc){$('verifyError').textContent='El código no coincide con '+activeLoc+'. Revisa la ubicación.';return;}const d=getLoc(activeLoc);d.verified=true;data.events.push({what:'Ubicación confirmada',loc:activeLoc,mode:manual?'visual':'código',at:new Date().toISOString()});save();go('articles');}
-function renderArticles(){const d=getLoc(activeLoc),a=items(activeLoc),p=progress(activeLoc);place(`${savedFeedback?`<div class="alert green" role="status">${savedFeedback}</div>`:""}<div class="title"><div class="overline">PASO 2 · ARTÍCULOS</div><div class="between"><h1>${activeLoc}</h1><span class="tag ${p.done===p.total?'ok':''}">${p.done}/${p.total} contados</span></div><p class="muted">Pulsa un artículo o busca su código. Sin cantidades teóricas.</p></div><p class="article-legend"><b>■ Verde</b>: artículo guardado · <span style="color:#ad6e18">■ Naranja</span>: guardado con aviso</p><div class="field"><input class="input" id="articleSearch" placeholder="Buscar por código o nombre" oninput="filterArticles(this.value)"></div><div id="articleList"></div><div class="card"><button class="btn-outline" style="width:100%" onclick="showModal('unexpected')">+ Artículo que no aparece en la lista</button></div>${a.length===0?'<div class="alert">No hay artículos previstos. Si la ubicación está realmente vacía, puedes confirmarlo abajo.</div>':''}`,`<div class="stack"><button class="btn" onclick="${p.done<p.total?'nextPending()':'closeLocation()'}">${p.done<p.total?'Contar siguiente artículo pendiente →':a.length===0?'Revisar ubicación vacía →':'Revisar y cerrar ubicación →'}</button><button class="back" onclick="go('locations')">← Ubicaciones de ${activeAisle}</button></div>`);filterArticles('');}
+function renderArticles(){const d=getLoc(activeLoc),a=items(activeLoc),p=progress(activeLoc);place(`${savedFeedback?`<div class="alert ${savedFeedback.startsWith('⚠')?'':'green'}" role="status">${savedFeedback}</div>`:""}<div class="title"><div class="overline">PASO 2 · ARTÍCULOS</div><div class="between"><h1>${activeLoc}</h1><span class="tag ${p.done===p.total?'ok':''}">${p.done}/${p.total} contados</span></div><p class="muted">Pulsa un artículo o busca su código. Sin cantidades teóricas.</p></div><p class="article-legend"><b>■ Verde</b>: recuento válido · <span style="color:#ad6e18">■ Naranja</span>: incidencia pendiente</p><div class="field"><input class="input" id="articleSearch" placeholder="Buscar por código o nombre" oninput="filterArticles(this.value)"></div><div id="articleList"></div><div class="card"><button class="btn-outline" style="width:100%" onclick="showModal('unexpected')">+ Artículo que no aparece en la lista</button></div>${a.length===0?'<div class="alert">No hay artículos previstos. Si la ubicación está realmente vacía, puedes confirmarlo abajo.</div>':''}`,`<div class="stack"><button class="btn" onclick="${p.done<p.total?'nextPending()':'closeLocation()'}">${p.done<p.total?'Contar siguiente artículo pendiente →':a.length===0?'Revisar ubicación vacía →':'Revisar y cerrar ubicación →'}</button><button class="back" onclick="go('locations')">← Ubicaciones de ${activeAisle}</button></div>`);filterArticles('');}
 function filterArticles(query){
  const a=items(activeLoc).filter(p=>(p.id+' '+p.name).toLowerCase().includes(String(query).toLowerCase()));
  $('articleList').innerHTML=a.length?a.map(p=>{
-  const rec=statusArticle(activeLoc,p);
-  const counted=!!rec;
-  const issue=counted&&(rec.notFound||rec.warning||rec.amount!==p.theoretical||p.extra);
-  const style=counted?'counted-article':'';
-  const warning=issue?'issue-article':'';
-  const label=!counted?'Pendiente':rec.notFound?'⚠ No encontrado':issue?'⚠ Diferencia':'✓ Contada';
-  return `<button class="item article-item ${style} ${warning}" onclick="openArticle('${esc(p.id)}')"><span><strong style="font-size:16px">${esc(p.name)}</strong><small>${esc(p.id)}${p.extra?' · Artículo añadido':''}</small></span><span class="tag ${issue?'warn':counted?'ok':''}">${label}</span><span class="chev">›</span></button>`;
+  const rec=statusArticle(activeLoc,p),issue=incidentArticle(activeLoc,p);
+  const accepted=isCountVerified(activeLoc,p);
+  const hasIssue=!!issue||hasLocationIssue(activeLoc,p);
+  const style=accepted?'counted-article':'';
+  const warning=hasIssue?'issue-article':'';
+  const label=hasIssue?'⚠ Pendiente de revisión':accepted?'✓ Contado':'Pendiente';
+  return '<button class="item article-item '+style+' '+warning+'" onclick="openArticle(\''+esc(p.id)+'\')"><span><strong style="font-size:16px">'+esc(p.name)+'</strong><small>'+esc(p.id)+(p.extra?' · Artículo añadido':'')+'</small></span><span class="tag '+(hasIssue?'warn':accepted?'ok':'')+'">'+label+'</span><span class="chev">›</span></button>';
  }).join(''):'<div class="alert">No se han encontrado artículos con ese texto.</div>';
 }
+function openArticle(id){
+ if(!items(activeLoc).some(p=>p.id===id))return;
+ activeArticle=id;pendingResult=null;savedFeedback='';countFeedback='';
+ const dr=readDraft(data.worker);
+ if(dr&&dr.loc===activeLoc&&dr.article===id){restoreDraft(dr);render();return;}
+ const prior=getLoc(activeLoc).counts[id];
+ if(prior){showModal('already-counted');return;}
+ beginArticle(false);
+}
+function beginArticle(modifying){
+ const rec=getLoc(activeLoc).counts[activeArticle];
+ if(modifying&&rec&&!editReason){showModal('reason');return;}
+ if(!modifying){editReason='';editOriginal=null;}
+ pendingEntries=rec&&modifying&&!rec.notFound?rec.entries.map(x=>({...x})):[];
+ cMode='direct';cStep=0;cInput='';cParts=[0,0,0,0];
+ lastPallet=bestPreviousPallet(pendingEntries);repeatMode=false;overwriteInput=false;countFeedback='';
+ go('count');
+}
+function toggleReasonDetails(){
+ const f=$('reasonSelect'),d=$('reasonDetailsWrap');
+ if(f&&d)d.hidden=f.value!=='Otro motivo';
+}
+function acceptEditReason(){
+ const select=$('reasonSelect'),details=$('reasonDetails'),error=$('reasonError');
+ if(!select||!select.value){if(error)error.textContent='Selecciona un motivo de modificación.';return;}
+ const detail=(details?.value||'').trim();
+ if(select.value==='Otro motivo'&&detail.length<5){if(error)error.textContent='Explica brevemente el motivo (al menos 5 caracteres).';return;}
+ editReason=select.value+(detail?' · '+detail:'');
+ const previous=getLoc(activeLoc).counts[activeArticle];editOriginal=previous?.amount??null;
+ hideModal();beginArticle(true);
+}
 
-function openArticle(id){activeArticle=id;pendingResult=null;savedFeedback='';countFeedback='';const d=readDraft(data.worker);if(d&&d.loc===activeLoc&&d.article===id){restoreDraft(d);render();return;}const rec=getLoc(activeLoc).counts[id];pendingEntries=rec&&!rec.notFound?rec.entries.map(x=>({...x})):[];cMode='direct';cStep=0;cInput='';cParts=[0,0,0,0];lastPallet=bestPreviousPallet(pendingEntries);repeatMode=false;overwriteInput=false;go('count');}
 function nextPending(){
- const list=items(activeLoc);
- const curr=list.findIndex(p=>p.id===activeArticle);
+ const list=items(activeLoc),curr=list.findIndex(p=>p.id===activeArticle);
+ // Priorizar los que nunca fueron contados y no tienen incidencias.
  for(let step=1;step<=list.length;step++){
   const idx=(curr+step+list.length)%list.length;
-  if(!statusArticle(activeLoc,list[idx])){openArticle(list[idx].id);return;}
+  const p=list[idx];
+  if(!statusArticle(activeLoc,p)&&!incidentArticle(activeLoc,p)){openArticle(p.id);return;}
  }
+ // El resto requiere revisión: la ubicación sigue abierta.
+ const issues=list.filter(p=>!isCountVerified(activeLoc,p));
+ if(issues.length){savedFeedback='⚠ Quedan '+issues.length+' referencia(s) sin validar o con incidencia pendiente.';go('articles');return;}
  closeLocation();
 }
 function getProduct(){return items(activeLoc).find(p=>p.id===activeArticle)}
@@ -455,7 +489,20 @@ function confirmCloseLocation(){
  save();go('closed');
 }
 function renderClosed(){const p=progress(activeLoc);place(`<div class="card" style="text-align:center;padding:25px 15px"><div class="bigcheck">✅</div><h1 style="margin:9px 0">Ubicación finalizada</h1><h2>${activeLoc}</h2><p class="muted" style="margin-top:7px">${p.done} artículos revisados. La información permanece en esta demo local y NO se ha sincronizado.</p></div><div class="alert">En la app real el responsable tendrá que autorizar cualquier reapertura y revisar todas las diferencias, incluso las inferiores a la tolerancia.</div>`,`<button class="btn" onclick="go('locations')">Ir a otra ubicación →</button>`);}
-function showModal(m){modal=m;let body='';if(m==='history'){body=`<h2>Detalle del recuento</h2>${pendingEntries.length?pendingEntries.map((e,i)=>`<div class="line"><span>${esc(e.detail)}<br><b>+${fmt(e.amount)}</b></span><button onclick="removeEntry(${i})">Eliminar</button></div>`).join(''):'<p class="muted">Sin cantidades añadidas.</p>'}<div class="modal-actions"><button class="btn-outline" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='menu'){body=`<h2>Opciones de prueba</h2><p class="muted">Versión instalada: v${APP_VERSION}. Usuario: ${esc(data.worker)}. Los recuentos se guardan en este dispositivo.</p><div class="stack" style="margin-top:12px"><button class="btn-outline" onclick="hideModal();checkForUpdates(true)">↻ Buscar actualizaciones</button><button class="btn-outline" onclick="installHelp()">Cómo instalar INVENTA</button><button class="btn-outline" onclick="resetDemo()">Restablecer datos de prueba</button><button class="btn-outline" onclick="logout()">Cambiar operario</button><button class="btn" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='help'){body=`<h2>Instalar INVENTA</h2><p class="muted">En iPhone: abre esta dirección desde Safari, pulsa Compartir y elige <b>Añadir a pantalla de inicio</b>. Después abre el icono INVENTA. En Android: menú de Chrome → Instalar aplicación.</p><p class="muted" style="margin-top:10px">Los archivos básicos se guardan tras la primera carga. Los datos de prueba son solo locales.</p><button class="btn" style="margin-top:12px" onclick="hideModal()">Entendido</button>`;}else if(m==='unexpected'){body=`<h2>Artículo no listado</h2><p class="muted">Registra provisionalmente un artículo encontrado en ${activeLoc}. En la aplicación definitiva se comunicará una incidencia al responsable.</p><div class="field" style="margin-top:11px"><label for="unknownCode">Código de artículo</label><input class="input" id="unknownCode" placeholder="Ej. PRD0009999"></div><div class="field"><label for="unknownName">Descripción (opcional)</label><input class="input" id="unknownName" placeholder="Artículo encontrado"></div><button class="btn" onclick="addUnexpected()">Añadir a esta ubicación</button><button class="back" onclick="hideModal()">Cancelar</button><p id="modalError" class="muted"></p>`;}else if(m==='missing'){const rem=items(activeLoc).filter(p=>!getLoc(activeLoc).counts[p.id]).length;body=`<h2>Quedan artículos sin revisar</h2><p class="muted">Debes contar o marcar «No encontrado» en ${rem} artículo(s) antes de cerrar ${activeLoc}.</p><button class="btn" style="margin-top:11px" onclick="hideModal()">Seguir contando</button>`;}else if(m==='emptycount'){body=`<h2>Sin cantidades</h2><p class="muted">Todavía no hay unidades apuntadas. Si el producto no está en esta ubicación, utiliza «No encontrado».</p><button class="btn" style="margin-top:10px" onclick="markNotFound()">No encontrado</button><button class="btn-outline" style="width:100%;margin-top:8px" onclick="hideModal()">Seguir contando</button>`;}
+function showModal(m){modal=m;let body='';if(m==='history'){body=`<h2>Detalle del recuento</h2>${pendingEntries.length?pendingEntries.map((e,i)=>`<div class="line"><span>${esc(e.detail)}<br><b>+${fmt(e.amount)}</b></span><button onclick="removeEntry(${i})">Eliminar</button></div>`).join(''):'<p class="muted">Sin cantidades añadidas.</p>'}<div class="modal-actions"><button class="btn-outline" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='already-counted'){
+ const p=getProduct(),rec=getLoc(activeLoc).counts[activeArticle];
+ body='<h2>⚠ Artículo ya contado</h2><p class="muted">Este artículo ya tiene un recuento guardado. Para cambiarlo es obligatorio justificar el motivo.</p>'
+ +'<div class="card" style="margin-top:12px"><b>'+esc(p.name)+'</b><p class="muted">Recuento guardado: <b>'+fmt(rec.amount)+' unidades</b></p></div>'
+ +'<div class="stack"><button class="btn" onclick="hideModal();showModal(\'reason\')">Modificar recuento</button><button class="btn-outline" onclick="hideModal()">Cancelar, no modificar</button></div>';
+}else if(m==='reason'){
+ const p=getProduct();
+ const reasons=['Unidad encontrada tras el recuento y reubicada','Corrección de una ubicación equivocada','Error detectado en el recuento inicial','Mercancía movida tras contar','Otro motivo'];
+ body='<h2>Motivo de modificación</h2><p class="muted">Vas a corregir el recuento de <b>'+esc(p.name)+'</b>. El cambio se registrará con operario, hora y cantidades anterior y nueva.</p>'
+ +'<div class="field" style="margin-top:13px"><label for="reasonSelect">Selecciona el motivo (obligatorio)</label><select class="input" id="reasonSelect" onchange="toggleReasonDetails()"><option value="">Seleccionar…</option>'+reasons.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></div>'
+ +'<div class="field" id="reasonDetailsWrap" hidden><label for="reasonDetails">Explica el motivo</label><textarea id="reasonDetails" class="input" style="min-height:90px" placeholder="Qué ha sucedido y por qué se corrige"></textarea></div>'
+ +'<p id="reasonError" class="muted" style="color:#b32836"></p>'
+ +'<div class="stack"><button class="btn" onclick="acceptEditReason()">Continuar con la modificación</button><button class="btn-outline" onclick="hideModal()">Cancelar</button></div>';
+}else if(m==='menu'){body=`<h2>Opciones de prueba</h2><p class="muted">Versión instalada: v${APP_VERSION}. Usuario: ${esc(data.worker)}. Los recuentos se guardan en este dispositivo.</p><div class="stack" style="margin-top:12px"><button class="btn-outline" onclick="hideModal();checkForUpdates(true)">↻ Buscar actualizaciones</button><button class="btn-outline" onclick="installHelp()">Cómo instalar INVENTA</button><button class="btn-outline" onclick="resetDemo()">Restablecer datos de prueba</button><button class="btn-outline" onclick="logout()">Cambiar operario</button><button class="btn" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='help'){body=`<h2>Instalar INVENTA</h2><p class="muted">En iPhone: abre esta dirección desde Safari, pulsa Compartir y elige <b>Añadir a pantalla de inicio</b>. Después abre el icono INVENTA. En Android: menú de Chrome → Instalar aplicación.</p><p class="muted" style="margin-top:10px">Los archivos básicos se guardan tras la primera carga. Los datos de prueba son solo locales.</p><button class="btn" style="margin-top:12px" onclick="hideModal()">Entendido</button>`;}else if(m==='unexpected'){body=`<h2>Artículo no listado</h2><p class="muted">Registra provisionalmente un artículo encontrado en ${activeLoc}. En la aplicación definitiva se comunicará una incidencia al responsable.</p><div class="field" style="margin-top:11px"><label for="unknownCode">Código de artículo</label><input class="input" id="unknownCode" placeholder="Ej. PRD0009999"></div><div class="field"><label for="unknownName">Descripción (opcional)</label><input class="input" id="unknownName" placeholder="Artículo encontrado"></div><button class="btn" onclick="addUnexpected()">Añadir a esta ubicación</button><button class="back" onclick="hideModal()">Cancelar</button><p id="modalError" class="muted"></p>`;}else if(m==='missing'){const rem=items(activeLoc).filter(p=>!getLoc(activeLoc).counts[p.id]).length;body=`<h2>Quedan artículos sin revisar</h2><p class="muted">Debes contar o marcar «No encontrado» en ${rem} artículo(s) antes de cerrar ${activeLoc}.</p><button class="btn" style="margin-top:11px" onclick="hideModal()">Seguir contando</button>`;}else if(m==='emptycount'){body=`<h2>Sin cantidades</h2><p class="muted">Todavía no hay unidades apuntadas. Si el producto no está en esta ubicación, utiliza «No encontrado».</p><button class="btn" style="margin-top:10px" onclick="markNotFound()">No encontrado</button><button class="btn-outline" style="width:100%;margin-top:8px" onclick="hideModal()">Seguir contando</button>`;}
 $('overlay').innerHTML=`<div class="modalback" onclick="if(event.target===this)hideModal()"><div class="modal">${body}</div></div>`;}
 function hideModal(){$('overlay').innerHTML='';modal='';}
 function removeEntry(i){pendingEntries.splice(i,1);saveDraft();hideModal();renderCount();showModal('history');}
