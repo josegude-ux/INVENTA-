@@ -1,4 +1,4 @@
-const CACHE='inventa-demo-v0242-01';
+const CACHE='inventa-demo-v0243-01';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.png'];
 const SCANNER_LIBRARY='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
 self.addEventListener('install',e=>{
