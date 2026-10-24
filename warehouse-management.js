@@ -81,6 +81,32 @@ function short(id){return String(id||'').slice(0,8);}
 function ftime(s){return s?new Date(s).toLocaleString('es-ES'):'—';}
 function options(items,k,t){return (items||[]).map(function(o){return '<option value="'+safe(o[k])+'">'+safe(o[t])+'</option>';}).join('');}
 function getId(){return session&&session.user&&session.user.id;}
+// Solo supervisión puede leer existencias teóricas; respeta RLS del servidor.
+async function allConsultRows(table,parameters){
+ var out=[],size=1000;
+ for(var offset=0;offset<100000;offset+=size){
+  var rows=await api(table,parameters+'&limit='+size+'&offset='+offset);
+  if(!Array.isArray(rows))throw Error('Respuesta de consulta no válida.');
+  out.push.apply(out,rows);
+  if(rows.length<size)return out;
+ }
+ throw Error('Consulta demasiado grande. Filtra o importa un inventario más pequeño.');
+}
+async function readConsultData(){
+ if(!isManager())throw Error('Consulta BC reservada a Supervisor o Administrador.');
+ var latest=await api('stock_snapshot','select=campaign_id,imported_at&order=imported_at.desc&limit=1');
+ var campaignId=latest[0]&&latest[0].campaign_id;
+ var lists=await Promise.all([
+  allConsultRows('products','select=code,description,unit,barcode&order=code'),
+  allConsultRows('locations','select=code&order=code'),
+  allConsultRows('fixed_positions','select=product_code,location_code,priority&order=product_code,location_code'),
+  campaignId?allConsultRows('stock_snapshot','select=location_code,product_code,lot,quantity&campaign_id=eq.'+encodeURIComponent(campaignId)+'&order=location_code,product_code,lot'):Promise.resolve([]),
+  campaignId?api('campaigns','select=name,status&id=eq.'+encodeURIComponent(campaignId)+'&limit=1'):Promise.resolve([])
+ ]);
+ return {products:lists[0],locations:lists[1],fixed:lists[2],stock:lists[3],
+  source:campaignId?((lists[4][0]&&lists[4][0].name)||'Campaña de BC'):'Sin importación BC',
+  importedAt:latest[0]&&latest[0].imported_at||null};
+}
 function curr(a){return a.find(function(x){return x.status==='active';});}
 async function dataFor(tab){
  if(tab==='dashboard'){
@@ -213,7 +239,7 @@ async function importCSV(){
 }
 function newMovement(){mutate(function(){return api('movements','', 'POST',{campaign_id:required(val('moveCamp'),'campaña abierta'),source_location:required(val('moveSource'),'origen'),destination_location:required(val('moveDestination'),'destino'),product_code:required(val('moveProduct'),'artículo'),lot:val('moveLot'),quantity:qty(val('moveQty')),reason:required(val('moveReason'),'motivo'),actor_id:getId(),client_mutation_id:uuid()});},'Movimiento interno registrado sin escribir en BC.');}
 function updateUser(id){if(!isAdmin())return;if(id===getId()&&(!document.getElementById('enabled_'+id).checked||val('role_'+id)!=='admin')){notice='Para evitar bloquear el único administrador, no puedes quitarte el rol ni desactivar tu propia cuenta desde esta pantalla.';render();return;}mutate(function(){return api('profiles','user_id=eq.'+id,'PATCH',{role:val('role_'+id),enabled:document.getElementById('enabled_'+id).checked});},'Permisos actualizados y registrados.');}
-var apiObject={isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
+var apiObject={readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
 Object.defineProperty(apiObject,'profile',{get:function(){return profile;}});
 window.INVENTA_MGMT=apiObject;
 window.addEventListener('DOMContentLoaded',function(){restore().then(function(){if(typeof screen!=='undefined'&&screen==='home'&&typeof render==='function')window.render&&window.render();}).catch(function(){});});
