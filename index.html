@@ -30,6 +30,18 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 .filters button.selected{background:#193750;color:white;border-color:#193750}
 .filters button span{margin-left:6px;opacity:.8}
 .location-item.done-location{background:#e2f2eb;border-color:#9ed3b7}
+/* Las referencias contadas se distinguen aunque la ubicación aún no esté terminada. */
+.article-item.counted-article{background:#dff2e9;border:2px solid #91c9ac;box-shadow:inset 4px 0 0 #27986a,0 2px 7px #194b2920}
+.article-item.counted-article strong{color:#14573a;font-weight:900}
+.article-item.counted-article small{color:#496d5d}
+.article-item.counted-article.issue-article{border-color:#e6bc74;box-shadow:inset 4px 0 0 #e5a02d,0 2px 7px #6c441d12}
+.article-item.counted-article .tag.ok{background:#b9e3ce;color:#145538;font-size:12px}
+.article-item.counted-article .tag.warn{background:#ffe5b8;color:#88500c;font-size:12px}
+.article-item:not(.counted-article) .tag{font-size:12px}
+.article-item .chev{flex-shrink:0}
+.article-legend{font-size:12px;line-height:1.4;margin:0 0 12px;color:#536c7b}
+.article-legend b{color:#16714b}
+
 .location-item.partial-location{background:#f1f7fd}
 .location-item.flag-location{border-left:4px solid #e4a044}
 .location-item.done-location strong{color:#12643f}
@@ -86,7 +98,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.18.0';
+const APP_VERSION='0.19.0';
 const KEY='inventa-demo-operario-v015';
 const blank=()=>({version:1,worker:'',locations:{},events:[]});
 function load(){try{const p=JSON.parse(localStorage.getItem(KEY));if(p?.version===1&&p.locations)return p;}catch(e){}return blank();}
@@ -150,7 +162,7 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();showPendingUpdate();}
-function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.18</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
+function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.19</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
 function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='login')renderLogin();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='closed')renderClosed();else renderLocations();}
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
@@ -197,8 +209,20 @@ function renderLocations(){
 function openLocation(loc){if(aisleFor(loc)!==activeAisle)return;savedFeedback='';activeLoc=loc;const d=getLoc(loc);if(d.closed){go('closed')}else if(d.verified){go('articles')}else{verifyValue='';go('verify')}}
 function renderVerify(){place(`<div class="title"><div class="overline">PASO 1 · UBICACIÓN</div><h1>${activeLoc}</h1><p class="muted">Comprueba que estás delante de la ubicación correcta. Puedes leer su etiqueta con un escáner que escriba el código, o confirmarla visualmente.</p></div><div class="card"><div class="field"><label for="locationBarcode">Código de ubicación</label><input class="input" id="locationBarcode" autocapitalize="characters" autocomplete="off" placeholder="${activeLoc}" value="${esc(verifyValue)}"></div><button class="btn" onclick="confirmLocation(false)">Verificar código →</button><div style="height:11px"></div><button class="btn btn-light" onclick="confirmLocation(true)">Confirmar visualmente</button><p id="verifyError" class="muted" style="margin-top:9px"></p></div>`,`<button class="back" onclick="go('locations')">← Ubicaciones del pasillo</button>`);$('locationBarcode').addEventListener('keydown',e=>{if(e.key==='Enter')confirmLocation(false)});}
 function confirmLocation(manual){if(!manual&&$('locationBarcode').value.trim().toUpperCase()!==activeLoc){$('verifyError').textContent='El código no coincide con '+activeLoc+'. Revisa la ubicación.';return;}const d=getLoc(activeLoc);d.verified=true;data.events.push({what:'Ubicación confirmada',loc:activeLoc,mode:manual?'visual':'código',at:new Date().toISOString()});save();go('articles');}
-function renderArticles(){const d=getLoc(activeLoc),a=items(activeLoc),p=progress(activeLoc);place(`${savedFeedback?`<div class="alert green" role="status">${savedFeedback}</div>`:""}<div class="title"><div class="overline">PASO 2 · ARTÍCULOS</div><div class="between"><h1>${activeLoc}</h1><span class="tag ${p.done===p.total?'ok':''}">${p.done}/${p.total} contados</span></div><p class="muted">Pulsa un artículo o busca su código. Sin cantidades teóricas.</p></div><div class="field"><input class="input" id="articleSearch" placeholder="Buscar por código o nombre" oninput="filterArticles(this.value)"></div><div id="articleList"></div><div class="card"><button class="btn-outline" style="width:100%" onclick="showModal('unexpected')">+ Artículo que no aparece en la lista</button></div>${a.length===0?'<div class="alert">No hay artículos previstos. Si la ubicación está realmente vacía, puedes confirmarlo abajo.</div>':''}`,`<div class="stack"><button class="btn" onclick="closeLocation()">${a.length===0?'Confirmar ubicación vacía':'Finalizar ubicación'}</button><button class="back" onclick="go('locations')">← Ubicaciones de ${activeAisle}</button></div>`);filterArticles('');}
-function filterArticles(query){const a=items(activeLoc).filter(p=>(p.id+' '+p.name).toLowerCase().includes(String(query).toLowerCase()));$('articleList').innerHTML=a.length?a.map(p=>{const s=statusArticle(activeLoc,p);return `<button class="item" onclick="openArticle('${esc(p.id)}')"><span><strong style="font-size:14px">${esc(p.name)}</strong><small>${esc(p.id)}${p.extra?' · Artículo añadido':''}</small></span><span class="tag ${s?'ok':''}">${s?(s.notFound?'No encontrado':'✓ Contado'):'Pendiente'}</span><span class="chev">›</span></button>`}).join(''):'<div class="alert">No se han encontrado artículos con ese texto.</div>';}
+function renderArticles(){const d=getLoc(activeLoc),a=items(activeLoc),p=progress(activeLoc);place(`${savedFeedback?`<div class="alert green" role="status">${savedFeedback}</div>`:""}<div class="title"><div class="overline">PASO 2 · ARTÍCULOS</div><div class="between"><h1>${activeLoc}</h1><span class="tag ${p.done===p.total?'ok':''}">${p.done}/${p.total} contados</span></div><p class="muted">Pulsa un artículo o busca su código. Sin cantidades teóricas.</p></div><p class="article-legend"><b>■ Verde</b>: recuento registrado · <span style="color:#ad6e18">⚠ Naranja</span>: diferencia o incidencia</p><div class="field"><input class="input" id="articleSearch" placeholder="Buscar por código o nombre" oninput="filterArticles(this.value)"></div><div id="articleList"></div><div class="card"><button class="btn-outline" style="width:100%" onclick="showModal('unexpected')">+ Artículo que no aparece en la lista</button></div>${a.length===0?'<div class="alert">No hay artículos previstos. Si la ubicación está realmente vacía, puedes confirmarlo abajo.</div>':''}`,`<div class="stack"><button class="btn" onclick="closeLocation()">${a.length===0?'Confirmar ubicación vacía':'Finalizar ubicación'}</button><button class="back" onclick="go('locations')">← Ubicaciones de ${activeAisle}</button></div>`);filterArticles('');}
+function filterArticles(query){
+ const a=items(activeLoc).filter(p=>(p.id+' '+p.name).toLowerCase().includes(String(query).toLowerCase()));
+ $('articleList').innerHTML=a.length?a.map(p=>{
+  const rec=statusArticle(activeLoc,p);
+  const counted=!!rec;
+  const issue=counted&&(rec.notFound||rec.warning||rec.amount!==p.theoretical||p.extra);
+  const style=counted?'counted-article':'';
+  const warning=issue?'issue-article':'';
+  const label=!counted?'Pendiente':rec.notFound?'⚠ No encontrado':issue?'⚠ Diferencia':'✓ Contada';
+  return `<button class="item article-item ${style} ${warning}" onclick="openArticle('${esc(p.id)}')"><span><strong style="font-size:16px">${esc(p.name)}</strong><small>${esc(p.id)}${p.extra?' · Artículo añadido':''}</small></span><span class="tag ${issue?'warn':counted?'ok':''}">${label}</span><span class="chev">›</span></button>`;
+ }).join(''):'<div class="alert">No se han encontrado artículos con ese texto.</div>';
+}
+
 function openArticle(id){activeArticle=id;pendingResult=null;savedFeedback='';countFeedback='';const rec=getLoc(activeLoc).counts[id];pendingEntries=rec&&!rec.notFound?rec.entries.map(x=>({...x})):[];cMode='direct';cStep=0;cInput='';cParts=[0,0,0,0];go('count');}
 function getProduct(){return items(activeLoc).find(p=>p.id===activeArticle)}
 function countedUnit(){return 'unidades';}
