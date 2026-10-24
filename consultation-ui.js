@@ -129,10 +129,17 @@
     +(locs.map(function(l){return '<button class="item" style="width:100%;text-align:left" onclick="INVENTA_CONSULT_UI.navigate(\'location\',\''+esc(l.code)+'\')"><span><strong>'+esc(l.code)+'</strong><small>'+l.articles.length+' artículos con stock o fija · '+(l.articles.some(function(p){return p.amount>0;})?'Con existencias':'Sin existencias')+'</small></span><span class="chev">›</span></button>';}).join('')||'<div class="alert">No hay ubicaciones registradas en este pasillo.</div>');return;
   }
   var letters='ABCDEFGHIJKLMNOPQRST'.split('');
+  var present=[...new Set(all.map(function(l){return aisle(l.code);}))]
+   .filter(function(a){return letters.includes(a);}).sort();
   var other=all.filter(function(l){return !letters.includes(aisle(l.code));});
-  box.innerHTML='<p class="muted" style="margin-bottom:12px">Selecciona un pasillo de la A a la T, igual que en Inventario.</p>'
-   +'<div class="catalog-aisles">'+letters.map(function(a){var count=all.filter(function(l){return aisle(l.code)===a;}).length;return '<button type="button" class="catalog-aisle" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\''+a+'\')"><b>'+a+'</b><small>'+count+' ubic.</small></button>';}).join('')+'</div>'
-   +(other.length?'<button class="btn-outline" style="width:100%;margin-top:12px" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\'OTROS\')">Otras ubicaciones ('+other.length+')</button>':'');
+  box.innerHTML='<p class="muted" style="margin-bottom:12px">Selecciona el pasillo que quieres consultar.</p>'
+   +(present.length?present.map(function(a){
+    var locs=all.filter(function(l){return aisle(l.code)===a;});
+    return '<button class="item aisle-item" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\''+a+'\')">'
+     +'<span class="aisle-letter">'+a+'</span><span class="aisle-details"><strong>Pasillo '+a+'</strong>'
+     +'<small>'+locs.length+' ubicaciones registradas</small></span><span class="chev">›</span></button>';
+   }).join(''):'<div class="alert">No hay pasillos registrados todavía.</div>')
+   +(other.length?'<button class="item aisle-item" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\'OTROS\')"><span class="aisle-letter">+</span><span class="aisle-details"><strong>Otras ubicaciones</strong><small>'+other.length+' ubicaciones registradas</small></span><span class="chev">›</span></button>':'');
  }
  function lookup(code){
   if(!model)return null;
