@@ -15,9 +15,9 @@ const fixedImport=require('../fixed-positions-import.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.30\.4'/);
- assert.match(worker,/inventa-demo-v0304-01/);
- assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.4'/);
+ assert.match(index,/APP_VERSION='0\.30\.5'/);
+ assert.match(worker,/inventa-demo-v0305-01/);
+ assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.5'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
  assert.match(index,/consultation-ui\.js/);
@@ -432,8 +432,8 @@ test('Informe de fijos se pagina para mostrar el inventario completo, sin cargar
  assert.match(code,/records\.slice\(0,100\)/);
  assert.match(code,/fixedReportRows\.filter/);
  assert.match(code,/INVENTA_FIXED_IMPORT\.panel/);
- assert.match(index,/fixed-positions-import\.js\?v=0\.30\.4/);
- assert.match(worker,/fixed-positions-import\.js\?v=0\.30\.4/);
+ assert.match(index,/fixed-positions-import\.js\?v=0\.30\.5/);
+ assert.match(worker,/fixed-positions-import\.js\?v=0\.30\.5/);
 });
 
 test('Ubicaciones especiales RET y CADCAP no se confunden con pasillos R/C',()=>{
@@ -462,4 +462,24 @@ test('Ubicaciones especiales RET y CADCAP no se confunden con pasillos R/C',()=>
  assert.match(el('consultResults').innerHTML,/CADCAP/);
  view.navigate('location','RET-09');
  assert.match(el('consultResults').innerHTML,/RETORNO/);
+});
+
+
+test('Importador de posiciones fijas presenta selección clara para iPhone y confirma fichero',()=>{
+ const markup=fixedImport.panel([]);
+ assert.match(markup,/id="fixedExcelFile"/);
+ assert.match(markup,/type="file"/);
+ assert.match(markup,/onchange="INVENTA_FIXED_IMPORT\.fileSelected\(this\)"/);
+ assert.match(markup,/id="fixedExcelSelected"/);
+ assert.match(markup,/2\. Analizar Excel seleccionado/);
+ assert.match(markup,/INVENTA_FIXED_IMPORT\.analyse\(\)/);
+ assert.match(markup,/Ningún archivo seleccionado todavía/);
+ assert.equal(typeof fixedImport.fileSelected,'function');
+});
+test('Importador de posiciones fijas no depende de un CDN único y ofrece recuperación',()=>{
+ const importerCode=fs.readFileSync(path.join(root,'fixed-positions-import.js'),'utf8');
+ assert.match(importerCode,/cdn\.jsdelivr\.net/);
+ assert.match(importerCode,/unpkg\.com/);
+ assert.match(importerCode,/setTimeout\(function\(\)\{finish\(false\);\},15000\)/);
+ assert.match(importerCode,/catch\(function\(e\)\{excelPromise=null;throw e;\}/);
 });
