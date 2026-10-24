@@ -31,7 +31,7 @@
   }
   (data.stock||[]).forEach(function(s){
    var qty=Number(s.quantity);
-   if(!s.product_code||!s.location_code||!Number.isFinite(qty)||qty<=0)return;
+   if(!s.product_code||!s.location_code||!Number.isFinite(qty)||qty===0)return;
    var entry=pair(s.product_code,s.location_code);
    entry.amount+=qty;
    var lot=String(s.lot||'').trim();
