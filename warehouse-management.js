@@ -107,18 +107,21 @@ async function allConsultRows(table,parameters){
 }
 async function readConsultData(){
  if(!isManager())throw Error('Consulta BC reservada a Supervisor o Administrador.');
- var latest=await api('stock_snapshot','select=campaign_id,imported_at&order=imported_at.desc&limit=1');
- var campaignId=latest[0]&&latest[0].campaign_id;
+ var current=await api('bc_import_current','select=import_id,updated_at&limit=1');
+ var active=current[0]||null,latest=[],campaignId=null;
+ if(!active){latest=await api('stock_snapshot','select=campaign_id,imported_at&order=imported_at.desc&limit=1');campaignId=latest[0]&&latest[0].campaign_id;}
  var lists=await Promise.all([
   allConsultRows('products','select=code,description,unit,barcode&order=code'),
   allConsultRows('locations','select=code&order=code'),
   allConsultRows('fixed_positions','select=product_code,location_code,priority&order=product_code,location_code'),
-  campaignId?allConsultRows('stock_snapshot','select=location_code,product_code,lot,quantity&campaign_id=eq.'+encodeURIComponent(campaignId)+'&order=location_code,product_code,lot'):Promise.resolve([]),
-  campaignId?api('campaigns','select=name,status&id=eq.'+encodeURIComponent(campaignId)+'&limit=1'):Promise.resolve([])
+  active?allConsultRows('bc_import_lines','select=location_code,product_code,lot,quantity&import_id=eq.'+encodeURIComponent(active.import_id)+'&quantity=neq.0&order=location_code,product_code,lot'):
+   (campaignId?allConsultRows('stock_snapshot','select=location_code,product_code,lot,quantity&campaign_id=eq.'+encodeURIComponent(campaignId)+'&order=location_code,product_code,lot'):Promise.resolve([])),
+  active?api('bc_import_batches','select=file_name&id=eq.'+encodeURIComponent(active.import_id)+'&limit=1'):
+   (campaignId?api('campaigns','select=name,status&id=eq.'+encodeURIComponent(campaignId)+'&limit=1'):Promise.resolve([]))
  ]);
  return {products:lists[0],locations:lists[1],fixed:lists[2],stock:lists[3],
-  source:campaignId?((lists[4][0]&&lists[4][0].name)||'Campaña de BC'):'Sin importación BC',
-  importedAt:latest[0]&&latest[0].imported_at||null};
+  source:active?((lists[4][0]&&lists[4][0].file_name)||'Excel BC'):(campaignId?((lists[4][0]&&lists[4][0].name)||'Campaña de BC'):'Sin importación BC'),
+  importedAt:active?active.updated_at:(latest[0]&&latest[0].imported_at||null)};
 }
 function curr(a){return a.find(function(x){return x.status==='active';});}
 async function dataFor(tab){
@@ -133,11 +136,13 @@ async function dataFor(tab){
   var locations=await allConsultRows('locations','select=code,aisle,zone,description,enabled&order=code');
   if(catalogView!=='detail')return {locations:locations};
   var id=catalogLocation;
-  var latest=await api('stock_snapshot','select=campaign_id,imported_at&order=imported_at.desc&limit=1');
-  var campaignId=latest[0]&&latest[0].campaign_id;
+  var current=await api('bc_import_current','select=import_id&limit=1');
+  var active=current[0]||null,latest=[],campaignId=null;
+  if(!active){latest=await api('stock_snapshot','select=campaign_id,imported_at&order=imported_at.desc&limit=1');campaignId=latest[0]&&latest[0].campaign_id;}
   var records=await Promise.all([
    allConsultRows('fixed_positions','select=product_code,location_code,priority&location_code=eq.'+encodeURIComponent(id)+'&order=priority,product_code'),
-   campaignId?allConsultRows('stock_snapshot','select=product_code,location_code,lot,quantity&campaign_id=eq.'+encodeURIComponent(campaignId)+'&location_code=eq.'+encodeURIComponent(id)+'&order=product_code,lot'):Promise.resolve([])
+   active?allConsultRows('bc_import_lines','select=product_code,location_code,lot,quantity&import_id=eq.'+encodeURIComponent(active.import_id)+'&quantity=neq.0&location_code=eq.'+encodeURIComponent(id)+'&order=product_code,lot'):
+    (campaignId?allConsultRows('stock_snapshot','select=product_code,location_code,lot,quantity&campaign_id=eq.'+encodeURIComponent(campaignId)+'&location_code=eq.'+encodeURIComponent(id)+'&order=product_code,lot'):Promise.resolve([]))
   ]);
   var ids=[...new Set(records[0].concat(records[1]).map(function(r){return r.product_code;}))];
   var products=[];
@@ -145,9 +150,9 @@ async function dataFor(tab){
    var keyset=ids.slice(start,start+70).map(function(k){return '"'+String(k).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"';});
    products.push.apply(products,await api('products','select=code,description,unit&code=in.'+encodeURIComponent('('+keyset.join(',')+')')));
   }
-  return {locations:locations,fixed:records[0],stock:records[1],products:products,hasImport:!!campaignId};
+  return {locations:locations,fixed:records[0],stock:records[1],products:products,hasImport:!!(active||campaignId)};
  }
- if(tab==='snapshot'){var a=await Promise.all([api('campaigns','select=*&order=created_at.desc&limit=100'),api('locations','select=code&limit=1500'),api('products','select=code&limit=1500'),api('stock_snapshot','select=*&limit=100')]);return {campaigns:a[0],locations:a[1],products:a[2],snapshot:a[3]};}
+ if(tab==='snapshot'){var a=await Promise.all([api('bc_import_batches','select=*&order=created_at.desc&limit=20'),api('bc_import_current','select=import_id,updated_at&limit=1')]);return {history:a[0],current:a[1]};}
  if(tab==='movements'){var a=await Promise.all([api('campaigns','select=*&status=eq.active&limit=1'),api('locations','select=code&limit=1500'),api('products','select=code&limit=1500'),api('movements','select=*&order=created_at.desc&limit=100')]);return {campaigns:a[0],locations:a[1],products:a[2],movements:a[3]};}
  if(tab==='history')return {history:await api('audit_events','select=*&order=created_at.desc&limit=100')};
  return {};
@@ -198,12 +203,7 @@ function contentFor(tab,d){
  }
  if(tab==='catalog')return catalogContent(d);
  if(tab==='snapshot'){
-  return card('Existencias BC · Lectura restringida',small('Las cantidades teóricas solo se consultan desde perfiles de gestión. Nunca se envían a la interfaz de recuento ciego.')
-   +row('Líneas de stock visibles',d.snapshot.length+' (hasta 100)'))
-   +card('Cargar línea de existencias',select('snapCamp','Campaña',d.campaigns,'id','name')+select('snapLoc','Ubicación',d.locations,'code','code')
-    +select('snapProd','Artículo',d.products,'code','description')+field('snapLot','Lote','Sin lote')+field('snapQty','Unidades','0','number')+button('Guardar línea BC','newSnapshot()'))
-   +card('Importación CSV (lotes)',small('CSV separado por punto y coma, columnas: ubicacion;articulo;lote;cantidad. Se carga en la campaña seleccionada; deben existir ubicaciones y artículos.')
-    +'<input type="file" class="input" accept=".csv,text/csv" id="snapFile">'+button('Importar CSV a campaña seleccionada','importCSV()'));
+  return window.INVENTA_BC?window.INVENTA_BC.panel(d,isAdmin()):card('Importador Excel BC','No se ha cargado el módulo Excel. Recarga la aplicación.');
  }
  if(tab==='movements'){
   return card('Movimiento interno · No escribe en BC',select('moveCamp','Campaña abierta',d.campaigns,'id','name')
