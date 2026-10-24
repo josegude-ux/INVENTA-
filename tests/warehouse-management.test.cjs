@@ -92,3 +92,27 @@ test('Consulta agrupa ubicaciones y mantiene posiciones fijas vacías',()=>{
  assert.equal(rows.locations.find(x=>x.code==='P3').articles.length,2);
  assert.ok(rows.locations.find(x=>x.code==='P3').articles.every(x=>x.amount===0&&x.fixed));
 });
+
+test('Consulta visible: ubicación fija a cero aparece por artículo y ubicación',()=>{
+ const root={INVENTA_CONSULT:consult};
+ const elements=new Map();
+ const el=id=>{
+  if(!elements.has(id))elements.set(id,{value:'',textContent:'',innerHTML:'',classList:{toggle(){}},placeholder:''});
+  return elements.get(id);
+ };
+ const sample={
+  'K00-P01':[{id:'PRD0003563',name:'ARTÍCULO CON STOCK',theoretical:200}],
+  'K00-P02':[], 'K00-P03':[]
+ };
+ const build=new Function('window','TEST','consultUser','consultBlocked','go','isManager','data','consultRole','place','esc','$','screen','normCode','barcodeKey',
+   ui+';return window.INVENTA_CONSULT_UI;');
+ const view=build(root,sample,'Supervisor (demo)',()=>false,()=>{},()=>false,{demoInventoryOpen:false},()=>'supervisor',()=>{},
+   x=>String(x),el,'consult',x=>String(x).toUpperCase(),x=>String(x).toUpperCase());
+ view.render();
+ assert.match(el('consultResults').innerHTML,/PRD0099000/);
+ assert.match(el('consultResults').innerHTML,/SIN STOCK/);
+ view.setMode('location');
+ assert.match(el('consultResults').innerHTML,/PRD0099000/);
+ assert.match(el('consultResults').innerHTML,/FIJA/);
+ assert.deepEqual(view.lookup('K00-P03'),{value:'K00-P03',mode:'location'});
+});
