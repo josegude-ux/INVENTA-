@@ -158,6 +158,14 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 #scanUnknown button{width:100%;min-height:44px;background:#92570c;color:#fff;border:0;border-radius:9px;padding:7px;font-size:14px;font-weight:850;margin-top:9px}
 #scanUnknown button.scan-secondary{background:#f7e7c9;color:#714b13;border:1px solid #ddbb7b}
 #scanLinkArticle{font-size:15px}
+.consult-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.consult-tabs button{border:1px solid #cbd8e6;background:white;color:#2b5476;border-radius:12px;padding:12px 8px;font-size:14px;font-weight:850}
+.consult-tabs button.active{background:#1d506b;color:#fff;border-color:#1d506b}
+.consult-line{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:10px 0;border-top:1px solid #e6eaf0}
+.consult-line>div:first-child{min-width:0}.consult-line b{font-size:14px}.consult-line small{display:block;font-size:11px;color:#667f92;margin-top:3px}
+.consult-qty{display:block;text-align:right;font-weight:850;font-size:13px;white-space:nowrap}
+.consult-tags{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:4px;margin-top:4px}
+.consult-empty{color:#99520f;background:#fff6e7;padding:9px;border-radius:10px;font-size:12px;margin-top:8px}
 </style></head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
 <input type="file" id="scanImportFile" accept="application/json,.json" hidden onchange="importBarcodeFile(this)">
 <div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
@@ -181,6 +189,8 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
   </div>
 </div>
 <script src="./warehouse-management.js"></script>
+<script src="./consultation-core.js"></script>
+<script src="./consultation-ui.js"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -192,7 +202,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.25.1';
+const APP_VERSION='0.26.0';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -365,9 +375,9 @@ function renderHome(){
  place('<div class="title"><div class="overline">MENÚ PRINCIPAL</div><h1>¿Qué quieres hacer?</h1><p class="muted">Selecciona la función que necesitas. Inventario sigue en modo de prueba; Gestión de almacén utiliza base de datos real y permisos.</p></div>'
  +profile
  +'<button class="item home-choice" onclick="startInventoryFromHome()"><span><strong>📦 Hacer inventario</strong><small>Recuento ciego de prueba · individual o en pareja.</small></span><span class="chev">›</span></button>'
- +'<button class="item home-choice" onclick="openConsultFromHome()"><span><strong>🔎 Realizar consulta</strong><small>Consulta de demostración; los datos BC reales se administran por separado.</small></span><span class="chev">›</span></button>'
+ +'<button class="item home-choice" onclick="openConsultFromHome()"><span><strong>🔎 Realizar consulta</strong><small>Por artículo o por ubicación, con posiciones fijas incluso sin stock.</small></span><span class="chev">›</span></button>'
  +management
- +'<div class="alert">Estado: recuento individual/en pareja y consulta con datos ficticios locales. Gestión de almacén conectada a Supabase (requiere cuenta con rol autorizado). No se escriben movimientos ni ajustes en Business Central.</div>');
+ +'<div class="alert">Estado: recuentos de prueba locales. Consulta BC real solo para Supervisor/Administrador autenticado; en acceso demo, datos ficticios. No se escriben movimientos ni ajustes en Business Central.</div>');
 }
 function renderManagerLogin(){window.INVENTA_MGMT.renderLogin();}
 function loginManager(){window.INVENTA_MGMT.signIn();}
@@ -391,35 +401,9 @@ function loginConsult(){
  if(consultRole()==='supervisor'||consultRole()==='admin')managerUser=consultUser;
  go('consult');
 }
-function consultStock(){
- const map=new Map();
- for(const [loc,articles] of Object.entries(TEST))for(const p of articles){
-  if(!map.has(p.id))map.set(p.id,{id:p.id,name:p.name,locations:[],total:0});
-  const row=map.get(p.id);row.locations.push({loc,amount:p.theoretical});row.total+=p.theoretical;
- }
- return [...map.values()];
-}
-function renderConsult(){
- if(!consultUser){go('consult-login');return;}
- if(consultBlocked()){consultUser='';go('consult-login');return;}
- place(`<div class="title"><div class="overline">CONSULTA DE ALMACÉN</div><h1>Buscar artículos y ubicaciones</h1><p class="muted">${esc(consultUser)} · Solo lectura · Existencias de prueba</p></div>
- ${data.demoInventoryOpen?'<div class="alert">Inventario de prueba en curso. Consulta reservada para supervisión y administración.</div>':''}
- <button class="scan-open" onclick="openScanner('consult')">▣ Escanear para consultar</button>
- <div class="field"><label for="consultSearch">Artículo o ubicación</label><input id="consultSearch" class="input" autocomplete="off" placeholder="Nombre, código o ubicación" oninput="filterConsult(this.value)"></div>
- <div id="consultResults"></div>
- <p class="muted">Ubicación fija: pendiente de incorporar el campo Fijo = 1 desde la base real de almacén.</p>
- ${consultRole()==='admin'&&data.demoInventoryOpen?'<button class="btn-outline" style="width:100%;margin-top:12px" onclick="closeDemoCampaign()">Finalizar campaña de prueba</button>':''}`,
- '<button class="back" onclick="consultUser=\'\';go(\'home\')">← Menú principal</button>');
- filterConsult('');
-}
-function filterConsult(q){
- const box=$('consultResults');if(!box)return;
- const term=String(q||'').trim().toLowerCase();
- const records=consultStock().filter(p=>!term||[p.id,p.name,...p.locations.map(x=>x.loc)].join(' ').toLowerCase().includes(term));
- box.innerHTML=records.length?records.map(p=>`<div class="card"><h2>${esc(p.name)}</h2><p class="muted">${esc(p.id)}</p><div class="between" style="margin:12px 0"><span>Stock BC de prueba</span><strong>${fmt(p.total)} uds.</strong></div>
- ${p.locations.map(x=>`<div class="between" style="padding:8px 0;border-top:1px solid #e5eaf0"><b>${esc(x.loc)}</b><span>${fmt(x.amount)} uds.</span></div>`).join('')}
- <p class="muted" style="margin-top:10px">Posición fija: sin cargar en demo</p></div>`).join(''):'<div class="alert">Sin coincidencias.</div>';
-}
+function renderConsult(){window.INVENTA_CONSULT_UI.render();}
+function filterConsult(q){window.INVENTA_CONSULT_UI.filter(q);}
+function setConsultMode(mode){window.INVENTA_CONSULT_UI.setMode(mode);}
 function closeDemoCampaign(){
  if(consultRole()!=='admin'||!data.demoInventoryOpen)return;
  if(!confirm('¿Cerrar únicamente la campaña de prueba? No valida recuentos ni cambia Business Central.'))return;
@@ -526,9 +510,12 @@ function handleScanned(raw){
  scanBusy=true;
  const mode=scanMode;
  if(mode==='consult'){
-  const found=codeForArticle(code)||Object.keys(TEST).find(loc=>normCode(loc)===normCode(code));
-  if(!found){updateScanStatus('Código no encontrado en el catálogo de prueba.');scanBusy=false;return;}
-  stopScanner();go('consult');$('consultSearch').value=found;filterConsult(found);return;
+  const match=window.INVENTA_CONSULT_UI.lookup(code);
+  const fallback=!isManager()?codeForArticle(code):null;
+  const selected=match||(fallback?{value:fallback,mode:'article'}:null);
+  if(!selected){updateScanStatus('Código no encontrado en la consulta.');scanBusy=false;return;}
+  window.INVENTA_CONSULT_UI.applyScan(selected);
+  stopScanner();go('consult');$('consultSearch').value=selected.value;filterConsult(selected.value);return;
  }
  if(mode==='location'){
   const loc=Object.keys(TEST).find(k=>normCode(k)===code);

@@ -7,13 +7,22 @@ const root=path.resolve(__dirname,'..');
 const code=fs.readFileSync(path.join(root,'warehouse-management.js'),'utf8');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const worker=fs.readFileSync(path.join(root,'service-worker.js'),'utf8');
+const core=fs.readFileSync(path.join(root,'consultation-core.js'),'utf8');
+const ui=fs.readFileSync(path.join(root,'consultation-ui.js'),'utf8');
+const consult=require('../consultation-core.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.25\.1'/);
- assert.match(worker,/inventa-demo-v0251-01/);
+ assert.match(index,/APP_VERSION='0\.26\.0'/);
+ assert.match(worker,/inventa-demo-v0260-01/);
  assert.match(worker,/'\.\/warehouse-management\.js'/);
  assert.match(index,/warehouse-management\.js/);
+ assert.match(index,/consultation-core\.js/);
+ assert.match(index,/consultation-ui\.js/);
+ assert.match(worker,/consultation-core\.js/);
+ assert.match(worker,/consultation-ui\.js/);
+ assert.doesNotThrow(()=>new Function(core));
+ assert.doesNotThrow(()=>new Function(ui));
  const inline=index.slice(index.indexOf("<script>\n'use strict';")+8,index.lastIndexOf('</script>'));
  assert.doesNotThrow(()=>new Function(inline));
 });
@@ -59,4 +68,51 @@ test('un Operario no puede abrir Gestión almacén',async()=>{
  await h.obj.render();
  assert.ok(h.routes.includes('manager-login'));
  assert.ok(!h.seen.some(x=>x.includes('Estado general')));
+});
+
+test('Consulta agrupa ubicaciones y mantiene posiciones fijas vacías',()=>{
+ const rows=consult.aggregate({
+  products:[{code:'A',description:'Artículo A'},{code:'B',description:'Artículo B'}],
+  locations:[{code:'P1'},{code:'P2'},{code:'P3'}],
+  stock:[
+   {product_code:'A',location_code:'P1',lot:'L1',quantity:12},
+   {product_code:'A',location_code:'P2',lot:'L2',quantity:8},
+   {product_code:'A',location_code:'P2',lot:'L2',quantity:2}
+  ],
+  fixed:[{product_code:'A',location_code:'P3',priority:1},{product_code:'B',location_code:'P3',priority:1}]
+ });
+ const a=rows.articles.find(x=>x.id==='A');
+ assert.equal(a.total,22);
+ assert.equal(a.locations.length,3);
+ assert.equal(a.locations[0].locationCode,'P3');
+ assert.equal(a.locations[0].fixed,true);
+ assert.equal(a.locations[0].amount,0);
+ assert.equal(a.locations.find(x=>x.locationCode==='P2').lots[0].amount,10);
+ assert.equal(rows.articles.find(x=>x.id==='B').total,0);
+ assert.equal(rows.locations.find(x=>x.code==='P3').articles.length,2);
+ assert.ok(rows.locations.find(x=>x.code==='P3').articles.every(x=>x.amount===0&&x.fixed));
+});
+
+test('Consulta visible: ubicación fija a cero aparece por artículo y ubicación',()=>{
+ const root={INVENTA_CONSULT:consult};
+ const elements=new Map();
+ const el=id=>{
+  if(!elements.has(id))elements.set(id,{value:'',textContent:'',innerHTML:'',classList:{toggle(){}},placeholder:''});
+  return elements.get(id);
+ };
+ const sample={
+  'K00-P01':[{id:'PRD0003563',name:'ARTÍCULO CON STOCK',theoretical:200}],
+  'K00-P02':[], 'K00-P03':[]
+ };
+ const build=new Function('window','TEST','consultUser','consultBlocked','go','isManager','data','consultRole','place','esc','$','screen','normCode','barcodeKey',
+   ui+';return window.INVENTA_CONSULT_UI;');
+ const view=build(root,sample,'Supervisor (demo)',()=>false,()=>{},()=>false,{demoInventoryOpen:false},()=>'supervisor',()=>{},
+   x=>String(x),el,'consult',x=>String(x).toUpperCase(),x=>String(x).toUpperCase());
+ view.render();
+ assert.match(el('consultResults').innerHTML,/PRD0099000/);
+ assert.match(el('consultResults').innerHTML,/SIN STOCK/);
+ view.setMode('location');
+ assert.match(el('consultResults').innerHTML,/PRD0099000/);
+ assert.match(el('consultResults').innerHTML,/FIJA/);
+ assert.deepEqual(view.lookup('K00-P03'),{value:'K00-P03',mode:'location'});
 });
