@@ -143,8 +143,8 @@ test('Catálogo guiado: primero pasillos A-T, después ubicaciones y finalmente 
  await h.obj.render();
  const aisles=h.seen.at(-1);
  assert.match(aisles,/Selecciona un pasillo/);
- assert.match(aisles,/openCatalogAisle\\\('A'\\\)/);
- assert.match(aisles,/openCatalogAisle\\\('T'\\\)/);
+ assert.match(aisles,/openCatalogAisle\('A'\)/);
+ assert.match(aisles,/openCatalogAisle\('T'\)/);
  assert.doesNotMatch(aisles,/Crear ubicación/);
  h.obj.openCatalogAisle('A');
  await h.obj.render();
