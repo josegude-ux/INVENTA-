@@ -112,18 +112,18 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.20.0';
+const APP_VERSION='0.21.0';
 const KEY='inventa-demo-operario-v015';
 const DRAFT_KEY='inventa-demo-draft-v020:';
 const blank=()=>({version:1,worker:'',locations:{},events:[]});
 function load(){try{const p=JSON.parse(localStorage.getItem(KEY));if(p?.version===1&&p.locations)return p;}catch(e){}return blank();}
-let data=load(),screen=data.worker?'aisles':'login',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all',lastPallet=null,repeatMode=false,overwriteInput=false,resumedDraft=false;
+let data=load(),screen=data.worker?'aisles':'login',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all',lastPallet=null,repeatMode=false,overwriteInput=false,resumedDraft=false,editReason='',editOriginal=null;
 const fmt=n=>Number(n).toLocaleString('es-ES');
 const esc=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const valid=s=>/^\d{1,8}$/.test(String(s))&&Number(s)>0&&Number.isSafeInteger(Number(s));
 function save(){localStorage.setItem(KEY,JSON.stringify(data));}
 function items(loc){let base=(TEST[loc]||[]).map(p=>({...p}));let unexpected=Object.entries(data.locations[loc]?.extras||{}).map(([id,v])=>({id,name:v.name||'Artículo encontrado no previsto',theoretical:0,extra:true}));return [...base,...unexpected];}
-function getLoc(loc){return data.locations[loc]||(data.locations[loc]={verified:false,counts:{},extras:{},closed:false});}
+function getLoc(loc){const d=data.locations[loc]||(data.locations[loc]={verified:false,counts:{},extras:{},closed:false,incidents:{}});if(!d.incidents)d.incidents={};return d;}
 function draftKey(worker){return DRAFT_KEY+encodeURIComponent(worker);}
 function readDraft(worker){
  if(!worker)return null;
@@ -142,7 +142,7 @@ function saveDraft(){
  const d={version:2,worker:data.worker,loc:activeLoc,article:activeArticle,screen,
   entries:pendingEntries.map(e=>({...e})),mode:cMode,step:cStep,input:cInput,
   parts:[...cParts],lastPallet:lastPallet?[...lastPallet]:null,
-  repeatMode,overwriteInput,feedback:countFeedback,at:new Date().toISOString()};
+  repeatMode,overwriteInput,editReason,editOriginal,feedback:countFeedback,at:new Date().toISOString()};
  try{localStorage.setItem(draftKey(data.worker),JSON.stringify(d));}catch(e){}
 }
 function restoreDraft(d){
@@ -152,7 +152,7 @@ function restoreDraft(d){
  cInput=/^\d{0,8}$/.test(String(d.input||''))?String(d.input||''):'';
  cParts=Array.isArray(d.parts)&&d.parts.length===4?d.parts.map(n=>Number(n)||0):[0,0,0,0];
  lastPallet=Array.isArray(d.lastPallet)&&d.lastPallet.length===4?d.lastPallet.map(Number):null;
- repeatMode=!!d.repeatMode&&!!lastPallet;overwriteInput=!!d.overwriteInput;
+ repeatMode=!!d.repeatMode&&!!lastPallet;overwriteInput=!!d.overwriteInput;editReason=String(d.editReason||'');editOriginal=d.editOriginal??null;
  countFeedback=d.feedback||'Recuento recuperado automáticamente. Todavía sin guardar.';
  screen=d.screen;resumedDraft=true;
 }
@@ -160,12 +160,16 @@ function bestPreviousPallet(entries){
  const e=[...entries].reverse().find(x=>Array.isArray(x.factors)&&x.factors.length===4&&x.factors.every(n=>Number.isSafeInteger(n)&&n>0));
  return e?e.factors.slice():null;
 }
+function hasDifference(p,rec){return !!rec && (rec.amount!==p.theoretical || !!rec.warning || !!rec.notFound);}
+function isCountVerified(loc,p){const d=getLoc(loc),rec=d.counts[p.id];return !!rec && !d.incidents[p.id] && !hasDifference(p,rec);}
+function hasLocationIssue(loc,p){const d=getLoc(loc);return !!d.incidents[p.id] || hasDifference(p,d.counts[p.id]) || (!!p.extra && !isCountVerified(loc,p));}
 function progress(loc){
- const a=items(loc), d=getLoc(loc),c=d.counts;
- const done=a.filter(x=>c[x.id]).length;
- const flagged=a.some(p=>c[p.id]&&(c[p.id].notFound||c[p.id].amount!==p.theoretical||c[p.id].warning)) || a.some(p=>p.extra);
- return {done,total:a.length,closed:d.closed,flagged,complete:d.closed || (a.length>0 && done===a.length),partial:done>0&&done<a.length};
+ const a=items(loc),d=getLoc(loc);
+ const done=a.filter(p=>isCountVerified(loc,p)).length;
+ const flagged=a.some(p=>hasLocationIssue(loc,p));
+ return {done,total:a.length,closed:d.closed,flagged,complete:d.closed||(a.length>0&&done===a.length&&!flagged),partial:done>0&&done<a.length};
 }
+
 function aisleFor(loc){return loc.slice(0,1).toUpperCase();}
 function aisleLocations(aisle){return Object.keys(TEST).filter(loc=>aisleFor(loc)===aisle);}
 function assignedAisles(){return AISLES[data.worker]||[];}
@@ -174,6 +178,7 @@ function setLocationFilter(v){locationFilter=v;renderLocations();}
 function statusLabel(p){if(p.flagged)return '⚠ Revisar';if(p.complete)return '✓';if(p.partial)return 'En curso';return 'Pendiente';}
 
 function statusArticle(loc,p){return getLoc(loc).counts[p.id];}
+function incidentArticle(loc,p){return getLoc(loc).incidents[p.id];}
 let updateReady=false, updating=false, lastCheck=0, hadController=false, bootAt=Date.now(), reloadedForUpdate=false;
 function countingInProgress(){return ['count','review','discrepancy'].includes(screen);}
 function showPendingUpdate(){
@@ -213,7 +218,7 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();if(s==='review'||s==='discrepancy')saveDraft();showPendingUpdate();}
-function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.20</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
+function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.21</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
 function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='login')renderLogin();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderLocations();}
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
@@ -369,10 +374,52 @@ function cancelCount(){if((pendingEntries.length||cInput||cParts.some(Boolean)||
 function prepareReview(){if(countTotal()===0){showModal('emptycount');return;}pendingResult='counted';go('review');}
 function renderReview(){const p=getProduct();place(`<div class="title"><div class="overline">PASO 4 · REVISIÓN</div><h1>Confirmar recuento</h1><p class="muted">${esc(activeLoc)} · ${esc(p.name)}</p></div><div class="card" style="text-align:center"><div class="overline">TOTAL CONTADO</div><div style="font-size:48px;font-weight:950;color:#142f4f">${fmt(countTotal())}</div><div class="muted">${countedUnit(p)} · ${pendingEntries.length} apuntes</div></div><div class="card"><h2>Detalle</h2>${pendingEntries.map(e=>`<div class="between" style="border-bottom:1px solid #edf0f5;padding:8px 0"><span class="muted">${esc(e.kind)}: ${esc(e.detail)}</span><b>+${fmt(e.amount)}</b></div>`).join('')}</div><div class="alert">Al guardar, INVENTA comprobará si la desviación supera la tolerancia de aviso. El operario no verá la cantidad teórica.</div>`,`<div class="stack"><button class="btn" onclick="validateCount()">CONFIRMAR Y GUARDAR ARTÍCULO →</button><button class="back" onclick="go('count')">← Modificar cantidades</button></div>`);}
 const tolerance=expected=>Math.max(2,Math.floor(expected*.05));
-function validateCount(){const p=getProduct(),amount=countTotal(),diff=Math.abs(amount-p.theoretical);pendingResult='counted';if(diff>tolerance(p.theoretical)){go('discrepancy');}else{commitCount(false);}}
-function renderWarning(){const p=getProduct();place(`<div class="title"><div class="overline">COMPROBACIÓN AUTOMÁTICA</div><h1>⚠️ Revisa tu recuento</h1><p class="muted">${esc(p.name)}</p></div><div class="alert red"><b>Atención:</b> la cantidad introducida presenta una diferencia superior a la tolerancia configurada. Puede haber un error de conteo.</div><div class="card" style="text-align:center"><div class="overline">HAS CONTADO</div><div style="font-size:48px;font-weight:950">${fmt(countTotal())}</div><span class="muted">${countedUnit(p)}</span></div><p class="muted">Vuelve a comprobar la mercancía. Si estás seguro del recuento, puedes confirmarlo. El responsable revisará la diferencia.</p>`,`<div class="stack"><button class="btn" onclick="go('count')">Volver a contar</button><button class="btn-outline" onclick="commitCount(true)">Confirmar esta cantidad</button></div>`);}
-function commitCount(warning,notFound=false){const rec={entries:pendingEntries.map(x=>({...x})),amount:notFound?0:countTotal(),notFound:!!notFound,warning:!!warning,at:new Date().toISOString()};const p=getProduct();getLoc(activeLoc).counts[activeArticle]=rec;data.events.push({what:notFound?'No encontrado':'Artículo contado',loc:activeLoc,article:activeArticle,amount:rec.amount,warning:rec.warning,at:rec.at});save();clearDraft();savedFeedback=`✓ GUARDADO: ${esc(p.name)} · ${fmt(rec.amount)} unidades. Puedes pasar al siguiente artículo.`;pendingEntries=[];go('articles');}
-function markNotFound(){pendingEntries=[];cInput='';const p=getProduct();if(!confirm(`Confirmar que no se ha encontrado ${p.name} en ${activeLoc}?`))return;const warn=p.theoretical>tolerance(p.theoretical);commitCount(warn,true);}
+function validateCount(){
+ const p=getProduct(),amount=countTotal();
+ pendingResult='counted';
+ if(amount!==p.theoretical){go('discrepancy');return;}
+ commitCount(false);
+}
+function renderWarning(){
+ const p=getProduct();
+ place('<div class="title"><div class="overline">CONTROL · TOLERANCIA CERO</div><h1>⚠️ Diferencia detectada</h1><p class="muted">'+esc(p.name)+'</p></div>'
+ +'<div class="alert red"><b>No se acepta este recuento como correcto.</b> La cantidad introducida no coincide con el registro de control. Las existencias teóricas no se muestran al operario.</div>'
+ +'<div class="card" style="text-align:center"><div class="overline">CANTIDAD CONTADA</div><div style="font-size:48px;font-weight:950">'+fmt(countTotal())+'</div><span class="muted">unidades</span></div>'
+ +'<p class="muted">Puedes volver a contar o registrar una incidencia pendiente de revisión. Una incidencia no equivale a un recuento validado.</p>',
+ '<div class="stack"><button class="btn" onclick="go(\'count\')">Volver a contar</button><button class="btn-outline" onclick="registerDiscrepancy(false)">Registrar incidencia pendiente</button></div>');
+}
+function registerDiscrepancy(notFound=false){
+ const p=getProduct();if(!p)return;
+ const d=getLoc(activeLoc),prior=d.counts[activeArticle];
+ if(prior&&!editReason){showModal('reason');return;}
+ const amount=notFound?0:countTotal();
+ const issue={amount,notFound,reason:editReason||(notFound?'Artículo no encontrado':'Diferencia en recuento'),previousAmount:prior?.amount??null,worker:data.worker,at:new Date().toISOString(),status:'pending'};
+ d.incidents[activeArticle]=issue;
+ data.events.push({what:'Incidencia pendiente (sin validar)',loc:activeLoc,article:activeArticle,amount,oldAmount:issue.previousAmount,reason:issue.reason,worker:data.worker,at:issue.at});
+ save();clearDraft();pendingEntries=[];editReason='';editOriginal=null;
+ savedFeedback='⚠ Incidencia registrada para revisión. No se ha dado por válido el artículo.';
+ go('articles');
+}
+function commitCount(warning,notFound=false){
+ if(warning||notFound){registerDiscrepancy(!!notFound);return;}
+ const p=getProduct();if(!p||countTotal()!==p.theoretical){go('discrepancy');return;}
+ const d=getLoc(activeLoc),prior=d.counts[activeArticle];
+ if(prior&&!editReason){showModal('reason');return;}
+ const rec={entries:pendingEntries.map(x=>({...x})),amount:countTotal(),notFound:false,warning:false,at:new Date().toISOString()};
+ if(prior){rec.corrections=[...(prior.corrections||[]),{oldAmount:prior.amount,newAmount:rec.amount,reason:editReason,worker:data.worker,at:rec.at}];}
+ d.counts[activeArticle]=rec;
+ const previousIssue=d.incidents[activeArticle];if(previousIssue)delete d.incidents[activeArticle];
+ data.events.push({what:prior?'Corrección justificada':'Artículo contado',loc:activeLoc,article:activeArticle,oldAmount:prior?.amount??null,amount:rec.amount,reason:prior?editReason:null,worker:data.worker,at:rec.at});
+ save();clearDraft();
+ savedFeedback='✓ GUARDADO: '+esc(p.name)+' · '+fmt(rec.amount)+' unidades.'+(prior?' Corrección registrada con motivo.':'');
+ pendingEntries=[];editReason='';editOriginal=null;go('articles');
+}
+function markNotFound(){
+ const p=getProduct();if(!p)return;
+ if(!confirm('¿Registrar que no se ha encontrado '+p.name+' en '+activeLoc+'? Quedará como incidencia pendiente.'))return;
+ pendingEntries=[];cInput='';registerDiscrepancy(true);
+}
+
 function closeLocation(){
  const p=progress(activeLoc);
  if(p.done!==p.total){showModal('missing');return;}
