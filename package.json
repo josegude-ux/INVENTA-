@@ -1,0 +1,10 @@
+{
+  "name": "inventa",
+  "version": "0.25.0",
+  "private": true,
+  "description": "INVENTA PWA — inventario y consulta (demo + preparación Supabase)",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check:sw": "node -e \"const fs=require('fs');const sw=fs.readFileSync('service-worker.js','utf8');const html=fs.readFileSync('index.html','utf8');const m=html.match(/APP_VERSION='([^']+)'/);if(!m){console.error('APP_VERSION missing');process.exit(1);}const tag='inventa-demo-v'+m[1].replace(/\\./g,'');if(!sw.includes(tag)){console.error('SW cache missing',tag);process.exit(1);}['lib/roles.js','lib/sync-queue.js','lib/incidents.js'].forEach(f=>{if(!sw.includes(f)){console.error('SW FILES missing',f);process.exit(1);}});console.log('OK',m[1],tag);\""
+  }
+}

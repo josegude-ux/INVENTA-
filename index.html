@@ -180,6 +180,9 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
     </div>
   </div>
 </div>
+<script src="lib/roles.js"></script>
+<script src="lib/sync-queue.js"></script>
+<script src="lib/incidents.js"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -191,7 +194,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.24.7';
+const APP_VERSION='0.25.0';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -199,10 +202,20 @@ const blank=()=>({version:1,worker:'',countSession:null,locations:{},events:[]})
 function load(){try{const p=JSON.parse(localStorage.getItem(KEY));if(p?.version===1&&p.locations){if(p.demoInventoryOpen===undefined)p.demoInventoryOpen=!!p.countSession;return p;}}catch(e){}return blank();}
 let data=load(),screen='home',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all',lastPallet=null,repeatMode=false,overwriteInput=false,resumedDraft=false,editReason='',editOriginal=null,editReasonChoice='',editReasonNote='',editingIndex=-1,entryEdits=[];
 let consultUser='',managerUser='';
+const syncQueue=(typeof InventaSyncQueue!=='undefined')?InventaSyncQueue.createQueue():null;
 const fmt=n=>Number(n).toLocaleString('es-ES');
 const esc=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const valid=s=>/^\d{1,8}$/.test(String(s))&&Number(s)>0&&Number.isSafeInteger(Number(s));
 function save(){localStorage.setItem(KEY,JSON.stringify(data));}
+function queueLocalOp(op,payload){
+ if(!syncQueue)return null;
+ try{return syncQueue.enqueue(op,payload);}catch(e){return null;}
+}
+async function tryFlushSyncQueue(){
+ if(!syncQueue)return {ok:false,reason:'no_queue'};
+ // Sin adaptador remoto: permanece local. No inventar sincronización.
+ return syncQueue.flush();
+}
 // La modalidad se mantiene por jornada hasta realizar un relevo explícito.
 function sessionWorkers(){
  const crew=data.countSession?.workers;
@@ -349,7 +362,10 @@ function render(){let counter=screen==='count';$('app').classList.toggle('counte
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 
 
-function isManager(){return managerUser==='Supervisor (demo)'||managerUser==='Administrador (demo)';}
+function isManager(){
+ if(typeof InventaRoles!=='undefined')return InventaRoles.canManageWarehouse(managerUser);
+ return managerUser==='Supervisor (demo)'||managerUser==='Administrador (demo)';
+}
 function startInventoryFromHome(){managerUser='';consultUser='';go('login');}
 function openConsultFromHome(){
  if(isManager()){consultUser=managerUser;go('consult');return;}
@@ -384,20 +400,43 @@ function loginManager(){
 function logoutManager(){managerUser='';consultUser='';go('home');}
 function renderManagement(){
  if(!isManager()){go('manager-login');return;}
- const administrator=managerUser==='Administrador (demo)';
+ const administrator=(typeof InventaRoles!=='undefined')?InventaRoles.canAdministerUsers(managerUser):(managerUser==='Administrador (demo)');
+ const pendingIncidents=(typeof InventaIncidents!=='undefined')?InventaIncidents.listFromDemoLocations(data.locations):[];
+ const syncSnap=syncQueue?syncQueue.snapshot():{pending:0,deviceId:'—',total:0};
+ const incidentRows=pendingIncidents.length
+  ?pendingIncidents.slice(0,20).map(i=>`<div class="between" style="border-bottom:1px solid #edf0f5;padding:8px 0"><div><b>${esc(i.locationId)} · ${esc(i.articleId)}</b><small class="muted" style="display:block">${esc(i.kind)} · ${esc(i.status)}${i.createdBy?' · '+esc(i.createdBy):''}</small></div><span class="tag warn">${i.countedQty==null?'—':fmt(i.countedQty)}</span></div>`).join('')
+  :'<p class="muted">No hay incidencias pendientes en este dispositivo.</p>';
  const rows=[
   ['Asignaciones de recuento','Organizar pasillos, ubicaciones, equipos y relevos.'],
-  ['Seguimiento e incidencias','Revisar diferencias, recuentos pendientes y traslados.'],
   ['Organización del almacén','Gestionar propuestas de reubicación y ubicaciones fijas.']
  ];
  if(administrator)rows.push(['Administración','Usuarios, permisos, bases de datos y apertura/cierre de inventarios.']);
  place(`<div class="title"><div class="overline">GESTIÓN ALMACÉN · ${administrator?'ADMINISTRADOR':'SUPERVISOR'}</div><h1>Gestión almacén</h1><p class="muted">Acceso diferenciado para ${esc(managerUser)}.</p></div>
- <div class="alert">Estructura inicial de prueba. Las herramientas de gestión todavía no están habilitadas y no modifican BC.</div>
+ <div class="card"><h2>Seguimiento e incidencias (local)</h2><p class="muted" style="margin-top:6px">Datos de este dispositivo. Tolerancia cero: toda diferencia queda pendiente.</p>${incidentRows}</div>
+ <div class="card"><h2>Cola de sincronización</h2><p class="muted" style="margin-top:6px">Dispositivo: ${esc(syncSnap.deviceId)} · Pendientes: <b>${syncSnap.pending}</b> / ${syncSnap.total}</p><p class="muted">Sin proyecto Supabase conectado: la cola no envía nada. No es sincronización multi-dispositivo todavía.</p><button class="btn-outline" style="width:100%;margin-top:8px" onclick="showSyncFlushResult()">Comprobar envío (sin credenciales)</button><p id="syncFlushMsg" class="muted" style="margin-top:8px" role="status"></p></div>
+ <div class="alert">Asignaciones y administración siguen en maqueta. No se modifica Business Central.</div>
  ${rows.map(([title,subtitle])=>`<div class="card"><h2>${esc(title)}</h2><p class="muted" style="margin-top:6px">${esc(subtitle)}</p></div>`).join('')}`,
  '<button class="back" onclick="go(\'home\')">← Menú principal</button>');
 }
-function consultRole(){return consultUser==='Supervisor (demo)'?'supervisor':consultUser==='Administrador (demo)'?'admin':'operator';}
-function consultBlocked(){return !!data.demoInventoryOpen&&consultRole()==='operator';}
+async function showSyncFlushResult(){
+ const el=$('syncFlushMsg');
+ const result=await tryFlushSyncQueue();
+ if(el)el.textContent=result.ok?('Adaptador OK · pendientes '+result.pending):(result.message||('Sin envío ('+(result.reason||'bloqueado')+'). Pendientes: '+(result.pending??'—')));
+ if(screen==='management')renderManagement();
+}
+function consultRole(){
+ if(typeof InventaRoles!=='undefined'){
+  const r=InventaRoles.normalizeRole(consultUser);
+  if(r==='administrador')return 'admin';
+  if(r==='supervisor')return 'supervisor';
+  return 'operator';
+ }
+ return consultUser==='Supervisor (demo)'?'supervisor':consultUser==='Administrador (demo)'?'admin':'operator';
+}
+function consultBlocked(){
+ if(typeof InventaRoles!=='undefined')return !InventaRoles.canConsultDuringCampaign(consultUser,!!data.demoInventoryOpen);
+ return !!data.demoInventoryOpen&&consultRole()==='operator';
+}
 function renderConsultLogin(){
  place(`<div class="title"><div class="overline">CONSULTA INDIVIDUAL</div><h1>Identificar usuario</h1><p class="muted">La consulta no pide elegir entre individual y pareja.</p></div>
  <div class="card"><div class="field"><label for="consultAccount">Usuario de demostración</label><select id="consultAccount" class="input"><option>Operario 1</option><option>Operario 2</option><option>Supervisor (demo)</option><option>Administrador (demo)</option></select></div>
@@ -962,7 +1001,6 @@ function undoEntry(){openBreakdown();}
 function cancelCount(){if(editOriginal!==null){countFeedback='';go('edit-detail');return;}if((pendingEntries.length||cInput||cParts.some(Boolean)||repeatMode)&&!confirm('Hay un recuento en curso. ¿Quieres descartarlo y volver al listado?'))return;clearDraft();go('articles');}
 function prepareReview(){if(countTotal()===0){showModal('emptycount');return;}pendingResult='counted';go('review');}
 function renderReview(){const p=getProduct();place(`<div class="title"><div class="overline">PASO 4 · REVISIÓN</div><h1>Confirmar recuento</h1><p class="muted">${esc(activeLoc)} · ${esc(p.name)}</p></div><div class="card" style="text-align:center"><div class="overline">TOTAL CONTADO</div><div style="font-size:48px;font-weight:950;color:#142f4f">${fmt(countTotal())}</div><div class="muted">${countedUnit(p)} · ${pendingEntries.length} apuntes</div></div><div class="card"><h2>Detalle</h2>${pendingEntries.map(e=>`<div class="between" style="border-bottom:1px solid #edf0f5;padding:8px 0"><span class="muted">${esc(e.kind)}: ${esc(e.detail)}</span><b>+${fmt(e.amount)}</b></div>`).join('')}</div><div class="alert">Al confirmar, INVENTA exige coincidencia exacta. Si hay diferencia, se registrará una incidencia pendiente y nunca se marcará el recuento como válido.</div>`,`<div class="stack"><button class="btn" onclick="validateCount()">CONFIRMAR Y GUARDAR ARTÍCULO →</button><button class="back" onclick="openBreakdown()">← Modificar cantidades</button></div>`);}
-const tolerance=expected=>Math.max(2,Math.floor(expected*.05));
 function validateCount(){
  const p=getProduct(),amount=countTotal();
  pendingResult='counted';
@@ -982,9 +1020,14 @@ function registerDiscrepancy(notFound=false){
  const d=getLoc(activeLoc),prior=d.counts[activeArticle];
  if(prior&&!editReason){showModal('reason');return;}
  const amount=notFound?0:countTotal();
+ // Tolerancia cero: cualquier diferencia (o no encontrado) es incidencia pendiente.
+ if(typeof InventaIncidents!=='undefined'&&!notFound&&!InventaIncidents.differenceRequiresIncident(amount,p.theoretical)){
+  commitCount(false);return;
+ }
  const issue={amount,notFound,reason:editReason||(notFound?'Artículo no encontrado':'Diferencia en recuento'),previousAmount:prior?.amount??null,originalEntries:cloneEntries(prior?.entries),proposedEntries:cloneEntries(pendingEntries),entryEdits:entryEdits.map(x=>({...x})),delta:amount-(prior?.amount??0),worker:data.worker,...sessionAudit(),at:new Date().toISOString(),status:'pending'};
  d.incidents[activeArticle]=issue;
  data.events.push({what:'Incidencia pendiente (sin validar)',loc:activeLoc,article:activeArticle,amount,oldAmount:issue.previousAmount,reason:issue.reason,originalEntries:cloneEntries(issue.originalEntries),proposedEntries:cloneEntries(issue.proposedEntries),entryEdits:entryEdits.map(x=>({...x})),worker:data.worker,...sessionAudit(),at:issue.at});
+ queueLocalOp('incident',{loc:activeLoc,article:activeArticle,amount,notFound,workers:sessionWorkers(),countMode:sessionMode(),at:issue.at});
  save();clearDraft();pendingEntries=[];editReason='';editOriginal=null;editReasonChoice='';editReasonNote='';entryEdits=[];
  savedFeedback='⚠ Incidencia registrada para revisión. No se ha dado por válido el artículo.';
  go('articles');
@@ -999,6 +1042,7 @@ function commitCount(warning,notFound=false){
  d.counts[activeArticle]=rec;
  const previousIssue=d.incidents[activeArticle];if(previousIssue)delete d.incidents[activeArticle];
  data.events.push({what:prior?'Corrección justificada':'Artículo contado',loc:activeLoc,article:activeArticle,oldAmount:prior?.amount??null,amount:rec.amount,reason:prior?editReason:null,originalEntries:cloneEntries(prior?.entries),newEntries:cloneEntries(rec.entries),entryEdits:entryEdits.map(x=>({...x})),worker:data.worker,...sessionAudit(),at:rec.at});
+ queueLocalOp('count_entry',{loc:activeLoc,article:activeArticle,amount:rec.amount,workers:rec.workers,countMode:rec.countMode,correction:!!prior,at:rec.at});
  save();clearDraft();
  savedFeedback='✓ GUARDADO: '+esc(p.name)+' · '+fmt(rec.amount)+' unidades.'+(prior?' Corrección registrada con motivo.':'');
  pendingEntries=[];editReason='';editOriginal=null;editReasonChoice='';editReasonNote='';entryEdits=[];go('articles');

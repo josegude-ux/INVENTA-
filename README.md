@@ -1,6 +1,8 @@
-# INVENTA — Demostración instalable del operario v0.15
+# INVENTA — Demostración instalable v0.25.0
 
-Esta versión sirve exclusivamente para probar una experiencia móvil de inventario, sin tocar Business Central ni Supabase.
+Experiencia móvil de inventario y consulta. Demo local (localStorage). Preparación Supabase en `supabase/` sin credenciales ni proyecto creado desde este repo. No toca Business Central, Control de Cargas ni Control de Tanques.
+
+Pruebas sin backend: `npm test`.
 
 ## Instalación
 
