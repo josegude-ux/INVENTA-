@@ -3,7 +3,7 @@
    Ninguna cantidad física ni diferencia del diario BC se usa como stock oficial. */
 (function(root){
 'use strict';
-var state=null,busy=false,excelLoading=null;
+var state=null,busy=false,excelLoading=null,currentFile=null;
 var CHUNK=150,MAX_ROWS=50000,MAX_BYTES=20*1024*1024;
 function esc(v){return String(v===null||v===undefined?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function normal(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');}
@@ -98,10 +98,28 @@ function loadExcelJS(){
  if(root.ExcelJS)return Promise.resolve(root.ExcelJS);
  if(excelLoading)return excelLoading;
  excelLoading=new Promise(function(resolve,reject){
-  var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
-  s.crossOrigin='anonymous';s.onload=function(){if(root.ExcelJS)resolve(root.ExcelJS);else reject(Error('No se ha podido inicializar ExcelJS.'));};
-  s.onerror=function(){reject(Error('No se pudo descargar el lector Excel. Comprueba la conexión a Internet.'));};
-  document.head.appendChild(s);
+  var sources=[
+   'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
+   'https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js'
+  ],done=false,attempt=0;
+  function next(){
+   if(done)return;
+   if(root.ExcelJS){done=true;resolve(root.ExcelJS);return;}
+   if(attempt>=sources.length){
+    done=true;reject(Error('No se pudo descargar el lector Excel. Comprueba la conexión a Internet y vuelve a intentarlo.'));return;
+   }
+   var s=document.createElement('script'),settled=false;s.src=sources[attempt++];s.async=true;s.crossOrigin='anonymous';
+   var watchdog=setTimeout(function(){finish(false);},15000);
+   function finish(ok){
+    if(settled||done)return;
+    settled=true;clearTimeout(watchdog);
+    if(ok&&root.ExcelJS){done=true;resolve(root.ExcelJS);}else next();
+   }
+   s.onload=function(){finish(!!root.ExcelJS);};
+   s.onerror=function(){finish(false);};
+   document.head.appendChild(s);
+  }
+  next();
  }).catch(function(e){excelLoading=null;throw e;});
  return excelLoading;
 }
@@ -120,6 +138,15 @@ async function withRetry(fn,label){
  throw last;
 }
 function status(msg,kind){var el=document.getElementById('bcExcelStatus');if(!el)return;el.innerHTML='<div class="'+(kind==='error'?'alert':'card')+'" role="status" style="margin-top:10px">'+esc(msg)+'</div>';}
+function fileSelected(input){
+ state=null;
+ currentFile=input&&input.files&&input.files[0]||null;
+ var info=document.getElementById('bcExcelSelected');
+ if(info)info.textContent=currentFile?'Archivo elegido: '+currentFile.name+' · '+Math.round(currentFile.size/1024)+' KB':'Ningún archivo seleccionado todavía.';
+ var area=document.getElementById('bcExcelStatus');
+ if(area)area.innerHTML='';
+ if(currentFile)status('Archivo seleccionado. Pulsa «Analizar Excel» para validar las existencias.');
+}
 function renderPreview(){
  var el=document.getElementById('bcExcelStatus');if(!el)return;
  if(!state){el.innerHTML='';return;}
@@ -144,10 +171,11 @@ function panel(data,isAdmin){
  var html='<div class="card"><h2>Importación Excel de Business Central</h2>'
  +'<p class="muted">Actualiza las existencias oficiales sin tocar recuentos físicos ni posiciones fijas. La carga completa se publica al finalizar; no se muestra stock parcial.</p>'
  +(current?'<div class="alert">Última importación: <b>'+esc(active&&active.file_name||'BC')+'</b> · '+esc(new Date(current.updated_at).toLocaleString('es-ES'))+(stale?' · <b>Datos con más de 24 horas</b>':'')+'</div>':'<div class="alert">Todavía no hay una exportación BC publicada.</div>');
- if(isAdmin)html+='<label for="bcExcelFile"><b>Selecciona el Excel (.xlsx)</b></label>'
- +'<input class="input" style="font-size:14px;padding:11px;margin:10px 0" type="file" id="bcExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">'
- +'<button class="btn-outline" style="width:100%" onclick="INVENTA_BC.analyse()">1. Analizar archivo y previsualizar</button>'
- +'<p class="muted" style="font-size:12px">2. Revisa las líneas y confirma la sustitución. Necesitas conexión a Internet hasta terminar.</p><div id="bcExcelStatus" aria-live="polite"></div>';
+ if(isAdmin)html+='<label for="bcExcelFile"><b>1. Elegir archivo Excel (.xlsx)</b></label>'
+ +'<input class="input" style="font-size:16px;padding:11px;margin:10px 0;min-height:56px" type="file" id="bcExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-describedby="bcExcelSelected" onchange="INVENTA_BC.fileSelected(this)">'
+ +'<p id="bcExcelSelected" class="muted" role="status" style="margin:8px 0 14px;overflow-wrap:anywhere">'+(currentFile?'Archivo elegido: '+esc(currentFile.name)+' · '+Math.round(currentFile.size/1024)+' KB':'Ningún archivo seleccionado todavía.')+'</p>'
+ +'<button class="btn-outline" style="width:100%;min-height:54px" onclick="INVENTA_BC.analyse()">2. Analizar Excel seleccionado</button>'
+ +'<p class="muted" style="font-size:12px">3. Revisa las líneas y confirma la sustitución. Necesitas conexión a Internet hasta terminar.</p><div id="bcExcelStatus" aria-live="polite"></div>';
  else html+='<p class="muted">Solo Administración puede subir una nueva exportación BC.</p>';
  html+='</div><div class="card"><h2>Historial de importaciones</h2>';
  var committed=data.history.filter(function(h){return h.status==='committed';});
@@ -159,7 +187,7 @@ function panel(data,isAdmin){
 }
 async function analyse(){
  if(busy)return;
- var f=document.getElementById('bcExcelFile');f=f&&f.files&&f.files[0];
+ var input=document.getElementById('bcExcelFile'),f=input&&input.files&&input.files[0]||currentFile;
  if(!f){status('Selecciona primero el archivo Excel.','error');return;}
  if(!/\.xlsx$/i.test(f.name)){status('Selecciona un archivo .xlsx exportado de BC.','error');return;}
  if(f.size>MAX_BYTES){status('El archivo supera el límite de 20 MB.','error');return;}
@@ -198,7 +226,7 @@ async function commit(){
  }catch(e){status('La importación NO se ha publicado: '+e.message+(batchId?' (identificador de intento: '+batchId+'). El stock visible no ha cambiado.':'') ,'error');}
  finally{busy=false;}
 }
-var obj={panel:panel,analyse:analyse,commit:commit,parseRows:parseRows,columns:columns,findHeaderRow:findHeaderRow,sheetToMatrix:sheetToMatrix};
+var obj={panel:panel,fileSelected:fileSelected,analyse:analyse,commit:commit,parseRows:parseRows,columns:columns,findHeaderRow:findHeaderRow,sheetToMatrix:sheetToMatrix};
 root.INVENTA_BC=obj;
 if(typeof module!=='undefined'&&module.exports)module.exports=obj;
 })(typeof window!=='undefined'?window:globalThis);
