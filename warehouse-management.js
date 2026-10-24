@@ -151,7 +151,14 @@ async function dataFor(tab){
  }
  if(tab==='fixed'){
   if(!isAdmin())throw Error('Informe exclusivo de Administración.');
-  return {rows:await api('rpc/admin_fixed_positions_report','','POST',{})};
+  var rows=[];
+  for(var offset=0;offset<50000;offset+=1000){
+   var segment=await api('rpc/admin_fixed_positions_report','limit=1000&offset='+offset,'POST',{});
+   if(!Array.isArray(segment))throw Error('Informe de posiciones fijas incorrecto.');
+   rows.push.apply(rows,segment);
+   if(segment.length<1000)break;
+  }
+  return {rows:rows,imports:await api('fixed_position_imports','select=*&order=imported_at.desc&limit=12')};
  }
  if(tab==='campaigns')return {campaigns:await api('campaigns','select=*&order=created_at.desc&limit=100')};
  if(tab==='users'){var people=await api('rpc/admin_user_directory','', 'POST',{});people.forEach(function(p){permissionVersions[p.user_id]=p.version;});return {profiles:people};}
@@ -209,7 +216,7 @@ function contentFor(tab,d){
    +'<input class="input" type="search" id="fixedReportSearch" placeholder="Buscar..." oninput="INVENTA_MGMT.filterFixedReport(this.value)"></div>'
    +'<p class="muted" id="fixedReportCount" role="status">'+records.length+' asignaciones</p>'
    +'<div id="fixedReportList">';
-  body+=records.length?records.map(function(r){
+  body+=records.length?records.slice(0,100).map(function(r){
    var txt=[r.product_code,r.product_description,r.location_code,r.aisle].join(' ').toLocaleLowerCase('es');
    var units=Number(r.stock_quantity||0).toLocaleString('es-ES',{maximumFractionDigits:3});
    return '<div class="card fixed-report-row" data-fixed-search="'+safe(txt)+'" style="margin-bottom:8px">'
@@ -218,7 +225,8 @@ function contentFor(tab,d){
     +'<p style="margin:8px 0 0"><b>'+safe(r.product_code)+'</b> · '+safe(r.product_description)+'</p>'
     +'<small class="muted">Asignada: '+safe(ftime(r.assigned_at))+'</small></div>';
   }).join(''):'<div class="alert">No hay posiciones fijas marcadas todavía. Ve a Ubicaciones y marca los artículos que correspondan.</div>';
-  return body+'</div>';
+  return (window.INVENTA_FIXED_IMPORT?window.INVENTA_FIXED_IMPORT.panel(d.imports):'')
+   +body+'</div>'+(records.length>100?'<p class="muted">Se muestran las primeras 100 posiciones. Busca un artículo o descarga el informe completo.</p>':'');
  }
  if(tab==='campaigns'){
   return card('Nueva campaña · Solo Administrador',
@@ -439,12 +447,23 @@ function toggleCatalogFixed(product,alreadyFixed){
 }
 function filterFixedReport(value){
  if(section!=='fixed'||!isAdmin())return;
- var term=String(value||'').trim().toLocaleLowerCase('es'),count=0;
- document.querySelectorAll('.fixed-report-row').forEach(function(node){
-  node.hidden=!node.getAttribute('data-fixed-search').includes(term);
-  if(!node.hidden)count++;
+ var term=String(value||'').trim().toLocaleLowerCase('es');
+ var matched=fixedReportRows.filter(function(r){
+  return [r.product_code,r.product_description,r.location_code,r.aisle]
+   .some(function(v){return String(v||'').toLocaleLowerCase('es').includes(term);});
  });
- var info=document.getElementById('fixedReportCount');if(info)info.textContent=count+' asignaciones visibles';
+ var rendered=matched.slice(0,100).map(function(r){
+  var units=Number(r.stock_quantity||0).toLocaleString('es-ES',{maximumFractionDigits:3});
+  return '<div class="card fixed-report-row" style="margin-bottom:8px">'
+   +'<div class="between"><div><b>'+safe(r.location_code)+'</b><small style="display:block;color:#678198">'+safe(r.aisle||'')+'</small></div>'
+   +'<div style="text-align:right"><b>'+safe(units)+' '+safe(r.unit||'UD')+'</b><small style="display:block;color:#678198">Stock calculado BC</small></div></div>'
+   +'<p style="margin:8px 0 0"><b>'+safe(r.product_code)+'</b> · '+safe(r.product_description)+'</p>'
+   +'<small class="muted">Asignada: '+safe(ftime(r.assigned_at))+'</small></div>';
+ }).join('');
+ var box=document.getElementById('fixedReportList');
+ if(box)box.innerHTML=rendered||'<div class="alert">No se han encontrado posiciones.</div>';
+ var info=document.getElementById('fixedReportCount');
+ if(info)info.textContent='Mostrando '+Math.min(100,matched.length)+' de '+matched.length+' asignaciones filtradas';
 }
 function makeFixedCSV(rows){
  var cols=['Código artículo','Descripción','Ubicación','Pasillo','Prioridad','Stock calculado BC','Unidad','Fecha de asignación'];
