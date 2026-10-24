@@ -206,10 +206,10 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
     </div>
   </div>
 </div>
-<script src="./warehouse-management.js"></script>
-<script src="./real-counts.js"></script>
-<script src="./consultation-core.js"></script>
-<script src="./consultation-ui.js"></script>
+<script src="./warehouse-management.js?v=0.28.1"></script>
+<script src="./real-counts.js?v=0.28.1"></script>
+<script src="./consultation-core.js?v=0.28.1"></script>
+<script src="./consultation-ui.js?v=0.28.1"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -221,7 +221,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.28.0';
+const APP_VERSION='0.28.1';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -388,7 +388,7 @@ function openConsultFromHome(){
 function renderHome(){
  const manager=isManager(),role=window.INVENTA_MGMT?.profile?.role;
  const management=manager?'<button class="item home-choice" onclick="go(\'management\')"><span><strong>🏭 Gestión almacén</strong><small>Campañas, asignaciones, incidencias, artículos, movimientos y permisos.</small></span><span class="chev">›</span></button>':'';
- const profile=window.INVENTA_MGMT?.isAuthenticated()
+ const profile=window.INVENTA_MGMT?.isAuthenticated?.()
  ?'<div class="card"><div class="between"><div><b>'+esc(window.INVENTA_MGMT.profile.display_name||role)+'</b><p class="muted">Sesión real · '+(role==='admin'?'Administrador':role==='supervisor'?'Supervisor':'Operario')+'</p></div><button class="tinybtn" onclick="logoutManager()">Salir</button></div></div>'
  :'<button class="btn-outline" style="width:100%;margin-top:7px;margin-bottom:12px" onclick="go(\'manager-login\')">Acceso personal · Operario / Supervisor / Administrador</button>';
  place('<div class="title"><div class="overline">MENÚ PRINCIPAL</div><h1>¿Qué quieres hacer?</h1><p class="muted">Selecciona la función que necesitas. Inventario sigue en modo de prueba; Gestión de almacén utiliza base de datos real y permisos.</p></div>'

@@ -1,4 +1,4 @@
-# INVENTA · v0.28.0
+# INVENTA · v0.28.1
 
 PWA móvil y PC para inventario. Aplicación: https://josegude-ux.github.io/INVENTA-/
 
@@ -22,7 +22,7 @@ Se mantienen catálogo, posiciones fijas, incidencias, movimientos internos, cam
 
 ## Verificación
 
-- 15 pruebas de aplicación y cola, además de pruebas transaccionales de RLS en el proyecto indicado.
+- 16 pruebas de aplicación y cola, además de pruebas transaccionales de RLS en el proyecto indicado.
 - Reintentos offline, respuesta perdida, conflicto de contenido, cambio de usuario y cuenta deshabilitada.
 - Defaults de alta, stock oculto, asignaciones, escalada bloqueada, directorio admin, último admin, correo confirmado, versiones y auditoría.
 - Fixtures SQL sin correo ni contraseña, revertidos mediante ROLLBACK. Ninguna cuenta ficticia persistente.
