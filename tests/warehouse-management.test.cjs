@@ -13,8 +13,8 @@ const consult=require('../consultation-core.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.26\.0'/);
- assert.match(worker,/inventa-demo-v0260-01/);
+ assert.match(index,/APP_VERSION='0\.27\.0'/);
+ assert.match(worker,/inventa-demo-v0270-01/);
  assert.match(worker,/'\.\/warehouse-management\.js'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
@@ -31,7 +31,7 @@ test('no se publica service_role ni clave privada',()=>{
  assert.doesNotMatch(code,/service_role.*=.*eyJ/);
  assert.match(code,/sb_publishable_/);
 });
-function harness(role){
+function harness(role,fixtures={}){
  const values={managerEmail:'admin@example.invalid',managerPassword:'example-strong-pass'};
  const seen=[],routes=[],storage=new Map(),queries=[];
  const mockFetch=async(url,opts)=>{
@@ -39,7 +39,16 @@ function harness(role){
   let data=[];
   if(url.includes('/auth/v1/token'))data={access_token:'test-access-token',refresh_token:'test-refresh-token',expires_at:Math.floor(Date.now()/1000)+3600,user:{id:'user-id-test'}};
   else if(url.includes('/rest/v1/profiles'))data=[{user_id:'user-id-test',role,enabled:true,display_name:'Persona de prueba'}];
-  else data=[];
+  else if(url.includes('/rest/v1/')){
+   const table=url.split('/rest/v1/')[1].split('?')[0];
+   data=fixtures[table]||[];
+   if(table==='stock_snapshot'&&url.includes('order=imported_at.desc')){
+    data=fixtures.latest||[];
+   }else if(url.includes('location_code=eq.')){
+    const loc=decodeURIComponent(url.split('location_code=eq.')[1].split('&')[0]);
+    data=data.filter(row=>row.location_code===loc);
+   }
+  }
   return {ok:true,status:200,text:async()=>JSON.stringify(data)};
  };
  const mockWindow={addEventListener(){}};
@@ -115,4 +124,55 @@ test('Consulta visible: ubicación fija a cero aparece por artículo y ubicació
  assert.match(el('consultResults').innerHTML,/PRD0099000/);
  assert.match(el('consultResults').innerHTML,/FIJA/);
  assert.deepEqual(view.lookup('K00-P03'),{value:'K00-P03',mode:'location'});
+});
+
+test('Catálogo guiado: primero pasillos A-T, después ubicaciones y finalmente detalle',async()=>{
+ const h=harness('supervisor',{
+  locations:[
+   {code:'A00-P01',aisle:'A',description:'Primera ubicación'},
+   {code:'A00-P02',aisle:'A'},
+   {code:'K00-P01',aisle:'K'}
+  ],
+  fixed_positions:[{product_code:'PRD1',location_code:'A00-P01',priority:1}],
+  products:[{code:'PRD1',description:'Producto fijo',unit:'UD'}],
+  latest:[{campaign_id:'camp01',imported_at:'2026-10-24T06:00:00Z'}],
+  stock_snapshot:[]
+ });
+ await h.obj.signIn();
+ h.obj.open('catalog');
+ await h.obj.render();
+ const aisles=h.seen.at(-1);
+ assert.match(aisles,/Selecciona un pasillo/);
+ assert.match(aisles,/openCatalogAisle\('A'\)/);
+ assert.match(aisles,/openCatalogAisle\('T'\)/);
+ assert.doesNotMatch(aisles,/Crear ubicación/);
+ h.obj.openCatalogAisle('A');
+ await h.obj.render();
+ const locs=h.seen.at(-1);
+ assert.match(locs,/Pasillo A/);
+ assert.match(locs,/A00-P01/);
+ assert.match(locs,/A00-P02/);
+ assert.doesNotMatch(locs,/K00-P01/);
+ assert.match(locs,/Añadir ubicación/);
+ h.obj.openCatalogLocation('A00-P01');
+ await h.obj.render();
+ const detail=h.seen.at(-1);
+ assert.match(detail,/Ubicación A00-P01/);
+ assert.match(detail,/Producto fijo/);
+ assert.match(detail,/FIJA/);
+ assert.match(detail,/SIN STOCK/);
+ assert.match(detail,/Asignar posición fija/);
+ h.obj.backCatalog();
+ await h.obj.render();
+ assert.match(h.seen.at(-1),/Pasillo A/);
+ h.obj.backCatalog();
+ await h.obj.render();
+ assert.match(h.seen.at(-1),/Selecciona un pasillo/);
+});
+test('El Operario no puede entrar en el catálogo de gestión',async()=>{
+ const h=harness('operator');
+ await h.obj.signIn();
+ h.obj.open('catalog');
+ assert.ok(h.routes.includes('manager-login'));
+ assert.equal(h.queries.some(q=>q.url.includes('/rest/v1/locations')),false);
 });

@@ -166,6 +166,21 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 .consult-qty{display:block;text-align:right;font-weight:850;font-size:13px;white-space:nowrap}
 .consult-tags{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:4px;margin-top:4px}
 .consult-empty{color:#99520f;background:#fff6e7;padding:9px;border-radius:10px;font-size:12px;margin-top:8px}
+
+/* Catálogo guiado: pasillo → ubicación → detalle; mantenimiento plegado. */
+.catalog-aisles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0 0 14px}
+.catalog-aisle{min-height:90px;border:1px solid #dce4ed;border-radius:15px;background:#fff;color:#234361;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;box-shadow:0 2px 8px #192e420b}
+.catalog-aisle b{font-size:29px;line-height:1;font-weight:950;color:#a9232b}.catalog-aisle small{font-size:11px;color:#678198;font-weight:700}
+.catalog-full{width:100%;margin-bottom:12px}.catalog-location[hidden]{display:none!important}
+.catalog-maintenance{border:1px solid #dce4ed;background:#fff;border-radius:13px;padding:0;margin:13px 0;overflow:hidden}
+.catalog-maintenance summary{cursor:pointer;padding:14px;font-size:14px;font-weight:850;color:#355b78;list-style-position:inside}
+.catalog-maintenance[open] summary{border-bottom:1px solid #e3e9ef}.catalog-maintenance-body{padding:15px}
+.catalog-maintenance-body h3{margin:0 0 13px;font-size:15px}
+.catalog-product{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-top:1px solid #e9edf2}
+.catalog-product:first-child{border-top:0}.catalog-product>div:first-child{min-width:0}.catalog-product b{font-size:13px}
+.catalog-product small{display:block;font-size:11px;color:#657e91;line-height:1.45;margin-top:4px}
+.catalog-product-right{text-align:right;flex:0 0 auto;max-width:45%}.catalog-product-right .tag{display:block;margin-top:5px}
+@media(max-width:360px){.catalog-aisles{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style></head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
 <input type="file" id="scanImportFile" accept="application/json,.json" hidden onchange="importBarcodeFile(this)">
 <div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
@@ -202,7 +217,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.26.0';
+const APP_VERSION='0.27.0';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';

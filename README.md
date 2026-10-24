@@ -1,4 +1,4 @@
-# INVENTA · v0.26.0
+# INVENTA · v0.27.0
 
 Aplicación PWA de inventario y gestión de almacén para móvil y PC. **Tres áreas diferenciadas en esta etapa:**
 
@@ -45,5 +45,7 @@ La base contiene doce tablas con RLS. Los nuevos registros de usuario obtienen e
 - Supabase: creación de esquema y migraciones registrada.
 - RLS: Operario no puede leer el stock ficticio insertado para una prueba; Supervisor sí puede. Los datos de la prueba fueron revertidos.
 - Advisor de seguridad inicial: sin advertencias.
+
+**Nota:** Los pasillos A–T se muestran siempre; las ubicaciones se alimentan del catálogo auténtico cargado en Supabase y no se generan ubicaciones ficticias. La pestaña de gestión sigue restringida a Supervisor/Administrador con cuenta real.
 
 **Pendiente para puesta en servicio real:** crear y promover el primer administrador, conectar el recuento operario con Supabase, importar maestros/existencias auténticos de BC, probar sincronización multiusuario/offline y validar la conciliación de movimientos. **No afirmar que esas funciones están completas.**
