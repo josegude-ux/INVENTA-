@@ -114,7 +114,7 @@ async function readConsultData(){
   allConsultRows('products','select=code,description,unit,barcode&order=code'),
   allConsultRows('locations','select=code&order=code'),
   allConsultRows('fixed_positions','select=product_code,location_code,priority&order=product_code,location_code'),
-  active?allConsultRows('bc_import_lines','select=location_code,product_code,lot,quantity&import_id=eq.'+encodeURIComponent(active.import_id)+'&quantity=neq.0&order=location_code,product_code,lot'):
+  active?allConsultRows('bc_import_lines','select=location_code,product_code,lot,quantity,expiry_date&import_id=eq.'+encodeURIComponent(active.import_id)+'&quantity=neq.0&order=location_code,product_code,lot'):
    (campaignId?allConsultRows('stock_snapshot','select=location_code,product_code,lot,quantity&campaign_id=eq.'+encodeURIComponent(campaignId)+'&order=location_code,product_code,lot'):Promise.resolve([])),
   active?api('bc_import_batches','select=file_name&id=eq.'+encodeURIComponent(active.import_id)+'&limit=1'):
    (campaignId?api('campaigns','select=name,status&id=eq.'+encodeURIComponent(campaignId)+'&limit=1'):Promise.resolve([]))
@@ -141,7 +141,7 @@ async function dataFor(tab){
   if(!active){latest=await api('stock_snapshot','select=campaign_id,imported_at&order=imported_at.desc&limit=1');campaignId=latest[0]&&latest[0].campaign_id;}
   var records=await Promise.all([
    allConsultRows('fixed_positions','select=product_code,location_code,priority&location_code=eq.'+encodeURIComponent(id)+'&order=priority,product_code'),
-   active?allConsultRows('bc_import_lines','select=product_code,location_code,lot,quantity&import_id=eq.'+encodeURIComponent(active.import_id)+'&quantity=neq.0&location_code=eq.'+encodeURIComponent(id)+'&order=product_code,lot'):
+   active?allConsultRows('bc_import_lines','select=product_code,location_code,lot,quantity,expiry_date&import_id=eq.'+encodeURIComponent(active.import_id)+'&quantity=neq.0&location_code=eq.'+encodeURIComponent(id)+'&order=product_code,lot'):
     (campaignId?allConsultRows('stock_snapshot','select=product_code,location_code,lot,quantity&campaign_id=eq.'+encodeURIComponent(campaignId)+'&location_code=eq.'+encodeURIComponent(id)+'&order=product_code,lot'):Promise.resolve([]))
   ]);
   var ids=[...new Set(records[0].concat(records[1]).map(function(r){return r.product_code;}))];
