@@ -1,7 +1,7 @@
 /* INVENTA · Consulta por artículo y por ubicación, incluidas posiciones fijas a cero. */
 (function(root){
  'use strict';
- var model=null,mode='location',loadId=0,selectedAisle='',selectedLocation='',selectedProduct='';
+ var model=null,mode='location',loadError='',loadId=0,selectedAisle='',selectedLocation='',selectedProduct='';
  function demoData(){
   var products=new Map(),stock=[];
   for(var pair of Object.entries(TEST)){
@@ -48,13 +48,13 @@
   selectedAisle='';selectedLocation='';selectedProduct='';
   if(!consultUser){go('consult-login');return;}
   if(consultBlocked()){consultUser='';go('consult-login');return;}
-  var real=isManager(),token=++loadId;
-  model=null;
+  var real=isManager()&&!root.INVENTA_CONSULT_DEMO,token=++loadId;
+  model=null;loadError='';
   var subtitle=real?'Existencias importadas de BC · Solo lectura':'Datos ficticios para pruebas';
   place('<div class="title"><div class="overline">CONSULTA DE ALMACÉN</div><h1>Artículos y ubicaciones</h1><p class="muted">'+esc(consultUser)+' · '+subtitle+'</p></div>'
    +(data.demoInventoryOpen?'<div class="alert">Inventario de prueba en curso. Consulta reservada para supervisión y administración.</div>':'')
    +'<button class="scan-open" onclick="openScanner(\'consult\')">▣ Escanear para consultar</button>'
-   +'<div class="consult-tabs"><button id="consultModeArticle" onclick="setConsultMode(\'article\')">🔎 Por artículo</button><button id="consultModeLocation" onclick="setConsultMode(\'location\')">📍 Por ubicación</button></div>'
+   +'<div class="consult-tabs"><button id="consultModeArticle" type="button" aria-pressed="false" onclick="INVENTA_CONSULT_UI.setMode(\'article\')">🔎 Por artículo</button><button id="consultModeLocation" type="button" aria-pressed="false" onclick="INVENTA_CONSULT_UI.setMode(\'location\')">📍 Por ubicación</button></div>'
    +'<div class="field"><label id="consultSearchLabel" for="consultSearch">Buscar</label><input id="consultSearch" class="input" autocomplete="off" oninput="filterConsult(this.value)"></div>'
    +'<p id="consultSource" class="muted" style="margin-bottom:10px" role="status"></p><div id="consultResults" aria-live="polite"></div>'
    +(consultRole()==='admin'&&data.demoInventoryOpen?'<button class="btn-outline" style="width:100%;margin-top:12px" onclick="closeDemoCampaign()">Finalizar campaña de prueba</button>':''),
@@ -76,6 +76,7 @@
    filter($('consultSearch').value);
   }).catch(function(e){
    if(token!==loadId||screen!=='consult')return;
+   loadError=e.message;
    $('consultSource').textContent='No se han podido obtener las existencias BC.';
    $('consultResults').innerHTML='<div class="alert red">'+esc(e.message)+'</div><button class="btn-outline" onclick="renderConsult()">Reintentar</button>';
   });
@@ -86,6 +87,7 @@
   var a=$('consultModeArticle'),l=$('consultModeLocation'),input=$('consultSearch');
   if(!a||!l||!input)return;
   a.classList.toggle('active',mode==='article');l.classList.toggle('active',mode==='location');
+  if(a.setAttribute)a.setAttribute('aria-pressed',String(mode==='article'));if(l.setAttribute)l.setAttribute('aria-pressed',String(mode==='location'));
   $('consultSearchLabel').textContent=mode==='article'?'Buscar artículo':'Buscar ubicación';
   input.placeholder=mode==='article'?'Código, descripción o ubicación':'Código de ubicación o artículo';
   input.value='';
@@ -94,13 +96,13 @@
  function aisle(code){return String(code||'').trim().toUpperCase().charAt(0);}
  function navigate(level,value){
   if(level==='aisle'){selectedAisle=value;selectedLocation='';selectedProduct='';}
-  if(level==='location'){selectedLocation=value;selectedProduct='';}
+  if(level==='location'){selectedLocation=value;selectedAisle=aisle(value);selectedProduct='';}
   if(level==='product')selectedProduct=value;
   filter('');
  }
  function filter(q){
   var box=$('consultResults');if(!box)return;
-  if(!model){box.innerHTML='<div class="card"><p class="muted">Preparando consulta…</p></div>';return;}
+  if(!model){box.innerHTML=loadError?'<div class="alert red">'+esc(loadError)+'</div><button class="btn-outline" onclick="INVENTA_CONSULT_UI.render()">Reintentar consulta</button>':'<div class="card"><p class="muted">Cargando '+(mode==='location'?'ubicaciones':'artículos')+'…</p></div>';return;}
   var term=String(q||'').trim().toLocaleLowerCase('es');
   var byProduct=new Map(model.articles.map(function(a){return [a.id,a];}));
   if(mode==='article'){
@@ -128,9 +130,13 @@
    box.innerHTML='<button class="back" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\'\')">← Todos los pasillos</button><h2 style="margin:12px 0">Pasillo '+esc(selectedAisle)+'</h2>'
     +(locs.map(function(l){return '<button class="item" style="width:100%;text-align:left" onclick="INVENTA_CONSULT_UI.navigate(\'location\',\''+esc(l.code)+'\')"><span><strong>'+esc(l.code)+'</strong><small>'+l.articles.length+' artículos con stock o fija · '+(l.articles.some(function(p){return p.amount>0;})?'Con existencias':'Sin existencias')+'</small></span><span class="chev">›</span></button>';}).join('')||'<div class="alert">No hay ubicaciones registradas en este pasillo.</div>');return;
   }
+  if(term){
+   var matches=all.filter(function(l){return l.code.toLocaleLowerCase('es').includes(term)||l.articles.some(function(p){var a=byProduct.get(p.productCode);return [p.productCode,a&&a.name].some(function(v){return String(v||'').toLocaleLowerCase('es').includes(term);});});});
+   box.innerHTML=matches.length?matches.map(function(l){return '<button class="item" onclick="INVENTA_CONSULT_UI.navigate(\'location\','+esc(JSON.stringify(l.code))+')"><span><strong>'+esc(l.code)+'</strong><small>'+l.articles.length+' artículos con stock o fija</small></span><span class="chev">›</span></button>';}).join(''):'<div class="alert">No se han encontrado ubicaciones para esta búsqueda.</div>';
+   return;
+  }
   var letters='ABCDEFGHIJKLMNOPQRST'.split('');
-  var present=[...new Set(all.map(function(l){return aisle(l.code);}))]
-   .filter(function(a){return letters.includes(a);}).sort();
+  var present=letters;
   var other=all.filter(function(l){return !letters.includes(aisle(l.code));});
   box.innerHTML='<p class="muted" style="margin-bottom:12px">Selecciona el pasillo que quieres consultar.</p>'
    +(present.length?present.map(function(a){

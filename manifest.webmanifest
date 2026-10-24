@@ -1,1 +1,26 @@
-{"id":"./","name":"INVENTA · Demo operario","short_name":"INVENTA","description":"Demostración instalable del recuento móvil INVENTA.","start_url":"./","scope":"./","display":"standalone","orientation":"portrait-primary","background_color":"#f5f7fa","theme_color":"#c61921","icons":[{"src":"icon-192.png","type":"image/png","sizes":"192x192"},{"src":"icon-512.png","type":"image/png","sizes":"512x512"}]}
+{
+  "id": "./",
+  "name": "INVENTA · Inventario y almacén",
+  "short_name": "INVENTA",
+  "description": "Inventario, consulta y gestión de almacén con acceso por roles.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fffaf6",
+  "theme_color": "#0b2647",
+  "icons": [
+    {
+      "src": "assets/brand/app-icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/brand/app-icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-# INVENTA · v0.28.1
+# INVENTA · v0.29.0
 
 PWA móvil y PC para inventario. Aplicación: https://josegude-ux.github.io/INVENTA-/
 
@@ -22,7 +22,7 @@ Se mantienen catálogo, posiciones fijas, incidencias, movimientos internos, cam
 
 ## Verificación
 
-- 16 pruebas de aplicación y cola, además de pruebas transaccionales de RLS en el proyecto indicado.
+- 22 pruebas de aplicación y cola, además de pruebas transaccionales de RLS en el proyecto indicado.
 - Reintentos offline, respuesta perdida, conflicto de contenido, cambio de usuario y cuenta deshabilitada.
 - Defaults de alta, stock oculto, asignaciones, escalada bloqueada, directorio admin, último admin, correo confirmado, versiones y auditoría.
 - Fixtures SQL sin correo ni contraseña, revertidos mediante ROLLBACK. Ninguna cuenta ficticia persistente.
@@ -30,3 +30,10 @@ Se mantienen catálogo, posiciones fijas, incidencias, movimientos internos, cam
 - **Pendiente:** alta y verificación de personas reales; aceptación física en móvil, portátil y tablet.
 
 Ver [operación](docs/OPERACION.md) y [protocolo de pruebas](docs/PRUEBAS_DISPOSITIVOS.md).
+
+
+## Interfaz v0.29.0
+
+Menú visual según permisos, marca vectorial INVENTA, acceso con imagen del almacén y aplicación instalable. Volver en cabecera, logo con navegación segura y Ajustes con engranaje 3D. Consulta por ubicación usa acciones directas y conserva errores de carga con reintento. El fallo concreto informado no se reprodujo en la versión anterior; comprobar de nuevo en el dispositivo afectado.
+
+Ver [navegación e instalación](docs/NAVEGACION_Y_ESCRITORIO.md) e [identidad visual](docs/IDENTIDAD_VISUAL.md).

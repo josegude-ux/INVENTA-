@@ -317,14 +317,16 @@ function backCatalog(){
  notice='';render();
 }
 async function render(){
- try{await loadProfile();}catch(e){show(card('Sin conexión verificada',small(e.message)));return;}
+ var serial=++renderSerial;
+ try{await loadProfile();}catch(e){if(serial===renderSerial)show(card('Sin conexión verificada',small(e.message)));return;}
+ if(serial!==renderSerial)return;
  if(!check())return;
- var s=section,serial=++renderSerial;
+ var s=section;
  show(shell(card('Cargando información…',small('Consultando datos autorizados.'))));
  try{
  var d=await dataFor(s);if(serial!==renderSerial||s!==section||!check())return;
  show(shell(contentFor(s,d)));
- }catch(e){show(shell(card('No se pudo cargar',small(e.message)+button('Reintentar','render()'))));}
+ }catch(e){if(serial===renderSerial)show(shell(card('No se pudo cargar',small(e.message)+button('Reintentar','render()'))));}
 }
 function open(s){if(!check())return;section=s;if(s==='catalog'){catalogView='aisles';catalogAisle='';catalogLocation='';}notice='';render();}
 async function mutate(action,message){
@@ -364,7 +366,7 @@ async function importCSV(){
 }
 function newMovement(){mutate(function(){return api('movements','', 'POST',{campaign_id:required(val('moveCamp'),'campaña abierta'),source_location:required(val('moveSource'),'origen'),destination_location:required(val('moveDestination'),'destino'),product_code:required(val('moveProduct'),'artículo'),lot:val('moveLot'),quantity:qty(val('moveQty')),reason:required(val('moveReason'),'motivo'),actor_id:getId(),client_mutation_id:uuid()});},'Movimiento interno registrado sin escribir en BC.');}
 function updateUser(id){if(!isAdmin())return;if(id===getId()&&(!document.getElementById('enabled_'+id).checked||val('role_'+id)!=='admin')){notice='Para evitar bloquear el único administrador, no puedes quitarte el rol ni desactivar tu propia cuenta desde esta pantalla.';render();return;}mutate(function(){var reason=val('reason_'+id);if(reason.length<5)throw Error('Explica el motivo con al menos cinco caracteres.');return api('profiles','user_id=eq.'+id+'&version=eq.'+permissionVersions[id],'PATCH',{role:val('role_'+id),enabled:document.getElementById('enabled_'+id).checked,permission_reason:reason}).then(function(rows){if(!rows.length)throw Error('El perfil cambió en otro dispositivo. Recarga y revisa los permisos.');});},'Permisos actualizados y registrados.');}
-var apiObject={isAuthenticated:function(){return !!(session&&profile&&profile.enabled);},openCounts:function(){window.INVENTA_REAL.open();},realApi:api,refreshProfile:loadProfile,getUserId:getId,openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
+var apiObject={isSaving:function(){return pending;},cancelView:function(){renderSerial++;},isAuthenticated:function(){return !!(session&&profile&&profile.enabled);},openCounts:function(){window.INVENTA_REAL.open();},realApi:api,refreshProfile:loadProfile,getUserId:getId,openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
 Object.defineProperty(apiObject,'profile',{get:function(){return profile;}});
 window.INVENTA_MGMT=apiObject;
 window.addEventListener('storage',function(e){if(e.key===STORE){session=null;profile=null;renderSerial++;restore().then(function(){if(typeof go==='function')go('home');});}});

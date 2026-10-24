@@ -13,9 +13,9 @@ const consult=require('../consultation-core.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.28\.1'/);
- assert.match(worker,/inventa-demo-v0281-01/);
- assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.28\.1'/);
+ assert.match(index,/APP_VERSION='0\.29\.0'/);
+ assert.match(worker,/inventa-demo-v0290-01/);
+ assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.29\.0'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
  assert.match(index,/consultation-ui\.js/);
@@ -184,3 +184,4 @@ test('cada script publicado tiene versión y está precargado en la misma caché
  assert.equal(scripts.length,4);
  scripts.forEach(src=>assert.ok(worker.includes("'"+src+"'")));
 });
+
