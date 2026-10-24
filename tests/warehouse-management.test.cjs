@@ -13,10 +13,16 @@ const consult=require('../consultation-core.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.25\.1'/);
+ assert.match(index,/APP_VERSION='0\.26\.0'/);
  assert.match(worker,/inventa-demo-v0260-01/);
  assert.match(worker,/'\.\/warehouse-management\.js'/);
  assert.match(index,/warehouse-management\.js/);
+ assert.match(index,/consultation-core\.js/);
+ assert.match(index,/consultation-ui\.js/);
+ assert.match(worker,/consultation-core\.js/);
+ assert.match(worker,/consultation-ui\.js/);
+ assert.doesNotThrow(()=>new Function(core));
+ assert.doesNotThrow(()=>new Function(ui));
  const inline=index.slice(index.indexOf("<script>\n'use strict';")+8,index.lastIndexOf('</script>'));
  assert.doesNotThrow(()=>new Function(inline));
 });
