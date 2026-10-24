@@ -13,9 +13,9 @@ const consult=require('../consultation-core.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.29\.0'/);
- assert.match(worker,/inventa-demo-v0290-01/);
- assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.29\.0'/);
+ assert.match(index,/APP_VERSION='0\.29\.1'/);
+ assert.match(worker,/inventa-demo-v0291-01/);
+ assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.29\.1'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
  assert.match(index,/consultation-ui\.js/);

@@ -247,6 +247,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 .settings-button{border:1px solid #dbe3ed;background:#fff;border-radius:13px;min-width:64px;min-height:60px;padding:3px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#163653;font-size:11px;font-weight:800;box-shadow:0 3px 9px #19354d12}
 .settings-button img{width:40px;height:40px;object-fit:contain}.settings-button:focus-visible{outline:3px solid #d52835;outline-offset:3px}
 .landing-person{margin-bottom:15px}.landing-top{align-items:center}.welcome-card>img{max-width:320px;width:100%;height:auto;border-radius:22px}
+.welcome-art{display:flex;flex-direction:column;align-items:center;gap:14px;margin:0 auto 22px;width:100%}.welcome-image-access{display:block;width:min(100%,540px);padding:0;border:0;background:transparent;border-radius:26px;cursor:pointer}.welcome-image-access img{display:block;width:100%;height:auto;border-radius:26px;box-shadow:0 12px 35px #0b264718}.welcome-logo-access{display:flex;align-items:center;justify-content:center;width:min(82%,350px);min-height:70px;padding:18px 30px;border:1px solid #ded7d2;border-radius:18px;background:#fff;box-shadow:0 5px 16px #0b264716;cursor:pointer}.welcome-logo-access img{width:100%;height:auto}.welcome-hint{font-size:12px;color:#61758a}.welcome-image-access:focus-visible,.welcome-logo-access:focus-visible{outline:3px solid #d52835;outline-offset:5px}.welcome-logo-access:hover{background:#fff5f2}@media(min-width:1000px){.welcome-image-access{width:min(100%,52vh,560px)}}
 </style></head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
 <input type="file" id="scanImportFile" accept="application/json,.json" hidden onchange="importBarcodeFile(this)">
 <div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
@@ -269,10 +270,10 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
     </div>
   </div>
 </div>
-<script src="./warehouse-management.js?v=0.29.0"></script>
-<script src="./real-counts.js?v=0.29.0"></script>
-<script src="./consultation-core.js?v=0.29.0"></script>
-<script src="./consultation-ui.js?v=0.29.0"></script>
+<script src="./warehouse-management.js?v=0.29.1"></script>
+<script src="./real-counts.js?v=0.29.1"></script>
+<script src="./consultation-core.js?v=0.29.1"></script>
+<script src="./consultation-ui.js?v=0.29.1"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -284,7 +285,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.29.0';
+const APP_VERSION='0.29.1';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -516,7 +517,7 @@ function renderHome(){
  const top='<div class="landing-top"><img class="landing-logo" src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80">'+settingsButton()+'</div>'+person+'<p class="landing-tagline">Tu almacén, bajo control</p>';
  function tile(kind,title,subtitle,image,action){return '<button type="button" class="landing-card '+kind+'" onclick="'+action+'"><span class="copy"><strong>'+title+'</strong><small>'+subtitle+'</small><span class="arrow" aria-hidden="true">→</span></span><img src="assets/menu/'+image+'.webp" alt="" width="640" height="640"></button>';}
  if(!allowed.authenticated){
-  place(top+'<div class="welcome-card"><img src="assets/brand/inventa-warehouse.webp" alt="" width="640" height="640"><h1>Todo empieza aquí</h1><p>Entra con tu cuenta para acceder a tus funciones de INVENTA.</p><button class="btn" onclick="go(\'manager-login\')">Acceder a INVENTA →</button></div><p class="landing-note">Acceso personal · Operario, Supervisor y Administrador</p><div class="landing-bottom"><span>Entorno piloto · v'+APP_VERSION+'</span>'+installMarkup()+'</div>','');return;
+  place(top+'<section class="welcome-art" aria-label="Bienvenido a INVENTA"><button type="button" class="welcome-image-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA desde la imagen del almacén"><img src="assets/brand/inventa-warehouse.webp" alt="Almacén con palets, Mahou, Voldis y el logo INVENTA en el portapapeles" width="768" height="768"></button><button type="button" class="welcome-logo-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA"><img src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></button><p class="welcome-hint">Pulsa INVENTA para entrar</p></section><div class="landing-bottom"><span>Entorno piloto · v'+APP_VERSION+'</span>'+installMarkup()+'</div>','');return;
  }
  const cards=(allowed.inventory?tile('inventory','Hacer<br>inventario','Cuenta y registra · Individual','inventory-3d','openAuthorizedHome(\'inventory\')'):'')
  +(allowed.consultation?tile('consultation','Realizar<br>consulta','Encuentra lo que buscas','consult-3d','openAuthorizedHome(\'consultation\')'):'')
