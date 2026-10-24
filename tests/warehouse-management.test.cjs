@@ -435,3 +435,31 @@ test('Informe de fijos se pagina para mostrar el inventario completo, sin cargar
  assert.match(index,/fixed-positions-import\.js\?v=0\.30\.4/);
  assert.match(worker,/fixed-positions-import\.js\?v=0\.30\.4/);
 });
+
+test('Ubicaciones especiales RET y CADCAP no se confunden con pasillos R/C',()=>{
+ const root={INVENTA_CONSULT:consult},elements=new Map();
+ const el=id=>{
+  if(!elements.has(id))elements.set(id,{value:'',textContent:'',innerHTML:'',classList:{toggle(){}},placeholder:'',setAttribute(){}});
+  return elements.get(id);
+ };
+ const source={
+  'K00-P01':[{id:'PRD0003563',name:'GIN',theoretical:10}],
+  'RET-09':[{id:'PRD0000465',name:'RETORNO',theoretical:3}],
+  'CADCAP':[{id:'PRD0016059',name:'CADUCADOS',theoretical:5}]
+ };
+ const build=new Function('window','TEST','consultUser','consultBlocked','go','isManager','data','consultRole','place','esc','$','screen','normCode','barcodeKey',
+  ui+';return window.INVENTA_CONSULT_UI;');
+ const view=build(root,source,'Supervisor (demo)',()=>false,()=>{},()=>false,
+  {demoInventoryOpen:false},()=>'supervisor',()=>{},x=>String(x),el,'consult',x=>String(x).toUpperCase(),x=>String(x).toUpperCase());
+ view.render();view.setMode('location');
+ let rootHtml=el('consultResults').innerHTML;
+ assert.match(rootHtml,/Pasillo K/);
+ assert.match(rootHtml,/Otras ubicaciones/);
+ assert.doesNotMatch(rootHtml,/Pasillo R/);
+ assert.doesNotMatch(rootHtml,/Pasillo C/);
+ view.navigate('aisle','OTROS');
+ assert.match(el('consultResults').innerHTML,/RET-09/);
+ assert.match(el('consultResults').innerHTML,/CADCAP/);
+ view.navigate('location','RET-09');
+ assert.match(el('consultResults').innerHTML,/RETORNO/);
+});
