@@ -246,7 +246,8 @@ function catalogContent(d){
    }).join(''):'<div class="card"><p class="muted">Este pasillo aún no tiene ubicaciones registradas.</p></div>')+'</div>'
    +'<details class="catalog-maintenance"><summary>＋ Añadir ubicación</summary><div class="catalog-maintenance-body">'
    +field('locCode','Código','Ejemplo: '+(catalogAisle==='OTROS'?'K':'A')+'00-P01')
-   +'<input type="hidden" id="locAisle" value="'+safe(catalogAisle==='OTROS'?'':catalogAisle)+'">'
+   +(catalogAisle==='OTROS'?field('locAisle','Pasillo','Por ejemplo U o Z')
+    :'<input type="hidden" id="locAisle" value="'+safe(catalogAisle)+'">')
    +field('locZone','Zona','Opcional')+field('locDescription','Descripción','Opcional')
    +button('Guardar nueva ubicación','newLocation()')+'</div></details>';
  }
