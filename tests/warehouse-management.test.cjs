@@ -14,9 +14,9 @@ const importer=require('../bc-excel-import.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.30\.0'/);
- assert.match(worker,/inventa-demo-v0300-01/);
- assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.0'/);
+ assert.match(index,/APP_VERSION='0\.30\.1'/);
+ assert.match(worker,/inventa-demo-v0301-01/);
+ assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.1'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
  assert.match(index,/consultation-ui\.js/);
@@ -200,10 +200,65 @@ test('importador BC utiliza Stock calculado, conserva lotes y detecta negativos'
  assert.equal(result.rows[0].expiry_date,'2028-06-12');
  assert.equal(result.rows[1].lot,'L2');
  assert.equal(result.warehouse,'COR_01_COR');
+ assert.ok(result.warnings.some(x=>/stock físico/i.test(x)));
+ assert.equal(result.rows[0].quantity!==999,true);
  const dup=importer.parseRows([head,r1,r1],'BC.xlsx');
  assert.ok(dup.errors.some(x=>x.includes('repite')));
  const mixed=importer.parseRows([head,r1,[...r2.slice(0,1),'OTRO_ALMACEN',...r2.slice(2)]],'BC.xlsx');
  assert.ok(mixed.errors.some(x=>x.includes('mezcla almacenes')));
+});
+test('importador ignora filas de título y nunca toma Cantidad física como stock',()=>{
+ const title=['Diario de inventario físico de almacén'];
+ const blank=[];
+ const head=['Cód. almacén','Nº producto','Cód. ubicación','Descripción','Nº lote','Stock calculado','Cant. (stock físico)','Cantidad','Cód. unidad medida'];
+ const r=['COR_01_COR','PRD9','A01-P01','DEMO','L1',7,1000,-993,'UD'];
+ const result=importer.parseRows([title,blank,head,r],'titulo.xlsx');
+ assert.equal(result.errors.length,0);
+ assert.equal(result.headerRow,3);
+ assert.equal(result.rows[0].quantity,7);
+ assert.equal(result.rows.length,1);
+});
+test('migración BC publica de forma atómica y no borra maestros',()=>{
+ const sql=fs.readFileSync(path.join(root,'supabase/migrations/005_bc_xlsx_atomic_import.sql'),'utf8');
+ assert.match(sql,/bc_commit_import/);
+ assert.match(sql,/pg_advisory_xact_lock/);
+ assert.match(sql,/Importación incompleta/);
+ assert.match(sql,/bc_import_current/);
+ assert.match(sql,/on conflict \(code\) do update/);
+ assert.doesNotMatch(sql,/delete from public\.products/i);
+ assert.doesNotMatch(sql,/delete from public\.locations/i);
+ assert.doesNotMatch(sql,/delete from public\.fixed_positions/i);
+ assert.doesNotMatch(sql,/delete from public\.counts/i);
+ assert.match(sql,/internal\.is_admin\(\)/);
+ assert.match(sql,/bc_batches_admin_insert/);
+});
+test('existe fixture XLSX ficticio del diario BC para pruebas manuales',()=>{
+ const fixture=path.join(root,'tests/fixtures/diario-inventario-fisico-DEMO.xlsx');
+ assert.ok(fs.existsSync(fixture));
+ const buf=fs.readFileSync(fixture);
+ assert.equal(buf[0],0x50);assert.equal(buf[1],0x4b); // ZIP/XLSX
+ assert.ok(buf.length>1000);
+});
+test('Consulta solo lista pasillos con ubicaciones registradas',()=>{
+ const rootWin={INVENTA_CONSULT:consult};
+ const elements=new Map();
+ const el=id=>{
+  if(!elements.has(id))elements.set(id,{value:'',textContent:'',innerHTML:'',classList:{toggle(){}},placeholder:'',setAttribute(){}});
+  return elements.get(id);
+ };
+ const sample={'K00-P01':[{id:'PRD1',name:'A',theoretical:1}],'L00-P01':[{id:'PRD2',name:'B',theoretical:2}]};
+ const build=new Function('window','TEST','consultUser','consultBlocked','go','isManager','data','consultRole','place','esc','$','screen','normCode','barcodeKey',
+  ui+';return window.INVENTA_CONSULT_UI;');
+ const view=build(rootWin,sample,'Supervisor (demo)',()=>false,()=>{},()=>false,{demoInventoryOpen:false},()=>'supervisor',()=>{},
+  x=>String(x),el,'consult',x=>String(x).toUpperCase(),x=>String(x).toUpperCase());
+ view.render();
+ view.setMode('location');
+ const html=el('consultResults').innerHTML;
+ assert.match(html,/Pasillo K/);
+ assert.match(html,/Pasillo L/);
+ assert.doesNotMatch(html,/Pasillo A</);
+ assert.doesNotMatch(html,/Pasillo B</);
+ assert.doesNotMatch(html,/Pasillo T</);
 });
 test('Consulta admite y etiqueta stock negativo oficial BC sin afectar posiciones fijas',()=>{
  const data=consult.aggregate({products:[{code:'PRD001',description:'ABC'}],locations:[{code:'K17-P02'}],
@@ -211,4 +266,5 @@ test('Consulta admite y etiqueta stock negativo oficial BC sin afectar posicione
  assert.equal(data.locations[0].articles[0].amount,-2);
  assert.equal(data.locations[0].articles[0].lots[0].amount,-2);
  assert.match(ui,/STOCK NEGATIVO BC/);
+ assert.match(code,/STOCK NEGATIVO BC/);
 });
