@@ -14,9 +14,9 @@ const importer=require('../bc-excel-import.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.30\.2'/);
- assert.match(worker,/inventa-demo-v0302-01/);
- assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.2'/);
+ assert.match(index,/APP_VERSION='0\.30\.3'/);
+ assert.match(worker,/inventa-demo-v0303-01/);
+ assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.3'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
  assert.match(index,/consultation-ui\.js/);
@@ -163,9 +163,10 @@ test('Catálogo guiado: primero pasillos A-T, después ubicaciones y finalmente 
  const detail=h.seen.at(-1);
  assert.match(detail,/Ubicación A00-P01/);
  assert.match(detail,/Producto fijo/);
- assert.match(detail,/FIJA/);
+ assert.match(detail,/catalog-fixed-shade/);
+ assert.doesNotMatch(detail,/>FIJA</);
  assert.match(detail,/SIN STOCK/);
- assert.match(detail,/Asignar posición fija/);
+ assert.doesNotMatch(detail,/Marcar posición fija de otro artículo/);
  h.obj.backCatalog();
  await h.obj.render();
  assert.match(h.seen.at(-1),/Pasillo A/);
@@ -330,4 +331,66 @@ test('Consulta: Volver recupera resultados filtrados y no marca artículos no fi
  assert.equal(el('consultSearch').value,'K00-P02');
  assert.match(el('consultResults').innerHTML,/K00-P02/);
  assert.match(index,/#topNavigation\[hidden\]\{display:none!important\}/);
+});
+
+
+test('Administrador puede marcar fijos desde catálogo sin cambiar existencias BC',async()=>{
+ const h=harness('admin',{
+  locations:[{code:'K00-P01',aisle:'K'}],
+  products:[{code:'PRD1',description:'Artículo de muestra',unit:'CAJA'}],
+  stock_snapshot:[{campaign_id:'old-camp',product_code:'PRD1',location_code:'K00-P01',lot:'',quantity:15}],
+  latest:[{campaign_id:'old-camp',imported_at:'2026-10-24T06:00:00Z'}],
+  fixed_positions:[]
+ });
+ await h.obj.signIn();
+ h.obj.open('catalog');await h.obj.render();
+ h.obj.openCatalogAisle('K');await h.obj.render();
+ h.obj.openCatalogLocation('K00-P01');await h.obj.render();
+ assert.match(h.seen.at(-1),/Marcar posición fija/);
+ assert.match(h.seen.at(-1),/Marcar posición fija de otro artículo/);
+ const ok=await h.obj.changeFixedPosition('PRD1','K00-P01',false);
+ assert.equal(ok,true);
+ assert.ok(h.queries.some(q=>q.method==='POST'&&q.url.includes('/rest/v1/fixed_positions')));
+ assert.equal(h.queries.some(q=>q.method==='POST'&&q.url.includes('/rest/v1/bc_import_lines')),false);
+});
+test('Supervisión puede consultar sombreado fijo pero no asignarlo',async()=>{
+ const h=harness('supervisor',{
+  locations:[{code:'K00-P01',aisle:'K'}],
+  fixed_positions:[{product_code:'PRD1',location_code:'K00-P01',priority:1}],
+  products:[{code:'PRD1',description:'Artículo fijo',unit:'UD'}]
+ });
+ await h.obj.signIn();
+ h.obj.open('catalog');await h.obj.render();
+ h.obj.openCatalogAisle('K');await h.obj.render();
+ h.obj.openCatalogLocation('K00-P01');await h.obj.render();
+ assert.match(h.seen.at(-1),/catalog-fixed-shade/);
+ assert.doesNotMatch(h.seen.at(-1),/Desmarcar posición/);
+ assert.doesNotMatch(h.seen.at(-1),/>FIJA</);
+ await assert.rejects(h.obj.changeFixedPosition('PRD1','K00-P01',true),/Solo Administración/);
+});
+test('Informe de fijos solo para Administración, con stock BC y botones CSV/PDF',async()=>{
+ const fixture={product_code:'PRD1',product_description:'Artículo fijo',location_code:'K00-P01',aisle:'K',priority:1,stock_quantity:15,unit:'CAJA',assigned_at:'2026-10-24T12:00:00Z'};
+ const h=harness('admin',{'rpc/admin_fixed_positions_report':[fixture]});
+ await h.obj.signIn();h.obj.open('fixed');await h.obj.render();
+ const page=h.seen.at(-1);
+ assert.match(page,/Informe de posiciones fijas/);
+ assert.match(page,/PRD1/);
+ assert.match(page,/K00-P01/);
+ assert.match(page,/15 CAJA/);
+ assert.match(page,/Descargar informe CSV/);
+ assert.match(page,/Guardar PDF/);
+ assert.ok(h.queries.some(q=>q.url.includes('/rpc/admin_fixed_positions_report')));
+ const supervisor=harness('supervisor',{'rpc/admin_fixed_positions_report':[fixture]});
+ await supervisor.obj.signIn();
+ supervisor.obj.open('dashboard');
+ await assert.rejects(supervisor.obj.changeFixedPosition('PRD1','K00-P01',false),/Solo Administración/);
+ assert.equal(supervisor.queries.some(q=>q.url.includes('/rpc/admin_fixed_positions_report')),false);
+});
+test('Aplicación lee el último snapshot BC al abrir sin reimportar Excel',()=>{
+ assert.match(code,/function refreshBCStatus\(\)/);
+ assert.match(index,/id="bcLiveStatus"/);
+ assert.match(index,/INVENTA_MGMT\.refreshBCStatus\(\)/);
+ assert.match(index,/visibilitychange/);
+ assert.match(index,/catalog-product\.catalog-fixed-shade/);
+ assert.doesNotMatch(index,/APP_VERSION='0\.30\.2'/);
 });
