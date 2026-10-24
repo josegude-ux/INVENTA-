@@ -181,6 +181,9 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 .catalog-product small{display:block;font-size:11px;color:#657e91;line-height:1.45;margin-top:4px}
 .catalog-product-right{text-align:right;flex:0 0 auto;max-width:45%}.catalog-product-right .tag{display:block;margin-top:5px}
 @media(max-width:360px){.catalog-aisles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Mobile controls and long audit identifiers. */
+#realSyncStatus,.real-count-row{overflow-wrap:anywhere}.real-count-row{padding:12px 0;border-top:1px solid #ddd}.card .input{min-height:44px;font-size:16px;max-width:100%;box-sizing:border-box}.card .btn-outline{min-height:44px}details input{margin-bottom:8px}
 </style></head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
 <input type="file" id="scanImportFile" accept="application/json,.json" hidden onchange="importBarcodeFile(this)">
 <div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
@@ -204,6 +207,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
   </div>
 </div>
 <script src="./warehouse-management.js"></script>
+<script src="./real-counts.js"></script>
 <script src="./consultation-core.js"></script>
 <script src="./consultation-ui.js"></script>
 <script>
@@ -217,7 +221,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.27.1';
+const APP_VERSION='0.28.0';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -384,11 +388,12 @@ function openConsultFromHome(){
 function renderHome(){
  const manager=isManager(),role=window.INVENTA_MGMT?.profile?.role;
  const management=manager?'<button class="item home-choice" onclick="go(\'management\')"><span><strong>🏭 Gestión almacén</strong><small>Campañas, asignaciones, incidencias, artículos, movimientos y permisos.</small></span><span class="chev">›</span></button>':'';
- const profile=manager
- ?'<div class="card"><div class="between"><div><b>'+esc(window.INVENTA_MGMT.profile.display_name||role)+'</b><p class="muted">Sesión real · '+(role==='admin'?'Administrador':'Supervisor')+'</p></div><button class="tinybtn" onclick="logoutManager()">Salir</button></div></div>'
- :'<button class="btn-outline" style="width:100%;margin-top:7px;margin-bottom:12px" onclick="go(\'manager-login\')">Acceso Supervisor / Administrador</button>';
+ const profile=window.INVENTA_MGMT?.isAuthenticated()
+ ?'<div class="card"><div class="between"><div><b>'+esc(window.INVENTA_MGMT.profile.display_name||role)+'</b><p class="muted">Sesión real · '+(role==='admin'?'Administrador':role==='supervisor'?'Supervisor':'Operario')+'</p></div><button class="tinybtn" onclick="logoutManager()">Salir</button></div></div>'
+ :'<button class="btn-outline" style="width:100%;margin-top:7px;margin-bottom:12px" onclick="go(\'manager-login\')">Acceso personal · Operario / Supervisor / Administrador</button>';
  place('<div class="title"><div class="overline">MENÚ PRINCIPAL</div><h1>¿Qué quieres hacer?</h1><p class="muted">Selecciona la función que necesitas. Inventario sigue en modo de prueba; Gestión de almacén utiliza base de datos real y permisos.</p></div>'
  +profile
+ +'<button class="item home-choice" onclick="INVENTA_MGMT.isAuthenticated()?INVENTA_MGMT.openCounts():go(\'manager-login\')"><span><strong>Recuento real · individual</strong><small>Cuenta aprobada, asignaciones y envío a Supabase.</small></span><span class="chev">›</span></button>'
  +'<button class="item home-choice" onclick="startInventoryFromHome()"><span><strong>📦 Hacer inventario</strong><small>Recuento ciego de prueba · individual o en pareja.</small></span><span class="chev">›</span></button>'
  +'<button class="item home-choice" onclick="openConsultFromHome()"><span><strong>🔎 Realizar consulta</strong><small>Por artículo o por ubicación, con posiciones fijas incluso sin stock.</small></span><span class="chev">›</span></button>'
  +management

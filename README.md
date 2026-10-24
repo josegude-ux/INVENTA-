@@ -1,51 +1,32 @@
-# INVENTA · v0.27.0
+# INVENTA · v0.28.0
 
-Aplicación PWA de inventario y gestión de almacén para móvil y PC. **Tres áreas diferenciadas en esta etapa:**
+PWA móvil y PC para inventario. Aplicación: https://josegude-ux.github.io/INVENTA-/
 
-1. **Inventario y Consulta (DEMO):** datos ficticios, recuento individual o en pareja (un único móvil), registro local, escáner de códigos, correcciones y navegador sin conexión. El PIN \`1234\` es solamente de demostración.
-2. **Consulta (artículo / ubicación):** con acceso de demostración utiliza ejemplos ficticios; con sesión real de Supervisor o Administrador lee la última importación de existencias BC y el catálogo de posiciones fijas desde Supabase. Lista todas las ubicaciones con stock de cada artículo y todos los artículos de cada ubicación, incluidas las posiciones fijas sin stock, identificadas como **FIJA · SIN STOCK**. La suma no incluye cantidades inexistentes.
-3. **Gestión de almacén (Supabase real):** inicio de sesión por correo y contraseña, roles protegidos en servidor y persistencia centralizada de campañas, asignaciones, incidencias, maestros, prioridades de ubicación fija, stock teórico, movimientos y auditoría.
+## Usuarios reales
 
-**No usar recuentos de esta versión para inventarios reales:** el módulo de operario aún no sincroniza con la base central, y las consultas hechas con un usuario de demostración muestran artículos ficticios. La consulta BC real está limitada a supervisión. Ningún dato de esta PWA modifica Business Central.
+Acceso personal con correo y contraseña a Supabase INVENTA (`wlejxnpphysogrzcxjfh`). Las altas crean un Operario **deshabilitado**. Tras confirmar correo, Administración aprueba y asigna Operario, Supervisor o Administrador. No hay autopromoción del primer registro.
 
-## Enlaces y arquitectura
+Administración consulta correos y confirmación, cambia permisos con motivo y versión de perfil; los conflictos obligan a recargar. El servidor protege al último Administrador, mantiene auditoría antes/después y comprueba el estado habilitado en cada operación autorizada. Supervisor gestiona campañas/asignaciones y ve stock; Operario no puede leer stock BC ni gestionar permisos.
 
-- Aplicación: https://josegude-ux.github.io/INVENTA-/
-- GitHub: https://github.com/josegude-ux/INVENTA-
-- Supabase: proyecto \`INVENTA\` (\`wlejxnpphysogrzcxjfh\`), separado de Control de Cargas y Tanques.
-- \`index.html\`: interfaz y recuentos ficticios aprobados.
-- \`warehouse-management.js\`: gestión conectada directamente a Supabase mediante REST y Auth, sin paquetes adicionales.
-- \`service-worker.js\`: shell offline y actualización con navegación network-first.
-- \`.cursor/rules/inventa.mdc\`: reglas y alcance acordados para evolucionar los recuentos.
-- \`docs/OPERACION.md\`: puesta en marcha, perfiles, CSV y requisitos pendientes.
+## Recuento real individual (nuevo)
 
-## Funciones de Supervisor
+El acceso «Recuento real · individual» permite elegir una asignación activa, registrar artículo/lote y unidades o desglose de cuatro factores. Correcciones inmutables vinculadas al original, con motivo. No se utiliza ningún dato TEST.
 
-- Consultar campañas, estado, asignaciones y auditoría.
-- Asignar ubicaciones a operarios y controlar estados.
-- Registrar y resolver incidencias con motivo e historial.
-- Crear artículos, ubicaciones y posiciones fijas, dando prioridad a \`1\`.
-- Consultar stock teórico de BC por artículo o ubicación, con indicador de posición fija incluso si está a cero, sin exponerlo a Operarios; registrar movimientos internos sin modificar BC.
+Cada usuario tiene una cola local separada. Se guarda antes de enviar; un error conserva el registro. Los reintentos reutilizan la misma clave y verifican el contenido si el servidor ya lo recibió. Las correcciones simultáneas del mismo original generan conflicto sin sobrescribirlo. La pantalla muestra pendientes y permite actualizar las últimas 100 lecturas desde otro navegador.
 
-## Funciones adicionales de Administrador
+**Límites:** sin conexión se puede seguir con las asignaciones cargadas mientras la pantalla y sesión sigan abiertas; no se promete reinicio/autenticación offline. No hay actualización push: pulsar «Actualizar lecturas». Un conflicto bloquea esa tanda hasta revisión técnica; no se descartan registros automáticamente. La pareja, el escáner y el teclado aprobado continúan en la demostración, todavía separados del nuevo recuento real. No usar esta entrega como inventario definitivo sin la aceptación en dispositivos.
 
-- Crear, abrir y cerrar campañas micro y anuales.
-- Habilitar/deshabilitar usuarios y asignar roles.
-- Importar stock teórico manualmente o desde CSV.
-- Administrar todos los módulos de Supervisor.
+## Gestión y Consulta
 
-## Seguridad
+Se mantienen catálogo, posiciones fijas, incidencias, movimientos internos, campañas y consulta BC para Supervisor/Administrador. No se escribe en Business Central. No se ha cargado el Excel ni stock oficial.
 
-La base contiene doce tablas con RLS. Los nuevos registros de usuario obtienen el rol **operator** por defecto. La promoción inicial a administrador se realiza una sola vez desde Supabase tras registrar la cuenta, **no desde una pantalla pública ni con el PIN de la demo**. Los recuentos y movimientos son de inserción inmutable; el historial registra modificaciones relevantes. El navegador solo utiliza la **clave publicable**. Jamás subir una clave \`service_role\`.
+## Verificación
 
-## Pruebas
+- 15 pruebas de aplicación y cola, además de pruebas transaccionales de RLS en el proyecto indicado.
+- Reintentos offline, respuesta perdida, conflicto de contenido, cambio de usuario y cuenta deshabilitada.
+- Defaults de alta, stock oculto, asignaciones, escalada bloqueada, directorio admin, último admin, correo confirmado, versiones y auditoría.
+- Fixtures SQL sin correo ni contraseña, revertidos mediante ROLLBACK. Ninguna cuenta ficticia persistente.
+- Advisor de seguridad: sin advertencias tras las migraciones.
+- **Pendiente:** alta y verificación de personas reales; aceptación física en móvil, portátil y tablet.
 
-- Verificación de sintaxis y pruebas automáticas de agregación de ubicaciones, lotes y posiciones fijas vacías.
-- Simulación del inicio de sesión del Administrador y carga del panel: correcta.
-- Supabase: creación de esquema y migraciones registrada.
-- RLS: Operario no puede leer el stock ficticio insertado para una prueba; Supervisor sí puede. Los datos de la prueba fueron revertidos.
-- Advisor de seguridad inicial: sin advertencias.
-
-**Nota:** Los pasillos A–T se muestran siempre; las ubicaciones se alimentan del catálogo auténtico cargado en Supabase y no se generan ubicaciones ficticias. La pestaña de gestión sigue restringida a Supervisor/Administrador con cuenta real.
-
-**Pendiente para puesta en servicio real:** crear y promover el primer administrador, conectar el recuento operario con Supabase, importar maestros/existencias auténticos de BC, probar sincronización multiusuario/offline y validar la conciliación de movimientos. **No afirmar que esas funciones están completas.**
+Ver [operación](docs/OPERACION.md) y [protocolo de pruebas](docs/PRUEBAS_DISPOSITIVOS.md).

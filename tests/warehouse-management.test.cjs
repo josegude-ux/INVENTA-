@@ -13,8 +13,8 @@ const consult=require('../consultation-core.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.27\.0'/);
- assert.match(worker,/inventa-demo-v0270-01/);
+ assert.match(index,/APP_VERSION='0\.28\.0'/);
+ assert.match(worker,/inventa-demo-v0280-01/);
  assert.match(worker,/'\.\/warehouse-management\.js'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
@@ -118,9 +118,11 @@ test('Consulta visible: ubicación fija a cero aparece por artículo y ubicació
  const view=build(root,sample,'Supervisor (demo)',()=>false,()=>{},()=>false,{demoInventoryOpen:false},()=>'supervisor',()=>{},
    x=>String(x),el,'consult',x=>String(x).toUpperCase(),x=>String(x).toUpperCase());
  view.render();
+ view.setMode('article');
  assert.match(el('consultResults').innerHTML,/PRD0099000/);
  assert.match(el('consultResults').innerHTML,/SIN STOCK/);
  view.setMode('location');
+ view.navigate('location','K00-P03');
  assert.match(el('consultResults').innerHTML,/PRD0099000/);
  assert.match(el('consultResults').innerHTML,/FIJA/);
  assert.deepEqual(view.lookup('K00-P03'),{value:'K00-P03',mode:'location'});
