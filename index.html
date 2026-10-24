@@ -4,7 +4,7 @@
 <title>INVENTA · Inventario y consulta</title>
 <meta name="theme-color" content="#c61921"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="INVENTA">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="favicon.png" type="image/png">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/brand/app-icon-192.png"><link rel="icon" href="assets/brand/app-icon-192.png" type="image/png">
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1d2e43;background:#f0f3f7;font-synthesis:none}
 *{box-sizing:border-box}button,input,select{font:inherit}button{touch-action:manipulation;cursor:pointer}body{margin:0}body,input,button{ -webkit-tap-highlight-color:transparent}
@@ -184,6 +184,69 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 
 /* Mobile controls and long audit identifiers. */
 #realSyncStatus,.real-count-row{overflow-wrap:anywhere}.real-count-row{padding:12px 0;border-top:1px solid #ddd}.card .input{min-height:44px;font-size:16px;max-width:100%;box-sizing:border-box}.card .btn-outline{min-height:44px}details input{margin-bottom:8px}
+
+/* INVENTA identity: landing only; operational screens retain their layout. */
+.brand .brand-wordmark{width:148px;height:auto;border-radius:0;object-fit:contain}
+#app.landing{max-width:760px;background:#fffaf6}
+#app.landing header{display:none}
+#app.landing main{padding:24px 22px 18px;background:radial-gradient(ellipse at 85% 0%,#fff1ee 0,transparent 55%),#fffaf6}
+#app.landing footer{display:none}
+.landing-top{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:6px 0 22px}
+.landing-logo{width:min(60%,340px);height:auto}
+.landing-person{display:flex;align-items:center;gap:9px;color:#0b2647;min-width:0}
+.landing-person .initial{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;background:#f1e5df;color:#a81525;font-size:19px;font-weight:900}
+.landing-person small{display:block;font-size:10px;color:#677587}
+.landing-person b{display:block;font-size:14px;max-width:115px;overflow:hidden;text-overflow:ellipsis}
+.landing-tagline{color:#536b83;font-size:18px;margin:-10px 0 24px}
+.landing-cards{display:grid;gap:17px}
+.landing-card{position:relative;isolation:isolate;display:flex;align-items:center;width:100%;min-height:194px;border:1px solid transparent;border-radius:25px;padding:24px;text-align:left;overflow:hidden;box-shadow:0 12px 24px #18304a0b;transition:transform .18s,box-shadow .18s;color:#092548}
+.landing-card:hover{transform:translateY(-3px);box-shadow:0 16px 30px #18304a18}
+.landing-card:active{transform:scale(.985)}
+.landing-card:focus-visible,.landing-account:focus-visible{outline:3px solid #174e8a;outline-offset:4px}
+.landing-card.inventory{background:linear-gradient(115deg,#fff1ef,#f9d9da)}
+.landing-card.consultation{background:linear-gradient(115deg,#eef9ff,#d7ebfc)}
+.landing-card.management{background:linear-gradient(115deg,#fff8e6,#fbe9bf)}
+.landing-card .copy{position:relative;z-index:2;width:53%}
+.landing-card strong{display:block;font-size:clamp(22px,4.7vw,31px);line-height:1.05;letter-spacing:-.8px;font-weight:900}
+.landing-card small{display:block;font-size:13px;line-height:1.35;color:#4f657e;margin:9px 0 14px;max-width:170px}
+.landing-card .arrow{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#d62532;color:white;font-size:24px;font-weight:700}
+.landing-card.consultation .arrow{background:#246ab5}
+.landing-card.management .arrow{background:#d89005}
+.landing-card img{position:absolute;right:-2%;bottom:-3%;width:53%;height:104%;object-fit:contain;z-index:1;pointer-events:none;filter:drop-shadow(0 12px 12px #18263a12)}
+.landing-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:22px;color:#6e7b8c;font-size:11px}
+.landing-account{background:transparent;border:0;padding:8px 0;color:#345572;font-size:12px;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.landing-note{font-size:11px;color:#7c8792;line-height:1.5;margin-top:10px}
+.welcome-card{padding:24px;border-radius:28px;background:linear-gradient(140deg,#fff0ec,#f7dedd);text-align:center;box-shadow:0 14px 30px #1234560b}
+.welcome-card img{width:min(85%,330px);display:block;margin:0 auto 8px}
+.welcome-card h1{font-size:29px;line-height:1.1;color:#092548;margin:8px 0}
+.welcome-card p{font-size:14px;color:#536b83;margin:10px 0 20px}
+.welcome-card .btn{max-width:350px;border-radius:16px;min-height:53px;background:#cf2632}
+@media(min-width:600px){.landing-card{min-height:230px;padding:30px}.landing-card img{right:0;width:53%}.landing-card strong{font-size:36px}.landing-card small{font-size:16px;max-width:230px}.landing-tagline{font-size:22px}}
+@media(max-width:360px){#app.landing main{padding:18px 14px}.landing-card{min-height:180px;padding:20px 15px}.landing-card strong{font-size:22px}.landing-card small{font-size:12px}.landing-person .initial{display:none}.landing-person b{max-width:85px}.landing-top{gap:10px}}
+@media(prefers-reduced-motion:reduce){.landing-card{transition:none}}
+
+
+@media(min-width:1000px){
+ #app:not(.counter){max-width:1180px;margin:20px auto;height:calc(100dvh - 40px);border-radius:24px;box-shadow:0 12px 50px #0b26471a}
+ #app.landing{max-width:960px}
+ #app.landing main{padding:25px 34px}
+ .landing-card{min-height:185px;padding:24px 30px}
+ .landing-card img{width:42%;right:3%}
+ .landing-card .copy{width:55%}
+ .landing-top{margin-bottom:18px}
+ .landing-tagline{margin-bottom:18px}
+ #app:not(.landing):not(.counter) main{padding:24px 32px}
+}
+@media(display-mode:standalone){#app:not(.counter){height:100dvh;margin:0 auto;border-radius:0;box-shadow:none}}
+.brand-home{display:inline-flex;align-items:center;min-height:44px;border:0;background:transparent;padding:0;cursor:pointer}
+#topNavigation{padding-top:12px;display:flex}
+.top-back{min-height:48px;min-width:112px;padding:10px 18px;border:1px solid #183e63;border-radius:10px;background:#0b2d50;color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 3px 8px #0b264720}
+.top-back:focus-visible,.brand-home:focus-visible{outline:3px solid #d52835;outline-offset:3px}
+#app.counter .brand-home{background:#fff;border-radius:6px;padding:4px 8px}
+#app.counter .top-back{border-color:#8da6bf}
+.settings-button{border:1px solid #dbe3ed;background:#fff;border-radius:13px;min-width:64px;min-height:60px;padding:3px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#163653;font-size:11px;font-weight:800;box-shadow:0 3px 9px #19354d12}
+.settings-button img{width:40px;height:40px;object-fit:contain}.settings-button:focus-visible{outline:3px solid #d52835;outline-offset:3px}
+.landing-person{margin-bottom:15px}.landing-top{align-items:center}.welcome-card>img{max-width:320px;width:100%;height:auto;border-radius:22px}
 </style></head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
 <input type="file" id="scanImportFile" accept="application/json,.json" hidden onchange="importBarcodeFile(this)">
 <div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
@@ -206,10 +269,10 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
     </div>
   </div>
 </div>
-<script src="./warehouse-management.js?v=0.28.1"></script>
-<script src="./real-counts.js?v=0.28.1"></script>
-<script src="./consultation-core.js?v=0.28.1"></script>
-<script src="./consultation-ui.js?v=0.28.1"></script>
+<script src="./warehouse-management.js?v=0.29.0"></script>
+<script src="./real-counts.js?v=0.29.0"></script>
+<script src="./consultation-core.js?v=0.29.0"></script>
+<script src="./consultation-ui.js?v=0.29.0"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -221,7 +284,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.28.1';
+const APP_VERSION='0.29.0';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -292,7 +355,7 @@ function saveDraft(){
   entries:pendingEntries.map(e=>({...e})),mode:cMode,step:cStep,input:cInput,
   parts:[...cParts],lastPallet:lastPallet?[...lastPallet]:null,
   repeatMode,overwriteInput,editReason,editOriginal,editReasonChoice,editReasonNote,entryEdits:entryEdits.map(x=>({...x})),feedback:countFeedback,at:new Date().toISOString()};
- try{localStorage.setItem(draftKey(data.worker),JSON.stringify(d));}catch(e){}
+ try{localStorage.setItem(draftKey(data.worker),JSON.stringify(d));return true;}catch(e){return false;}
 }
 function restoreDraft(d){
  activeLoc=d.loc;activeAisle=aisleFor(d.loc);activeArticle=d.article;
@@ -374,36 +437,109 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();if(s==='review'||s==='discrepancy'||s==='edit-detail')saveDraft();showPendingUpdate();}
-function header(){const counting=!['home','manager-login','management','consult-login','consult'].includes(screen);return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo · v${APP_VERSION}${counting&&data.worker&&data.countSession?' · '+esc(sessionLabel()):screen==='consult'?' · Consulta':screen==='management'?' · Gestión almacén':''}</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${counting&&data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`;}
-function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='home')renderHome();else if(screen==='manager-login')renderManagerLogin();else if(screen==='management')renderManagement();else if(screen==='consult-login')renderConsultLogin();else if(screen==='consult')renderConsult();else if(screen==='login')renderLogin();else if(screen==='session')renderSession();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderHome();}
-function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
+function settingsButton(){return '<button type="button" class="settings-button" onclick="openSettings()" aria-label="Ajustes"><img src="assets/menu/settings-3d.webp" alt="" width="48" height="48"><span>Ajustes</span></button>';}
+function openSettings(){
+ const authenticated=!!window.INVENTA_MGMT?.isAuthenticated();
+ const profile=window.INVENTA_MGMT?.profile;
+ $('overlay').innerHTML='<div class="modalback"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Ajustes</h2><p class="muted">INVENTA · v'+APP_VERSION+'</p>'+(authenticated?'<p>'+esc(profile.display_name)+' · '+esc({admin:'Administrador',supervisor:'Supervisor',operator:'Operario'}[profile.role]||'')+'</p>':'<p>Accede con tu cuenta para ver tus funciones.</p>')+'<div class="stack" style="margin-top:16px"><button class="btn-outline" onclick="hideModal();installInventa()">Instalar aplicación</button><button class="btn-outline" onclick="hideModal();safeNavigation(()=>checkForUpdates(true))">Buscar actualizaciones</button>'+(authenticated?'<button class="btn-outline" onclick="safeNavigation(()=>{hideModal();logoutManager();})">Cerrar sesión</button>':'')+((data.worker&&!authenticated)?'<button class="btn-outline" onclick="showModal(\'menu\')">Opciones de demostración</button>':'')+'<button class="btn" onclick="hideModal()">Cerrar ajustes</button></div></section></div>';
+ $('settingsTitle').setAttribute('tabindex','-1');$('settingsTitle').focus();
+}
+function header(){const counting=!['home','manager-login','management','consult-login','consult'].includes(screen);return `<div class="hrow"><div class="brand"><div><button class="brand-home" type="button" onclick="navigateHome()" aria-label="INVENTA: ir al menú principal"><img class="brand-wordmark" src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></button><small>Demo · v${APP_VERSION}${counting&&data.worker&&data.countSession?' · '+esc(sessionLabel()):screen==='consult'?' · Consulta':screen==='management'?' · Gestión almacén':''}</small></div></div><div class="topbuttons">${settingsButton()}</div></div>`;}
+function render(){let counter=screen==='count';$('app').classList.toggle('landing',screen==='home');$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='home')renderHome();else if(screen==='demo-home')renderDemoHome();else if(screen==='manager-login')renderManagerLogin();else if(screen==='management')renderManagement();else if(screen==='consult-login')renderConsultLogin();else if(screen==='consult')renderConsult();else if(screen==='login')renderLogin();else if(screen==='session')renderSession();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderHome();}
+let navigationBaseline=[];
+function navigationFields(){return Array.from(document.querySelectorAll('#content input,#content select,#content textarea')).filter(el=>!['consultSearch','catalogSearch'].includes(el.id));}
+function navigationDirty(){return navigationBaseline.some(([el,value])=>el.isConnected&&(el.type==='checkbox'?el.checked:el.value)!==value);}
+function navigationBusy(){return !!(window.INVENTA_MGMT?.isSaving?.()||window.INVENTA_REAL?.isBusy?.());}
+function safeNavigation(action){
+ if(navigationBusy()){alert('Hay un guardado o una sincronización en curso. Espera a que termine y vuelve a pulsar.');return false;}
+ if(navigationDirty()&&!confirm('Hay cambios sin guardar. Pulsa Cancelar para quedarte y guardarlos, o Aceptar para descartarlos y salir.'))return false;
+ action();return true;
+}
+function navigateHome(){
+ return safeNavigation(()=>{
+  if(['count','review','discrepancy','edit-detail'].includes(screen)){
+   if(!confirm('El recuento en curso se conservará como borrador en este dispositivo. ¿Volver al menú?'))return;
+   if(!saveDraft()){alert('No se ha podido conservar el borrador. Guarda el recuento antes de salir.');return;}
+  }
+  stopScanner();window.INVENTA_MGMT?.cancelView?.();window.INVENTA_REAL?.leave?.();go('home');
+ });
+}
+function place(html,foot=''){
+ $('content').innerHTML=html;$('content').scrollTop=0;$('foot').innerHTML=foot;
+ let back=$('foot').querySelector('button.back');
+ if(!back&&screen==='count'){back=document.createElement('button');back.textContent='Volver a los artículos';back.onclick=cancelCount;}
+ const oldNav=document.getElementById('topNavigation');if(oldNav)oldNav.remove();
+ if(back){
+  const original=back.onclick;const label=back.textContent.trim();
+  back.className='top-back';back.type='button';back.title=label;back.setAttribute('aria-label',label);
+  back.textContent='← Volver';back.onclick=function(event){safeNavigation(()=>{window.INVENTA_MGMT?.cancelView?.();original?.call(back,event);});};
+  const nav=document.createElement('nav');nav.id='topNavigation';nav.setAttribute('aria-label','Volver a la pantalla anterior');nav.appendChild(back);
+  $('head').appendChild(nav);
+ }
+ $('foot').hidden=!$('foot').textContent.trim();
+ navigationBaseline=navigationFields().map(el=>[el,el.type==='checkbox'?el.checked:el.value]);
+}
+
 
 
 function isManager(){return !!window.INVENTA_MGMT?.isManager();}
 function startInventoryFromHome(){managerUser='';consultUser='';go('login');}
 function openConsultFromHome(){
+ window.INVENTA_CONSULT_DEMO=false;
  if(isManager()){consultUser=window.INVENTA_MGMT.profile.display_name||'Supervisor';go('consult');return;}
  consultUser='';go('consult-login');
 }
+
+let inventaInstallPrompt=null;
+function inventaInstalled(){return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}
+function installMarkup(){return inventaInstalled()?'<span>Aplicación instalada</span>':'<button type="button" id="installInventa" class="landing-account" onclick="installInventa()">Instalar aplicación</button>';}
+function installInstructions(){
+ $('overlay').innerHTML='<div class="modalback"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="installTitle"><h2 id="installTitle">INVENTA en tu escritorio</h2><p class="muted" style="margin:14px 0">Abre INVENTA en Microsoft Edge o Google Chrome. Pulsa el icono de instalación de la barra de direcciones y confirma Instalar.</p><p class="muted">También puedes buscar la opción de instalar esta página como aplicación en el menú del navegador. En iPhone: Compartir → Añadir a pantalla de inicio.</p><p class="muted" style="margin-top:14px">Se abrirá en su propia ventana con tu cuenta y las funciones permitidas por tu rol. La sincronización necesita conexión; los envíos pendientes se conservan en este dispositivo.</p><button class="btn" style="margin-top:18px" onclick="hideModal()">Entendido</button></section></div>';
+}
+async function installInventa(){
+ if(inventaInstalled())return;
+ if(!inventaInstallPrompt){installInstructions();return;}
+ const prompt=inventaInstallPrompt;inventaInstallPrompt=null;
+ try{await prompt.prompt();await prompt.userChoice;}catch(e){installInstructions();}
+}
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();inventaInstallPrompt=event;});
+window.addEventListener('appinstalled',()=>{inventaInstallPrompt=null;const button=$('installInventa');if(button){button.textContent='Aplicación instalada';button.disabled=true;}});
+
+function homePermissions(){
+ const api=window.INVENTA_MGMT,authenticated=!!api?.isAuthenticated?.(),role=api?.profile?.role;
+ return {authenticated,role,inventory:authenticated&&['operator','supervisor','admin'].includes(role),consultation:authenticated&&api.isManager(),management:authenticated&&api.isManager(),demo:authenticated&&api.isAdmin()};
+}
 function renderHome(){
- const manager=isManager(),role=window.INVENTA_MGMT?.profile?.role;
- const management=manager?'<button class="item home-choice" onclick="go(\'management\')"><span><strong>🏭 Gestión almacén</strong><small>Campañas, asignaciones, incidencias, artículos, movimientos y permisos.</small></span><span class="chev">›</span></button>':'';
- const profile=window.INVENTA_MGMT?.isAuthenticated?.()
- ?'<div class="card"><div class="between"><div><b>'+esc(window.INVENTA_MGMT.profile.display_name||role)+'</b><p class="muted">Sesión real · '+(role==='admin'?'Administrador':role==='supervisor'?'Supervisor':'Operario')+'</p></div><button class="tinybtn" onclick="logoutManager()">Salir</button></div></div>'
- :'<button class="btn-outline" style="width:100%;margin-top:7px;margin-bottom:12px" onclick="go(\'manager-login\')">Acceso personal · Operario / Supervisor / Administrador</button>';
- place('<div class="title"><div class="overline">MENÚ PRINCIPAL</div><h1>¿Qué quieres hacer?</h1><p class="muted">Selecciona la función que necesitas. Inventario sigue en modo de prueba; Gestión de almacén utiliza base de datos real y permisos.</p></div>'
- +profile
- +'<button class="item home-choice" onclick="INVENTA_MGMT.isAuthenticated()?INVENTA_MGMT.openCounts():go(\'manager-login\')"><span><strong>Recuento real · individual</strong><small>Cuenta aprobada, asignaciones y envío a Supabase.</small></span><span class="chev">›</span></button>'
- +'<button class="item home-choice" onclick="startInventoryFromHome()"><span><strong>📦 Hacer inventario</strong><small>Recuento ciego de prueba · individual o en pareja.</small></span><span class="chev">›</span></button>'
- +'<button class="item home-choice" onclick="openConsultFromHome()"><span><strong>🔎 Realizar consulta</strong><small>Por artículo o por ubicación, con posiciones fijas incluso sin stock.</small></span><span class="chev">›</span></button>'
- +management
- +'<div class="alert">Estado: recuentos de prueba locales. Consulta BC real solo para Supervisor/Administrador autenticado; en acceso demo, datos ficticios. No se escriben movimientos ni ajustes en Business Central.</div>');
+ const allowed=homePermissions(),profile=window.INVENTA_MGMT?.profile;
+ const name=profile?.display_name||'Usuario',roleLabel={operator:'Operario',supervisor:'Supervisor',admin:'Administrador'}[allowed.role]||'';
+ const person=allowed.authenticated?'<div class="landing-person"><span class="initial" aria-hidden="true">'+esc(name.charAt(0).toUpperCase())+'</span><div><small>Hola,</small><b>'+esc(name)+'</b><small>'+roleLabel+'</small></div></div>':'';
+ const top='<div class="landing-top"><img class="landing-logo" src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80">'+settingsButton()+'</div>'+person+'<p class="landing-tagline">Tu almacén, bajo control</p>';
+ function tile(kind,title,subtitle,image,action){return '<button type="button" class="landing-card '+kind+'" onclick="'+action+'"><span class="copy"><strong>'+title+'</strong><small>'+subtitle+'</small><span class="arrow" aria-hidden="true">→</span></span><img src="assets/menu/'+image+'.webp" alt="" width="640" height="640"></button>';}
+ if(!allowed.authenticated){
+  place(top+'<div class="welcome-card"><img src="assets/brand/inventa-warehouse.webp" alt="" width="640" height="640"><h1>Todo empieza aquí</h1><p>Entra con tu cuenta para acceder a tus funciones de INVENTA.</p><button class="btn" onclick="go(\'manager-login\')">Acceder a INVENTA →</button></div><p class="landing-note">Acceso personal · Operario, Supervisor y Administrador</p><div class="landing-bottom"><span>Entorno piloto · v'+APP_VERSION+'</span>'+installMarkup()+'</div>','');return;
+ }
+ const cards=(allowed.inventory?tile('inventory','Hacer<br>inventario','Cuenta y registra · Individual','inventory-3d','openAuthorizedHome(\'inventory\')'):'')
+ +(allowed.consultation?tile('consultation','Realizar<br>consulta','Encuentra lo que buscas','consult-3d','openAuthorizedHome(\'consultation\')'):'')
+ +(allowed.management?tile('management','Gestión<br>del almacén','Organiza y supervisa','management-3d','openAuthorizedHome(\'management\')'):'');
+ place(top+'<div class="landing-cards">'+cards+'</div><div class="landing-bottom"><span>Entorno piloto · v'+APP_VERSION+'</span>'+installMarkup()+'<button class="landing-account" onclick="logoutManager()">Cerrar sesión</button>'+(allowed.demo?'<button class="landing-account" onclick="go(\'demo-home\')">Zona de demostración →</button>':'')+'</div><p class="landing-note">Recuentos reales individuales. Las pruebas de pareja y escáner están en la zona de demostración.</p>','');
+}
+function openAuthorizedHome(target){
+ const p=homePermissions();
+ if(!p.authenticated){go('manager-login');return;}
+ if(target==='inventory'&&p.inventory){$('app').classList.remove('landing');window.INVENTA_MGMT.openCounts();return;}
+ if(target==='consultation'&&p.consultation){openConsultFromHome();return;}
+ if(target==='management'&&p.management){go('management');return;}
+ go('home');
+}
+function renderDemoHome(){
+ if(!window.INVENTA_MGMT?.isAdmin()){go('home');return;}
+ place('<div class="title"><h1>Zona de demostración</h1><p class="muted">Datos ficticios y recuentos locales. Separados del trabajo real.</p></div><button class="item" onclick="startInventoryFromHome()">Inventario de prueba · individual o pareja →</button><button class="item" onclick="window.INVENTA_CONSULT_DEMO=true;consultUser=\'\';go(\'consult-login\')">Consulta con datos ficticios →</button>','<button class="back" onclick="go(\'home\')">← Menú principal</button>');
 }
 function renderManagerLogin(){window.INVENTA_MGMT.renderLogin();}
 function loginManager(){window.INVENTA_MGMT.signIn();}
 function logoutManager(){window.INVENTA_MGMT.logout();}
 function renderManagement(){window.INVENTA_MGMT.render();}
-function consultRole(){if(isManager())return window.INVENTA_MGMT.profile.role;return consultUser==='Supervisor (demo)'?'supervisor':consultUser==='Administrador (demo)'?'admin':'operator';}
+function consultRole(){if(isManager()&&!window.INVENTA_CONSULT_DEMO)return window.INVENTA_MGMT.profile.role;return consultUser==='Supervisor (demo)'?'supervisor':consultUser==='Administrador (demo)'?'admin':'operator';}
 function consultBlocked(){return !!data.demoInventoryOpen&&consultRole()==='operator';}
 function renderConsultLogin(){
  place(`<div class="title"><div class="overline">CONSULTA INDIVIDUAL</div><h1>Identificar usuario</h1><p class="muted">La consulta no pide elegir entre individual y pareja.</p></div>

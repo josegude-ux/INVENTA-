@@ -101,7 +101,8 @@ async function save(){
   message='Guardado en este dispositivo; pendiente de confirmación.';draw();await sync();
  }catch(e){message=e.message;status();}
 }
-root.INVENTA_REAL={open:function(){visible=true;assignments=[];counts=[];lastRead='';draw();return reload();},close:function(){visible=false;serial++;go('home');},reload:reload,sync:sync,save:save,flush:flush,payloadEqual:payloadEqual};
+root.INVENTA_REAL={isBusy:function(){return busy;},leave:function(){visible=false;serial++;},open:function(){visible=true;assignments=[];counts=[];lastRead='';draw();return reload();},close:function(){visible=false;serial++;go('home');},reload:reload,sync:sync,save:save,flush:flush,payloadEqual:payloadEqual};
 root.addEventListener('online',function(){if(m().isAuthenticated())sync();});
 root.addEventListener('storage',function(e){if(e.key==='inventa-real-auth-v1'){visible=false;serial++;assignments=[];counts=[];}else status();});
 })(window);
+
