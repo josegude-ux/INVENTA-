@@ -180,6 +180,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
     </div>
   </div>
 </div>
+<script src="./warehouse-management.js"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -191,7 +192,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.24.7';
+const APP_VERSION='0.25.0';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -349,54 +350,30 @@ function render(){let counter=screen==='count';$('app').classList.toggle('counte
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 
 
-function isManager(){return managerUser==='Supervisor (demo)'||managerUser==='Administrador (demo)';}
+function isManager(){return !!window.INVENTA_MGMT?.isManager();}
 function startInventoryFromHome(){managerUser='';consultUser='';go('login');}
 function openConsultFromHome(){
- if(isManager()){consultUser=managerUser;go('consult');return;}
+ if(isManager()){consultUser=window.INVENTA_MGMT.profile.display_name||'Supervisor';go('consult');return;}
  consultUser='';go('consult-login');
 }
 function renderHome(){
- const management=isManager()?`<button class="item home-choice" onclick="go('management')"><span><strong>🏭 Gestión almacén</strong><small>Funciones de gestión para supervisor y administrador.</small></span><span class="chev">›</span></button>`:'';
- const profile=isManager()
-  ?`<div class="card"><div class="between"><div><b>${esc(managerUser)}</b><p class="muted">Perfil de gestión identificado (solo demo)</p></div><button class="tinybtn" onclick="logoutManager()">Salir</button></div></div>`
-  :'<button class="btn-outline" style="width:100%;margin-top:7px;margin-bottom:12px" onclick="go(\'manager-login\')">Identificar Supervisor / Administrador</button>';
- place(`<div class="title"><div class="overline">MENÚ PRINCIPAL</div><h1>¿Qué quieres hacer?</h1><p class="muted">Elige Inventario o Consulta. Gestión almacén aparece solo al identificar un perfil autorizado.</p></div>
- ${profile}
- <button class="item home-choice" onclick="startInventoryFromHome()"><span><strong>📦 Hacer inventario</strong><small>Recuento ciego. Después elegirás individual o en pareja.</small></span><span class="chev">›</span></button>
- <button class="item home-choice" onclick="openConsultFromHome()"><span><strong>🔎 Realizar consulta</strong><small>Búsqueda individual de artículos, existencias y ubicaciones.</small></span><span class="chev">›</span></button>
- ${management}
- <div class="alert">DEMO local: perfiles y cantidades de ejemplo. Los permisos reales necesitan autenticación y comprobación centralizada.</div>`);
+ const manager=isManager(),role=window.INVENTA_MGMT?.profile?.role;
+ const management=manager?'<button class="item home-choice" onclick="go(\'management\')"><span><strong>🏭 Gestión almacén</strong><small>Campañas, asignaciones, incidencias, artículos, movimientos y permisos.</small></span><span class="chev">›</span></button>':'';
+ const profile=manager
+ ?'<div class="card"><div class="between"><div><b>'+esc(window.INVENTA_MGMT.profile.display_name||role)+'</b><p class="muted">Sesión real · '+(role==='admin'?'Administrador':'Supervisor')+'</p></div><button class="tinybtn" onclick="logoutManager()">Salir</button></div></div>'
+ :'<button class="btn-outline" style="width:100%;margin-top:7px;margin-bottom:12px" onclick="go(\'manager-login\')">Acceso Supervisor / Administrador</button>';
+ place('<div class="title"><div class="overline">MENÚ PRINCIPAL</div><h1>¿Qué quieres hacer?</h1><p class="muted">Selecciona la función que necesitas. Inventario sigue en modo de prueba; Gestión de almacén utiliza base de datos real y permisos.</p></div>'
+ +profile
+ +'<button class="item home-choice" onclick="startInventoryFromHome()"><span><strong>📦 Hacer inventario</strong><small>Recuento ciego de prueba · individual o en pareja.</small></span><span class="chev">›</span></button>'
+ +'<button class="item home-choice" onclick="openConsultFromHome()"><span><strong>🔎 Realizar consulta</strong><small>Consulta de demostración; los datos BC reales se administran por separado.</small></span><span class="chev">›</span></button>'
+ +management
+ +'<div class="alert">Estado: recuento individual/en pareja y consulta con datos ficticios locales. Gestión de almacén conectada a Supabase (requiere cuenta con rol autorizado). No se escriben movimientos ni ajustes en Business Central.</div>');
 }
-function renderManagerLogin(){
- place(`<div class="title"><div class="overline">PERFIL DE GESTIÓN · DEMO</div><h1>Identificarse</h1><p class="muted">Solo supervisor y administrador dispondrán del tercer apartado en el menú principal.</p></div>
- <div class="card"><div class="field"><label for="managerAccount">Perfil</label><select id="managerAccount" class="input"><option>Supervisor (demo)</option><option>Administrador (demo)</option></select></div>
- <div class="field"><label for="managerPin">PIN de prueba</label><input id="managerPin" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="4 cifras" autocomplete="off"></div>
- <button class="btn" onclick="loginManager()">Entrar al menú →</button><p class="muted" id="managerError" role="alert" style="margin-top:10px"></p></div>
- <div class="alert">PIN de demostración: <b>1234</b>. Este acceso todavía no gestiona permisos reales ni se conecta a la base central.</div>`,
- '<button class="back" onclick="go(\'home\')">← Menú principal</button>');
-}
-function loginManager(){
- if($('managerPin')?.value!=='1234'){$('managerError').textContent='PIN incorrecto. Usa 1234 en la demo.';return;}
- const value=$('managerAccount')?.value;
- if(value!=='Supervisor (demo)'&&value!=='Administrador (demo)')return;
- managerUser=value;consultUser='';go('home');
-}
-function logoutManager(){managerUser='';consultUser='';go('home');}
-function renderManagement(){
- if(!isManager()){go('manager-login');return;}
- const administrator=managerUser==='Administrador (demo)';
- const rows=[
-  ['Asignaciones de recuento','Organizar pasillos, ubicaciones, equipos y relevos.'],
-  ['Seguimiento e incidencias','Revisar diferencias, recuentos pendientes y traslados.'],
-  ['Organización del almacén','Gestionar propuestas de reubicación y ubicaciones fijas.']
- ];
- if(administrator)rows.push(['Administración','Usuarios, permisos, bases de datos y apertura/cierre de inventarios.']);
- place(`<div class="title"><div class="overline">GESTIÓN ALMACÉN · ${administrator?'ADMINISTRADOR':'SUPERVISOR'}</div><h1>Gestión almacén</h1><p class="muted">Acceso diferenciado para ${esc(managerUser)}.</p></div>
- <div class="alert">Estructura inicial de prueba. Las herramientas de gestión todavía no están habilitadas y no modifican BC.</div>
- ${rows.map(([title,subtitle])=>`<div class="card"><h2>${esc(title)}</h2><p class="muted" style="margin-top:6px">${esc(subtitle)}</p></div>`).join('')}`,
- '<button class="back" onclick="go(\'home\')">← Menú principal</button>');
-}
-function consultRole(){return consultUser==='Supervisor (demo)'?'supervisor':consultUser==='Administrador (demo)'?'admin':'operator';}
+function renderManagerLogin(){window.INVENTA_MGMT.renderLogin();}
+function loginManager(){window.INVENTA_MGMT.signIn();}
+function logoutManager(){window.INVENTA_MGMT.logout();}
+function renderManagement(){window.INVENTA_MGMT.render();}
+function consultRole(){if(isManager())return window.INVENTA_MGMT.profile.role;return consultUser==='Supervisor (demo)'?'supervisor':consultUser==='Administrador (demo)'?'admin':'operator';}
 function consultBlocked(){return !!data.demoInventoryOpen&&consultRole()==='operator';}
 function renderConsultLogin(){
  place(`<div class="title"><div class="overline">CONSULTA INDIVIDUAL</div><h1>Identificar usuario</h1><p class="muted">La consulta no pide elegir entre individual y pareja.</p></div>
