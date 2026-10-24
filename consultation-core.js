@@ -37,8 +37,8 @@
    var lot=String(s.lot||'').trim();
    if(lot){
     var existing=entry.lots.find(function(l){return l.code===lot;});
-    if(existing)existing.amount+=qty;
-    else entry.lots.push({code:lot,amount:qty});
+    if(existing){existing.amount+=qty;if(!existing.expiryDate&&s.expiry_date)existing.expiryDate=s.expiry_date;}
+    else entry.lots.push({code:lot,amount:qty,expiryDate:s.expiry_date||null});
    }
   });
   (data.fixed||[]).forEach(function(f){
