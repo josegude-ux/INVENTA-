@@ -8,7 +8,7 @@ var KEY='sb_publishable_gPeof-fUW3yITvNXqsjHVw_-PjB1Fyd';
 var STORE='inventa-real-auth-v1';
 var session=null,profile=null,section='dashboard',pending=false,notice='';
 var catalogView='aisles',catalogAisle='',catalogLocation='',renderSerial=0,refreshTask=null;
-var permissionVersions={};
+var permissionVersions={},fixedReportRows=[];
 function safe(s){return String(s===null||s===undefined?'':s).replace(/[&<>"']/g,function(k){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[k];});}
 function val(id){var e=document.getElementById(id);return e?e.value.trim():'';}
 function show(html,footer){if(typeof place==='function')place(html,footer||'<button class="back" onclick="go(\'home\')">← Menú principal</button>');}
@@ -78,7 +78,7 @@ function tabs(){return [
  ['snapshot','Existencias BC'],
  ['movements','Movimientos'],
  ['history','Auditoría']
- ].concat(isAdmin()?[['users','Usuarios y permisos']]:[]).map(function(pair){
+ ].concat(isAdmin()?[['fixed','Posiciones fijas'],['users','Usuarios y permisos']]:[]).map(function(pair){
   return '<button class="tinybtn" style="margin:3px 3px 3px 0;'+(section===pair[0]?'font-weight:800;border:2px solid currentColor;':'')+'" onclick="INVENTA_MGMT.open(\''+pair[0]+'\')">'+pair[1]+'</button>';
  }).join('');}
 function shell(body){
@@ -128,6 +128,10 @@ async function dataFor(tab){
  if(tab==='dashboard'){
   var arr=await Promise.all([api('campaigns','select=*&order=created_at.desc&limit=10'),api('locations','select=code'),api('products','select=code'),api('incidents','select=*&status=neq.resolved&limit=10'),api('assignments','select=*&order=created_at.desc&limit=10')]);return {campaigns:arr[0],locations:arr[1],products:arr[2],incidents:arr[3],assignments:arr[4]};
  }
+ if(tab==='fixed'){
+  if(!isAdmin())throw Error('Informe exclusivo de Administración.');
+  return {rows:await api('rpc/admin_fixed_positions_report','','POST',{})};
+ }
  if(tab==='campaigns')return {campaigns:await api('campaigns','select=*&order=created_at.desc&limit=100')};
  if(tab==='users'){var people=await api('rpc/admin_user_directory','', 'POST',{});people.forEach(function(p){permissionVersions[p.user_id]=p.version;});return {profiles:people};}
  if(tab==='assignments'){var a=await Promise.all([api('assignments','select=*&order=created_at.desc&limit=200'),api('campaigns','select=*&order=created_at.desc&limit=100'),api('locations','select=*&order=code&limit=1500'),api('profiles','select=*&order=display_name&limit=500')]);return {assignments:a[0],campaigns:a[1],locations:a[2],profiles:a[3]};}
@@ -166,6 +170,34 @@ function contentFor(tab,d){
   +row('Incidencias pendientes',d.incidents.length+' entre las diez últimas')
   +row('Asignaciones recientes',d.assignments.length+' entre las diez últimas'))
   +card('Campañas recientes',empty(d.campaigns.map(function(x){return row(x.name,x.kind+' · '+x.status+' · '+ftime(x.created_at));}),'Crea una campaña desde la pestaña Campañas.'));
+ }
+ if(tab==='fixed'){
+  if(!isAdmin())return card('Sin permiso','Solo Administración puede consultar el informe.');
+  var records=d.rows||[];fixedReportRows=records;
+  var prodCount=new Set(records.map(function(r){return r.product_code;})).size;
+  var locCount=new Set(records.map(function(r){return r.location_code;})).size;
+  var body=heading('GESTIÓN ALMACÉN','Informe de posiciones fijas','Asignaciones registradas en Supabase y stock calculado de la última exportación de BC.')
+   +card('Resumen',
+      row('Asignaciones',records.length+' posiciones artículo/ubicación')
+     +row('Artículos distintos',prodCount)
+     +row('Ubicaciones distintas',locCount)
+     +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'
+     +button('Descargar informe CSV · Excel','exportFixedReport()')
+     +button('Imprimir / Guardar PDF','printFixedReport()')+'</div>')
+   +'<div class="field"><label for="fixedReportSearch">Filtrar por artículo, descripción, ubicación o pasillo</label>'
+   +'<input class="input" type="search" id="fixedReportSearch" placeholder="Buscar..." oninput="INVENTA_MGMT.filterFixedReport(this.value)"></div>'
+   +'<p class="muted" id="fixedReportCount" role="status">'+records.length+' asignaciones</p>'
+   +'<div id="fixedReportList">';
+  body+=records.length?records.map(function(r){
+   var txt=[r.product_code,r.product_description,r.location_code,r.aisle].join(' ').toLocaleLowerCase('es');
+   var units=Number(r.stock_quantity||0).toLocaleString('es-ES',{maximumFractionDigits:3});
+   return '<div class="card fixed-report-row" data-fixed-search="'+safe(txt)+'" style="margin-bottom:8px">'
+    +'<div class="between"><div><b>'+safe(r.location_code)+'</b><small style="display:block;color:#678198">'+safe(r.aisle||'')+'</small></div>'
+    +'<div style="text-align:right"><b>'+safe(units)+' '+safe(r.unit||'UD')+'</b><small style="display:block;color:#678198">Stock calculado BC</small></div></div>'
+    +'<p style="margin:8px 0 0"><b>'+safe(r.product_code)+'</b> · '+safe(r.product_description)+'</p>'
+    +'<small class="muted">Asignada: '+safe(ftime(r.assigned_at))+'</small></div>';
+  }).join(''):'<div class="alert">No hay posiciones fijas marcadas todavía. Ve a Ubicaciones y marca los artículos que correspondan.</div>';
+  return body+'</div>';
  }
  if(tab==='campaigns'){
   return card('Nueva campaña · Solo Administrador',
@@ -280,24 +312,24 @@ function catalogContent(d){
   var entries=[...byProduct.values()].sort(function(a,b){return (Number(b.fixed)-Number(a.fixed))||(a.priority-b.priority)||a.code.localeCompare(b.code,'es',{numeric:true});});
   var display=entries.length?entries.map(function(e){
   var p=pmap.get(e.code)||{},name=p.description||'Artículo sin descripción',unit=p.unit||'UD';
-  return '<div class="catalog-product"><div><b>'+safe(e.code)+'</b><small>'+safe(name)+'</small>'
+  return '<div class="catalog-product'+(e.fixed?' catalog-fixed-shade':'')+'"><div><b>'+safe(e.code)+'</b><small>'+safe(name)+'</small>'
    +(e.lots.length?'<small>Lotes: '+e.lots.map(function(l){return safe(l.code)+' ('+l.quantity.toLocaleString('es-ES')+')';}).join(', ')+'</small>':'')
    +'</div><div class="catalog-product-right"><b>'+e.total.toLocaleString('es-ES')+' '+safe(unit)+'</b>'
-   +(e.fixed?'<span class="tag ok">FIJA</span>':'')
    +(e.total<0?'<span class="tag warn">STOCK NEGATIVO BC</span>':'')
    +(e.fixed&&e.total===0?'<span class="tag warn">'+(d.hasImport?'SIN STOCK':'SIN DATOS BC')+'</span>':'')
+   +(isAdmin()?'<button type="button" class="tinybtn" style="margin-top:8px" onclick="INVENTA_MGMT.toggleCatalogFixed('+safe(JSON.stringify(e.code))+','+(e.fixed?'true':'false')+')">'+(e.fixed?'Desmarcar posición':'Marcar posición fija')+'</button>':'')
    +'</div></div>';
  }).join(''):'<p class="muted">No hay artículos ni posiciones fijas registrados aquí.</p>';
  return heading('PASILLO '+catalogAisle,'Ubicación '+catalogLocation,location?(location.description||location.zone||''):'')
   +button('← Volver al pasillo '+catalogAisle,'backCatalog()')
   +card('Artículos en esta ubicación',small(d.hasImport?'Existencias de la última importación BC.':'Todavía no hay existencias BC importadas.')
     +'<div class="catalog-product-list">'+display+'</div>')
-  +'<details class="catalog-maintenance"><summary>＋ Asignar posición fija</summary><div class="catalog-maintenance-body">'
-  +small('La posición fija seguirá figurando aunque no tenga existencias.')
+  +(isAdmin()?'<details class="catalog-maintenance"><summary>＋ Marcar posición fija de otro artículo</summary><div class="catalog-maintenance-body">'
+  +small('Permite fijar artículos sin existencias. La asignación persiste al actualizar el Excel BC.')
   +field('fixedProd','Código del artículo','PRD000123')
   +'<input type="hidden" id="fixedLoc" value="'+safe(catalogLocation)+'">'
   +'<input type="hidden" id="fixedPriority" value="1">'
-  +button('Guardar posición fija','newFixed()')+'</div></details>';
+  +button('Guardar posición fija','newFixed()')+'</div></details>':'');
 }
 function filterCatalogLocations(query){
  var term=String(query||'').trim().toLowerCase();
@@ -351,7 +383,73 @@ function newIncident(){mutate(function(){return api('incidents','', 'POST',{camp
 function resolveIncident(id){var resolution=val('incResolution_'+id);if(resolution.length<5){notice='Explica la solución con al menos cinco caracteres.';render();return;}mutate(function(){return api('incidents','id=eq.'+id,'PATCH',{status:'resolved',resolution:resolution,resolved_by:getId(),resolved_at:new Date().toISOString()});},'Incidencia resuelta con historial.');}
 function newLocation(){mutate(function(){return api('locations','', 'POST',{code:required(val('locCode'),'código').toUpperCase(),aisle:required(val('locAisle'),'pasillo').toUpperCase(),zone:val('locZone'),description:val('locDescription')});},'Ubicación creada.');}
 function newProduct(){mutate(function(){return api('products','', 'POST',{code:required(val('prodCode'),'código').toUpperCase(),description:required(val('prodDesc'),'descripción'),unit:val('prodUnit')||'UD'});},'Artículo creado.');}
-function newFixed(){mutate(function(){return api('fixed_positions','', 'POST',{product_code:required(val('fixedProd'),'artículo'),location_code:required(val('fixedLoc'),'ubicación'),priority:Math.max(1,Math.trunc(qty(val('fixedPriority')||'1')))});},'Ubicación fija guardada.');}
+function newFixed(){
+ if(!isAdmin())return;
+ mutate(async function(){
+  var product=required(val('fixedProd'),'artículo').toUpperCase(),location=required(val('fixedLoc'),'ubicación').toUpperCase();
+  await api('fixed_positions','','POST',{product_code:product,location_code:location,priority:1});
+ },'Posición fija registrada. Se mantiene aunque el stock BC sea cero.');
+}
+async function changeFixedPosition(product,location,alreadyFixed){
+ if(pending)throw Error('Espera a que termine la operación anterior.');
+ if(!isAdmin())throw Error('Solo Administración puede modificar posiciones fijas.');
+ var sentence=alreadyFixed?'¿Desmarcar la posición fija de '+product+' en '+location+'?':'¿Marcar '+product+' como posición fija en '+location+'?';
+ if(!confirm(sentence))return false;
+ pending=true;
+ try{
+  await loadProfile();
+  if(!isAdmin())throw Error('Se requiere una cuenta de Administrador activa.');
+  var filter='product_code=eq.'+encodeURIComponent(product)+'&location_code=eq.'+encodeURIComponent(location);
+  if(alreadyFixed){
+   var deleted=await api('fixed_positions',filter,'DELETE');
+   if(!Array.isArray(deleted)||!deleted.length)throw Error('La posición ya se había desmarcado. Recarga los datos.');
+  }else{
+   await api('fixed_positions','','POST',{product_code:product,location_code:location,priority:1});
+  }
+  return true;
+ }finally{pending=false;}
+}
+function toggleCatalogFixed(product,alreadyFixed){
+ if(!isAdmin()||section!=='catalog'||catalogView!=='detail')return;
+ var location=catalogLocation;
+ changeFixedPosition(product,location,alreadyFixed).then(function(changed){
+  if(changed){notice='Posición '+(alreadyFixed?'desmarcada':'marcada')+' y sincronizada en Supabase.';render();}
+ }).catch(function(e){notice='No se pudo cambiar la posición fija: '+e.message;render();});
+}
+function filterFixedReport(value){
+ if(section!=='fixed'||!isAdmin())return;
+ var term=String(value||'').trim().toLocaleLowerCase('es'),count=0;
+ document.querySelectorAll('.fixed-report-row').forEach(function(node){
+  node.hidden=!node.getAttribute('data-fixed-search').includes(term);
+  if(!node.hidden)count++;
+ });
+ var info=document.getElementById('fixedReportCount');if(info)info.textContent=count+' asignaciones visibles';
+}
+function makeFixedCSV(rows){
+ var cols=['Código artículo','Descripción','Ubicación','Pasillo','Prioridad','Stock calculado BC','Unidad','Fecha de asignación'];
+ var values=rows.map(function(r){
+  return [r.product_code,r.product_description,r.location_code,r.aisle,r.priority,r.stock_quantity,r.unit,ftime(r.assigned_at)];
+ });
+ return '\\uFEFF'+[cols].concat(values).map(function(row){
+  return row.map(function(v){return '"'+String(v===null||v===undefined?'':v).replace(/"/g,'""')+'"';}).join(';');
+ }).join('\\r\\n');
+}
+function exportFixedReport(){
+ if(!isAdmin()||section!=='fixed')return;
+ var csv=makeFixedCSV(fixedReportRows);
+ var url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+ var a=document.createElement('a');a.href=url;a.download='INVENTA_posiciones_fijas_'+new Date().toISOString().slice(0,10)+'.csv';
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(function(){URL.revokeObjectURL(url);},10000);
+}
+function printFixedReport(){
+ if(!isAdmin()||section!=='fixed')return;
+ var w=window.open('','_blank');
+ if(!w){notice='Permite las ventanas emergentes para imprimir o utiliza Descargar CSV.';render();return;}
+ var rows=fixedReportRows.map(function(r){return '<tr><td>'+safe(r.location_code)+'</td><td>'+safe(r.product_code)+'</td><td>'+safe(r.product_description)+'</td><td>'+safe(r.stock_quantity)+' '+safe(r.unit)+'</td></tr>';}).join('');
+ w.document.open();w.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>INVENTA · Posiciones fijas</title><style>body{font-family:Arial,sans-serif;margin:25px;color:#203047}table{border-collapse:collapse;width:100%}th,td{padding:8px;border:1px solid #d4dfe9;text-align:left}th{background:#edf3f9}tr{break-inside:avoid}small{color:#64748b}@media print{button{display:none}}</style></head><body><h1>INVENTA · Informe de posiciones fijas</h1><small>Generado: '+safe(ftime(new Date().toISOString()))+' · Total: '+fixedReportRows.length+' asignaciones</small><table><thead><tr><th>Ubicación</th><th>Artículo</th><th>Descripción</th><th>Stock BC</th></tr></thead><tbody>'+rows+'</tbody></table><button onclick="window.print()">Imprimir / Guardar PDF</button></body></html>');w.document.close();
+}
+
 function newSnapshot(){mutate(function(){return api('stock_snapshot','', 'POST',{campaign_id:required(val('snapCamp'),'campaña'),location_code:required(val('snapLoc'),'ubicación'),product_code:required(val('snapProd'),'artículo'),lot:val('snapLot'),quantity:qty(val('snapQty')),source:'BC'});},'Existencias importadas sin modificar BC.');}
 function parseCSV(text){var rows=[],row=[],part='',quote=false;for(var i=0;i<text.length;i++){var c=text[i];if(c==='"'){if(quote&&text[i+1]==='"'){part+='"';i++;}else quote=!quote;}else if(c===';'&&!quote){row.push(part.trim());part='';}else if((c==='\n'||c==='\r')&&!quote){if(c==='\r'&&text[i+1]==='\n')i++;row.push(part.trim());part='';if(row.some(Boolean))rows.push(row);row=[];}else part+=c;}if(quote)throw Error('Comillas sin cerrar en CSV');row.push(part.trim());if(row.some(Boolean))rows.push(row);return rows;}
 async function importCSV(){
@@ -371,7 +469,7 @@ async function importCSV(){
 }
 function newMovement(){mutate(function(){return api('movements','', 'POST',{campaign_id:required(val('moveCamp'),'campaña abierta'),source_location:required(val('moveSource'),'origen'),destination_location:required(val('moveDestination'),'destino'),product_code:required(val('moveProduct'),'artículo'),lot:val('moveLot'),quantity:qty(val('moveQty')),reason:required(val('moveReason'),'motivo'),actor_id:getId(),client_mutation_id:uuid()});},'Movimiento interno registrado sin escribir en BC.');}
 function updateUser(id){if(!isAdmin())return;if(id===getId()&&(!document.getElementById('enabled_'+id).checked||val('role_'+id)!=='admin')){notice='Para evitar bloquear el único administrador, no puedes quitarte el rol ni desactivar tu propia cuenta desde esta pantalla.';render();return;}mutate(function(){var reason=val('reason_'+id);if(reason.length<5)throw Error('Explica el motivo con al menos cinco caracteres.');return api('profiles','user_id=eq.'+id+'&version=eq.'+permissionVersions[id],'PATCH',{role:val('role_'+id),enabled:document.getElementById('enabled_'+id).checked,permission_reason:reason}).then(function(rows){if(!rows.length)throw Error('El perfil cambió en otro dispositivo. Recarga y revisa los permisos.');});},'Permisos actualizados y registrados.');}
-var apiObject={isSaving:function(){return pending;},cancelView:function(){renderSerial++;},isAuthenticated:function(){return !!(session&&profile&&profile.enabled);},openCounts:function(){window.INVENTA_REAL.open();},realApi:api,refreshProfile:loadProfile,getUserId:getId,openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
+var apiObject={isSaving:function(){return pending;},changeFixedPosition:changeFixedPosition,toggleCatalogFixed:toggleCatalogFixed,filterFixedReport:filterFixedReport,exportFixedReport:exportFixedReport,printFixedReport:printFixedReport,cancelView:function(){renderSerial++;},isAuthenticated:function(){return !!(session&&profile&&profile.enabled);},openCounts:function(){window.INVENTA_REAL.open();},realApi:api,refreshProfile:loadProfile,getUserId:getId,openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
 Object.defineProperty(apiObject,'profile',{get:function(){return profile;}});
 window.INVENTA_MGMT=apiObject;
 window.addEventListener('storage',function(e){if(e.key===STORE){session=null;profile=null;renderSerial++;restore().then(function(){if(typeof go==='function')go('home');});}});
