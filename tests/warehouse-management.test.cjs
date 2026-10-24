@@ -15,9 +15,9 @@ const fixedImport=require('../fixed-positions-import.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.30\.5'/);
- assert.match(worker,/inventa-demo-v0305-01/);
- assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.5'/);
+ assert.match(index,/APP_VERSION='0\.30\.6'/);
+ assert.match(worker,/inventa-demo-v0306-01/);
+ assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.6'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
  assert.match(index,/consultation-ui\.js/);
@@ -220,6 +220,18 @@ test('importador ignora filas de título y nunca toma Cantidad física como stoc
  assert.equal(result.headerRow,3);
  assert.equal(result.rows[0].quantity,7);
  assert.equal(result.rows.length,1);
+});
+test('importador BC confirma la selección en iPhone y permite reintentar el lector Excel',()=>{
+ const markup=importer.panel({current:[],history:[]},true);
+ const importerCode=fs.readFileSync(path.join(root,'bc-excel-import.js'),'utf8');
+ assert.match(markup,/onchange="INVENTA_BC\.fileSelected\(this\)"/);
+ assert.match(markup,/id="bcExcelSelected"/);
+ assert.match(markup,/2\. Analizar Excel seleccionado/);
+ assert.equal(typeof importer.fileSelected,'function');
+ assert.match(importerCode,/cdn\.jsdelivr\.net/);
+ assert.match(importerCode,/unpkg\.com/);
+ assert.match(importerCode,/setTimeout\(function\(\)\{finish\(false\);\},15000\)/);
+ assert.match(importerCode,/catch\(function\(e\)\{excelLoading=null;throw e;\}/);
 });
 test('migración BC publica de forma atómica y no borra maestros',()=>{
  const sql=fs.readFileSync(path.join(root,'supabase/migrations/005_bc_xlsx_atomic_import.sql'),'utf8');
@@ -432,8 +444,8 @@ test('Informe de fijos se pagina para mostrar el inventario completo, sin cargar
  assert.match(code,/records\.slice\(0,100\)/);
  assert.match(code,/fixedReportRows\.filter/);
  assert.match(code,/INVENTA_FIXED_IMPORT\.panel/);
- assert.match(index,/fixed-positions-import\.js\?v=0\.30\.5/);
- assert.match(worker,/fixed-positions-import\.js\?v=0\.30\.5/);
+ assert.match(index,/fixed-positions-import\.js\?v=0\.30\.6/);
+ assert.match(worker,/fixed-positions-import\.js\?v=0\.30\.6/);
 });
 
 test('Ubicaciones especiales RET y CADCAP no se confunden con pasillos R/C',()=>{
