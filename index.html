@@ -166,6 +166,10 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 .consult-qty{display:block;text-align:right;font-weight:850;font-size:13px;white-space:nowrap}
 .consult-tags{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:4px;margin-top:4px}
 .consult-empty{color:#99520f;background:#fff6e7;padding:9px;border-radius:10px;font-size:12px;margin-top:8px}
+/* Posición fija: solo sombreado, sin iconos ni etiquetas. */
+.consult-line.consult-fixed{background:#e5effa;padding:11px 9px;margin:5px -9px;border-radius:12px;border-top-color:transparent}
+.item.consult-fixed,.card.consult-fixed{background:#e5effa}
+
 
 /* Catálogo guiado: pasillo → ubicación → detalle; mantenimiento plegado. */
 .catalog-aisles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0 0 14px}
@@ -240,6 +244,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 @media(display-mode:standalone){#app:not(.counter){height:100dvh;margin:0 auto;border-radius:0;box-shadow:none}}
 .brand-home{display:inline-flex;align-items:center;min-height:44px;border:0;background:transparent;padding:0;cursor:pointer}
 #topNavigation{padding-top:12px;display:flex}
+#topNavigation[hidden]{display:none!important}
 .top-back{min-height:48px;min-width:112px;padding:10px 18px;border:1px solid #183e63;border-radius:10px;background:#0b2d50;color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 3px 8px #0b264720}
 .top-back:focus-visible,.brand-home:focus-visible{outline:3px solid #d52835;outline-offset:3px}
 #app.counter .brand-home{background:#fff;border-radius:6px;padding:4px 8px}
@@ -270,11 +275,11 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
     </div>
   </div>
 </div>
-<script src="./warehouse-management.js?v=0.30.1"></script>
-<script src="./bc-excel-import.js?v=0.30.1"></script>
-<script src="./real-counts.js?v=0.30.1"></script>
-<script src="./consultation-core.js?v=0.30.1"></script>
-<script src="./consultation-ui.js?v=0.30.1"></script>
+<script src="./warehouse-management.js?v=0.30.2"></script>
+<script src="./bc-excel-import.js?v=0.30.2"></script>
+<script src="./real-counts.js?v=0.30.2"></script>
+<script src="./consultation-core.js?v=0.30.2"></script>
+<script src="./consultation-ui.js?v=0.30.2"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -286,7 +291,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.30.1';
+const APP_VERSION='0.30.2';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';

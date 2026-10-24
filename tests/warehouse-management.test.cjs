@@ -14,9 +14,9 @@ const importer=require('../bc-excel-import.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.30\.1'/);
- assert.match(worker,/inventa-demo-v0301-01/);
- assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.1'/);
+ assert.match(index,/APP_VERSION='0\.30\.2'/);
+ assert.match(worker,/inventa-demo-v0302-01/);
+ assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.2'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
  assert.match(index,/consultation-ui\.js/);
@@ -125,7 +125,8 @@ test('Consulta visible: ubicación fija a cero aparece por artículo y ubicació
  view.setMode('location');
  view.navigate('location','K00-P03');
  assert.match(el('consultResults').innerHTML,/PRD0099000/);
- assert.match(el('consultResults').innerHTML,/FIJA/);
+ assert.match(el('consultResults').innerHTML,/consult-fixed/);
+ assert.doesNotMatch(el('consultResults').innerHTML,/>FIJA</);
  assert.deepEqual(view.lookup('K00-P03'),{value:'K00-P03',mode:'location'});
 });
 
@@ -267,4 +268,66 @@ test('Consulta admite y etiqueta stock negativo oficial BC sin afectar posicione
  assert.equal(data.locations[0].articles[0].lots[0].amount,-2);
  assert.match(ui,/STOCK NEGATIVO BC/);
  assert.match(code,/STOCK NEGATIVO BC/);
+});
+
+
+test('Consulta: Volver recorre artículo → ubicación → pasillo sin salir al menú',()=>{
+ const root={INVENTA_CONSULT:consult};
+ const elements=new Map(),routes=[],topNav={hidden:false};
+ const el=id=>{
+  if(!elements.has(id))elements.set(id,{value:'',textContent:'',innerHTML:'',classList:{toggle(){}},placeholder:'',setAttribute(){}});
+  return elements.get(id);
+ };
+ const demo={'K00-P01':[{id:'PRD0003563',name:'PRODUCTO FIJO',theoretical:12}],
+             'K00-P02':[{id:'PRD0001287',name:'PRODUCTO NO FIJO',theoretical:8}],
+             'K00-P03':[]};
+ const build=new Function('window','TEST','consultUser','consultBlocked','go','isManager','data','consultRole','place','esc','$','screen','normCode','barcodeKey','document',
+  ui+';return window.INVENTA_CONSULT_UI;');
+ const view=build(root,demo,'Supervisor (demo)',()=>false,s=>routes.push(s),()=>false,
+  {demoInventoryOpen:false},()=>'supervisor',()=>{},
+  x=>String(x),el,'consult',x=>String(x).toUpperCase(),x=>String(x).toUpperCase(),
+  {getElementById:id=>id==='topNavigation'?topNav:null});
+ view.render();
+ assert.equal(topNav.hidden,true,'Volver no debe salir al menú desde la raíz de Consulta');
+ assert.match(ui,/INVENTA_CONSULT_UI\.back\(\)/);
+ view.navigate('aisle','K');
+ assert.equal(topNav.hidden,false);
+ view.navigate('location','K00-P01');
+ assert.match(el('consultResults').innerHTML,/PRODUCTO FIJO/);
+ assert.match(el('consultResults').innerHTML,/consult-fixed/);
+ assert.doesNotMatch(el('consultResults').innerHTML,/>FIJA</);
+ view.navigate('product','PRD0003563');
+ assert.match(el('consultResults').innerHTML,/Cantidad total/);
+ assert.match(el('consultResults').innerHTML,/card consult-fixed/);
+ view.back();
+ assert.match(el('consultResults').innerHTML,/PRODUCTO FIJO/);
+ assert.doesNotMatch(el('consultResults').innerHTML,/Cantidad total:/);
+ view.back();
+ assert.match(el('consultResults').innerHTML,/Pasillo K/);
+ view.back();
+ assert.equal(topNav.hidden,true);
+ assert.match(el('consultResults').innerHTML,/Selecciona el pasillo/);
+ view.back();
+ assert.deepEqual(routes,[],'Solo el logotipo debe regresar al inicio');
+ assert.match(index,/onclick="navigateHome\(\)" aria-label="INVENTA: ir al menú principal"/);
+});
+test('Consulta: Volver recupera resultados filtrados y no marca artículos no fijos',()=>{
+ const root={INVENTA_CONSULT:consult},elements=new Map();
+ const el=id=>{
+  if(!elements.has(id))elements.set(id,{value:'',innerHTML:'',textContent:'',placeholder:'',classList:{toggle(){}},setAttribute(){}});
+  return elements.get(id);
+ };
+ const build=new Function('window','TEST','consultUser','consultBlocked','go','isManager','data','consultRole','place','esc','$','screen','normCode','barcodeKey',
+  ui+';return window.INVENTA_CONSULT_UI;');
+ const view=build(root,{'K00-P02':[{id:'PRD0001572',name:'ARTICULO SIN FIJO',theoretical:9}]},'Supervisor (demo)',()=>false,()=>{},()=>false,
+   {demoInventoryOpen:false},()=>'supervisor',()=>{},x=>String(x),el,'consult',x=>String(x).toUpperCase(),x=>String(x).toUpperCase());
+ view.render();el('consultSearch').value='K00-P02';view.filter('K00-P02');
+ view.navigate('location','K00-P02');
+ const html=el('consultResults').innerHTML;
+ assert.match(html,/ARTICULO SIN FIJO/);
+ assert.doesNotMatch(html,/consult-fixed/);
+ view.back();
+ assert.equal(el('consultSearch').value,'K00-P02');
+ assert.match(el('consultResults').innerHTML,/K00-P02/);
+ assert.match(index,/#topNavigation\[hidden\]\{display:none!important\}/);
 });
