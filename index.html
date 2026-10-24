@@ -38,7 +38,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 .count-feedback{border-radius:9px;padding:7px 8px;background:#21402f;border:1px solid #395744;font-size:11px;font-weight:850;color:#b9f8d1;text-align:center;line-height:1.35;flex:none;margin-top:6px}
 #app.counter footer .counter-total span{font-size:10px}
 
-/* INVENTA v0.17 · recuento accesible y total principal */
+/* INVENTA v0.18 · recuento accesible y total principal */
 #app.counter .cproduct{font-size:14px;line-height:1.4;margin-bottom:8px}
 #app.counter .cproduct b{font-size:19px;line-height:1.25}
 #app.counter .cproduct small{font-size:12px;display:block;color:#b8cfe3;margin-top:3px}
@@ -83,14 +83,14 @@ const TEST={
  'K00-P02':[{id:'PRD0002411',name:'REFRESCO LIMÓN 33 CL',theoretical:72},{id:'PRD0001572',name:'AGUA MINERAL 50 CL',theoretical:24}],
  'K00-P03':[],
  'L00-P01':[{id:'PRD0006051',name:'ZUMO NARANJA 1 L',theoretical:60}],
- 'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36,unit:'caja'}],
+ 'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.17.0';
+const APP_VERSION='0.18.0';
 const KEY='inventa-demo-operario-v015';
 const blank=()=>({version:1,worker:'',locations:{},events:[]});
 function load(){try{const p=JSON.parse(localStorage.getItem(KEY));if(p?.version===1&&p.locations)return p;}catch(e){}return blank();}
-let data=load(),screen=data.worker?'aisles':'login',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all';
+let data=load(),screen=data.worker?'aisles':'login',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all';
 const fmt=n=>Number(n).toLocaleString('es-ES');
 const esc=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const valid=s=>/^\d{1,8}$/.test(String(s))&&Number(s)>0&&Number.isSafeInteger(Number(s));
@@ -150,7 +150,7 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();showPendingUpdate();}
-function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.17</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
+function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.18</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
 function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='login')renderLogin();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='closed')renderClosed();else renderLocations();}
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
@@ -199,32 +199,66 @@ function renderVerify(){place(`<div class="title"><div class="overline">PASO 1 �
 function confirmLocation(manual){if(!manual&&$('locationBarcode').value.trim().toUpperCase()!==activeLoc){$('verifyError').textContent='El código no coincide con '+activeLoc+'. Revisa la ubicación.';return;}const d=getLoc(activeLoc);d.verified=true;data.events.push({what:'Ubicación confirmada',loc:activeLoc,mode:manual?'visual':'código',at:new Date().toISOString()});save();go('articles');}
 function renderArticles(){const d=getLoc(activeLoc),a=items(activeLoc),p=progress(activeLoc);place(`${savedFeedback?`<div class="alert green" role="status">${savedFeedback}</div>`:""}<div class="title"><div class="overline">PASO 2 · ARTÍCULOS</div><div class="between"><h1>${activeLoc}</h1><span class="tag ${p.done===p.total?'ok':''}">${p.done}/${p.total} contados</span></div><p class="muted">Pulsa un artículo o busca su código. Sin cantidades teóricas.</p></div><div class="field"><input class="input" id="articleSearch" placeholder="Buscar por código o nombre" oninput="filterArticles(this.value)"></div><div id="articleList"></div><div class="card"><button class="btn-outline" style="width:100%" onclick="showModal('unexpected')">+ Artículo que no aparece en la lista</button></div>${a.length===0?'<div class="alert">No hay artículos previstos. Si la ubicación está realmente vacía, puedes confirmarlo abajo.</div>':''}`,`<div class="stack"><button class="btn" onclick="closeLocation()">${a.length===0?'Confirmar ubicación vacía':'Finalizar ubicación'}</button><button class="back" onclick="go('locations')">← Ubicaciones de ${activeAisle}</button></div>`);filterArticles('');}
 function filterArticles(query){const a=items(activeLoc).filter(p=>(p.id+' '+p.name).toLowerCase().includes(String(query).toLowerCase()));$('articleList').innerHTML=a.length?a.map(p=>{const s=statusArticle(activeLoc,p);return `<button class="item" onclick="openArticle('${esc(p.id)}')"><span><strong style="font-size:14px">${esc(p.name)}</strong><small>${esc(p.id)}${p.extra?' · Artículo añadido':''}</small></span><span class="tag ${s?'ok':''}">${s?(s.notFound?'No encontrado':'✓ Contado'):'Pendiente'}</span><span class="chev">›</span></button>`}).join(''):'<div class="alert">No se han encontrado artículos con ese texto.</div>';}
-function openArticle(id){activeArticle=id;pendingResult=null;savedFeedback='';countFeedback='';const rec=getLoc(activeLoc).counts[id];pendingEntries=rec&&!rec.notFound?rec.entries.map(x=>({...x})):[];cMode='direct';cStep=0;cInput='';cParts=[0,0,0];go('count');}
+function openArticle(id){activeArticle=id;pendingResult=null;savedFeedback='';countFeedback='';const rec=getLoc(activeLoc).counts[id];pendingEntries=rec&&!rec.notFound?rec.entries.map(x=>({...x})):[];cMode='direct';cStep=0;cInput='';cParts=[0,0,0,0];go('count');}
 function getProduct(){return items(activeLoc).find(p=>p.id===activeArticle)}
-function countedUnit(p){return p?.unit==='caja'?'cajas':'unidades';}
-function countedUnitUpper(p){return p?.unit==='caja'?'CAJAS':'UNIDADES';}
+function countedUnit(){return 'unidades';}
+function countedUnitUpper(){return 'UNIDADES';}
 function countTotal(){return pendingEntries.reduce((sum,e)=>sum+e.amount,0)}
-function renderCount(){const p=getProduct();const rec=getLoc(activeLoc).counts[p.id];place(`<div class="cproduct"><span>${esc(activeLoc)} · ${esc(p.id)}</span><b>${esc(p.name)}</b><small>Unidad de inventario: <strong>${countedUnitUpper(p)}</strong></small></div><div class="modebar"><button id="modeDirect" onclick="setMode('direct')">+ CANTIDAD</button><button id="modePallet" onclick="setMode('pallet')">▦ PALÉ / CAJAS</button></div><div class="between" style="margin-bottom:7px"><span class="muted" id="cStep" style="color:#b9cadd"></span><span id="cProgress" class="tag"></span></div><div class="display"><div class="caption"><span id="cCaption">Cantidad directa</span><span id="cUnit">${countedUnitUpper(p)}</span></div><div class="digits" id="cDigits">0</div><div class="desc" id="cDesc"></div></div><div class="keypad"><button onclick="digit('1')">1</button><button onclick="digit('2')">2</button><button onclick="digit('3')">3</button><button onclick="digit('4')">4</button><button onclick="digit('5')">5</button><button onclick="digit('6')">6</button><button onclick="digit('7')">7</button><button onclick="digit('8')">8</button><button onclick="digit('9')">9</button><button class="ctl" onclick="clearDigit()">BORRAR</button><button onclick="digit('0')">0</button><button class="ctl" onclick="backDigit()">⌫</button></div><button id="cAction" class="addbtn" onclick="actionDigit()">+ AÑADIR AL TOTAL</button><div class="count-feedback" id="countFeedback" role="status" aria-live="polite">Aún no has sumado cantidades.</div><div class="c-tools"><span id="cEntries">0 apuntes</span><button onclick="showModal('history')">VER / CORREGIR ›</button></div>`,`<div class="counter-total"><div class="total-heading">TOTAL ACUMULADO</div><div class="total-reading"><strong id="liveTotal">${fmt(countTotal())}</strong><span class="total-unit">${countedUnitUpper(p)}</span></div><div class="total-staged">● PROVISIONAL · SIN GUARDAR</div></div><div class="counter-footer"><button onclick="cancelCount()">← Artículos</button><button onclick="undoEntry()">↶ Deshacer</button><button onclick="prepareReview()">IR A CONFIRMAR →</button></div>`);drawCount();}
-function setMode(v){cMode=v;cStep=0;cInput='';cParts=[0,0,0];drawCount();}
+function renderCount(){const p=getProduct();const rec=getLoc(activeLoc).counts[p.id];place(`<div class="cproduct"><span>${esc(activeLoc)} · ${esc(p.id)}</span><b>${esc(p.name)}</b><small>Unidad de recuento: <strong>UNIDADES</strong></small></div><div class="modebar"><button id="modeDirect" onclick="setMode('direct')">+ CANTIDAD</button><button id="modePallet" onclick="setMode('pallet')">▦ CÁLCULO DE PALÉS</button></div><div class="between" style="margin-bottom:7px"><span class="muted" id="cStep" style="color:#b9cadd"></span><span id="cProgress" class="tag"></span></div><div class="display"><div class="caption"><span id="cCaption">Cantidad directa</span><span id="cUnit">${countedUnitUpper(p)}</span></div><div class="digits" id="cDigits">0</div><div class="desc" id="cDesc"></div></div><div class="keypad"><button onclick="digit('1')">1</button><button onclick="digit('2')">2</button><button onclick="digit('3')">3</button><button onclick="digit('4')">4</button><button onclick="digit('5')">5</button><button onclick="digit('6')">6</button><button onclick="digit('7')">7</button><button onclick="digit('8')">8</button><button onclick="digit('9')">9</button><button class="ctl" onclick="clearDigit()">BORRAR</button><button onclick="digit('0')">0</button><button class="ctl" onclick="backDigit()">⌫</button></div><button id="cAction" class="addbtn" onclick="actionDigit()">+ AÑADIR AL TOTAL</button><div class="count-feedback" id="countFeedback" role="status" aria-live="polite">Aún no has sumado cantidades.</div><div class="c-tools"><span id="cEntries">0 apuntes</span><button onclick="showModal('history')">VER / CORREGIR ›</button></div>`,`<div class="counter-total"><div class="total-heading">TOTAL ACUMULADO</div><div class="total-reading"><strong id="liveTotal">${fmt(countTotal())}</strong><span class="total-unit">${countedUnitUpper(p)}</span></div><div class="total-staged">● PROVISIONAL · SIN GUARDAR</div></div><div class="counter-footer"><button onclick="cancelCount()">← Artículos</button><button onclick="undoEntry()">↶ Deshacer</button><button onclick="prepareReview()">IR A CONFIRMAR →</button></div>`);drawCount();}
+function setMode(v){cMode=v;cStep=0;cInput='';cParts=[0,0,0,0];countFeedback='';drawCount();}
 function digit(n){if(cInput.length>=8)return;cInput=(cInput+n).replace(/^0+(?=\d)/,'');if(cInput==='0')cInput='';drawCount();}
 function clearDigit(){cInput='';drawCount()};function backDigit(){cInput=cInput.slice(0,-1);drawCount()};
-function drawCount(){if(screen!=='count')return;const n=valid(cInput)?Number(cInput):0;const lab=['Cajas por base','Número de alturas','Unidades por caja'];$('modeDirect').classList.toggle('on',cMode==='direct');$('modePallet').classList.toggle('on',cMode==='pallet');$('cDigits').textContent=cInput||'0';$('cCaption').textContent=cMode==='direct'?'Unidades contadas':lab[cStep];$('cStep').textContent=cMode==='direct'?'Introduce una cantidad suelta':'Palé · paso '+(cStep+1)+' de 3';$('cProgress').textContent=cMode==='direct'?'DIRECTO':(cStep+1)+'/3';$('cDesc').textContent=cMode==='direct'?'Cada añadido se suma al total.':cStep===0?'Indica las cajas por base.':cStep===1?'Base: '+cParts[0]+' cajas.':`${cParts[0]} × ${cParts[1]} × ${n||'…'} = ${n?fmt(cParts[0]*cParts[1]*n):'…'} ${countedUnit(getProduct())}`;$('cAction').textContent=cMode==='direct'?'+ AÑADIR CANTIDAD':cStep<2?'SIGUIENTE ›':'+ SUMAR PALÉ AL TOTAL';$('cAction').disabled=!n||(cMode==='pallet'&&cStep===2&&(!Number.isSafeInteger(cParts[0]*cParts[1]*n)||cParts[0]*cParts[1]*n>99999999));$('cEntries').textContent=pendingEntries.length+' '+(pendingEntries.length===1?'apunte':'apuntes')+' realizados';$('liveTotal').textContent=fmt(countTotal());$('countFeedback').textContent=countFeedback||'Cantidad aún no guardada. Pulsa AÑADIR para incorporarla al total.';}
+function drawCount(){
+ if(screen!=='count')return;
+ const n=valid(cInput)?Number(cInput):0;
+ const labels=['Número de palés','Cajas por base','Número de alturas','Unidades por caja'];
+ const units=['PALÉS','CAJAS','ALTURAS','UNIDADES'];
+ $('modeDirect').classList.toggle('on',cMode==='direct');
+ $('modePallet').classList.toggle('on',cMode==='pallet');
+ $('cDigits').textContent=cInput||'0';
+ $('cCaption').textContent=cMode==='direct'?'Unidades contadas':labels[cStep];
+ $('cUnit').textContent=cMode==='direct'?'UNIDADES':units[cStep];
+ $('cStep').textContent=cMode==='direct'?'Introduce una cantidad suelta':'Palés · paso '+(cStep+1)+' de 4';
+ $('cProgress').textContent=cMode==='direct'?'DIRECTO':(cStep+1)+'/4';
+ let product=0;
+ if(cMode==='direct'){
+  $('cDesc').textContent='Cada añadido se suma al total provisional.';
+ }else{
+  const guide=[
+   '¿Cuántos palés iguales quieres contar?',
+   'Palés: '+cParts[0]+'. Indica las cajas de cada base.',
+   cParts[0]+' palés × '+cParts[1]+' cajas/base. Indica las alturas.',
+   'Si cada caja cuenta como una unidad, introduce 1.'
+  ];
+  if(cStep===3&&n){
+   product=cParts[0]*cParts[1]*cParts[2]*n;
+   $('cDesc').textContent=[...cParts.slice(0,3),n].join(' × ')+' = '+fmt(product)+' unidades';
+  }else{$('cDesc').textContent=guide[cStep];}
+ }
+ $('cAction').textContent=cMode==='direct'?'+ AÑADIR CANTIDAD':cStep<3?'SIGUIENTE ›':'+ SUMAR PALÉS AL TOTAL';
+ const tooLarge=cMode==='pallet'&&cStep===3&&n&&(!Number.isSafeInteger(product)||product>99999999);
+ $('cAction').disabled=!n||!!tooLarge;
+ if(tooLarge)$('cDesc').textContent='Resultado demasiado grande. Revisa los factores.';
+ $('cEntries').textContent=pendingEntries.length+' '+(pendingEntries.length===1?'apunte':'apuntes')+' realizados';
+ $('liveTotal').textContent=fmt(countTotal());
+ $('countFeedback').textContent=countFeedback||'Cantidad aún no guardada. Pulsa AÑADIR para incorporarla al total.';
+}
 function actionDigit(){
  if(!valid(cInput))return;
  const n=Number(cInput);let added=0;
  if(cMode==='direct'){
-   pendingEntries.push({kind:'directa',detail:`${n} ${countedUnit(getProduct())}`,amount:n});added=n;cInput='';
+  pendingEntries.push({kind:'directa',detail:n+' unidades',amount:n});added=n;cInput='';
  }else{
-   cParts[cStep]=n;
-   if(cStep<2){cStep++;cInput='';countFeedback='Palé en preparación. Falta completar los factores.';}
-   else{
-     const amount=cParts[0]*cParts[1]*cParts[2];
-     if(!Number.isSafeInteger(amount)||amount>99999999)return;
-     pendingEntries.push({kind:'palé',detail:cParts.join(' × '),amount});added=amount;
-     cStep=0;cInput='';cParts=[0,0,0];
-   }
+  cParts[cStep]=n;
+  if(cStep<3){cStep++;cInput='';countFeedback='Cálculo de palés en preparación. Falta completar los factores.';}
+  else{
+   const amount=cParts.reduce((acc,val)=>acc*val,1);
+   if(!Number.isSafeInteger(amount)||amount>99999999)return;
+   pendingEntries.push({kind:'palés',detail:cParts[0]+' palés × '+cParts[1]+' cajas/base × '+cParts[2]+' alturas × '+cParts[3]+' unidades/caja',amount});
+   added=amount;cStep=0;cInput='';cParts=[0,0,0,0];
+  }
  }
- if(added)countFeedback=`✓ +${fmt(added)} AÑADIDAS · TOTAL ${fmt(countTotal())} · TODAVÍA SIN GUARDAR`;
+ if(added)countFeedback='✓ +'+fmt(added)+' UNIDADES AÑADIDAS · TOTAL '+fmt(countTotal())+' · TODAVÍA SIN GUARDAR';
  drawCount();
 }
 function undoEntry(){if(pendingEntries.length){const n=pendingEntries.pop().amount;countFeedback=`↶ Se han quitado ${fmt(n)} unidades · total ${fmt(countTotal())}. Aún sin guardar.`;}drawCount();}
