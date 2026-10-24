@@ -132,7 +132,52 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 .inline-entry-editor .input{margin-top:5px;min-width:0}
 .entry-detail:has(.inline-entry-editor){flex-wrap:wrap}
 .entry-factor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+
+/* INVENTA v0.24 — cámara y base propia de códigos */
+.scan-open{display:block;width:100%;min-height:52px;background:#193b59;color:white;font-size:16px;font-weight:900;border:0;border-radius:12px;margin:10px 0}
+#scanOverlay[hidden],#scanUnknown[hidden]{display:none!important}
+#scanOverlay{position:fixed;z-index:90;inset:0;background:#071827ef;display:flex;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom))}
+.scan-card{width:min(560px,100%);max-height:100%;overflow-y:auto;padding:14px;background:#fff;color:#1c3549;border-radius:17px;box-shadow:0 12px 40px #0007}
+.scan-card h2{font-size:21px;margin:4px 0 8px}
+.scan-card p{font-size:13px;line-height:1.45;color:#576f82;margin:0 0 9px}
+#scanReader{background:#101f2d;min-height:180px;overflow:hidden;border-radius:13px;margin:10px 0}
+#scanReader video{width:100%!important;max-height:340px;object-fit:cover;border-radius:12px}
+#scanReader img{display:none}
+#scanStatus{font-size:13px;font-weight:850;color:#244b62;min-height:39px;line-height:1.5;margin:9px 0}
+.scan-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.scan-controls button,.scan-manual button{min-height:45px;padding:8px;border-radius:10px;font-size:13px;font-weight:900;border:1px solid #bdd3e3;background:#e7f2f9;color:#1b4661}
+.scan-controls .scan-retry{background:#163e5a;color:#fff;border-color:#163e5a}
+.scan-manual{margin-top:12px}
+.scan-manual label,.scan-link-label{font-size:12px;font-weight:900;display:block;color:#567187;margin-bottom:6px}
+.scan-manual-row{display:flex;gap:7px}
+.scan-manual-row .input{min-width:0;flex:1}
+.scan-manual-row button{flex:0 0 auto;background:#164966;color:#fff}
+#scanUnknown{background:#fff2df;border:1px solid #dfb96a;padding:12px;margin-top:10px;border-radius:12px}
+#scanUnknown p{color:#6b4c1b}
+#scanUnknown button{width:100%;min-height:44px;background:#92570c;color:#fff;border:0;border-radius:9px;padding:7px;font-size:14px;font-weight:850;margin-top:9px}
+#scanUnknown button.scan-secondary{background:#f7e7c9;color:#714b13;border:1px solid #ddbb7b}
+#scanLinkArticle{font-size:15px}
 </style></head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
+<div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
+  <div class="scan-card">
+    <h2 id="scanTitle">Escanear código</h2>
+    <p>Acerca la etiqueta a la cámara. No hace falta ninguna confirmación adicional de INVENTA.</p>
+    <div id="scanReader"></div>
+    <p id="scanStatus" role="status" aria-live="polite">Abriendo cámara…</p>
+    <div class="scan-controls"><button type="button" onclick="stopScanner()">Cerrar cámara</button><button type="button" class="scan-retry" onclick="restartScanner()">Volver a intentar</button></div>
+    <div id="scanUnknown" hidden>
+      <p id="scanUnknownText"></p>
+      <label class="scan-link-label" for="scanLinkArticle">Artículo de Business Central al que corresponde</label>
+      <select id="scanLinkArticle" class="input"></select>
+      <button type="button" onclick="saveScannedAssociation()">Guardar relación y abrir artículo</button>
+      <button type="button" class="scan-secondary" onclick="scanAddUnexpected()">No aparece: artículo no previsto</button>
+    </div>
+    <div class="scan-manual">
+      <label for="scanManual">Introducir código manualmente</label>
+      <div class="scan-manual-row"><input id="scanManual" class="input" type="text" autocomplete="off" autocapitalize="characters" placeholder="Código de etiqueta"><button type="button" onclick="submitScanManual()">Aceptar</button></div>
+    </div>
+  </div>
+</div>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -144,8 +189,9 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.23.0';
+const APP_VERSION='0.24.0';
 const KEY='inventa-demo-operario-v015';
+// Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
 const blank=()=>({version:1,worker:'',locations:{},events:[]});
 function load(){try{const p=JSON.parse(localStorage.getItem(KEY));if(p?.version===1&&p.locations)return p;}catch(e){}return blank();}
@@ -250,11 +296,161 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();if(s==='review'||s==='discrepancy'||s==='edit-detail')saveDraft();showPendingUpdate();}
-function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.23</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
+function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.24</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
 function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='login')renderLogin();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderLocations();}
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
 function login(){if($('pin').value!=='1234'){$('loginError').textContent='PIN incorrecto. Usa el PIN de demostración.';return;}data.worker=$('worker').value;activeAisle='';save();const d=readDraft(data.worker);if(d){restoreDraft(d);render();}else go('aisles');}
+
+/* Escáner móvil. La cámara se abre al pulsar; solo el sistema operativo gestiona permisos. */
+const normCode=v=>String(v??'').trim().toUpperCase();
+const printableCode=v=>typeof v==='string'&&v.length>=3&&v.length<=180&&!/[\x00-\x1f\x7f]/.test(v);
+let scanMode=null,scanActive=0,scanReader=null,scanBusy=false,scanUnknownCode='',scanLibraryPromise=null,scanPendingStart=null;
+function catalog(){return data.barcodeCatalog||(data.barcodeCatalog={});}
+function articleCodes(p){
+ return [p.id,p.barcode,p.ean,p.gtin,...(Array.isArray(p.barcodes)?p.barcodes:[])].filter(Boolean).map(normCode);
+}
+function codeForArticle(code){
+ const key=normCode(code);
+ const own=catalog()[key];
+ if(own&&typeof own.articleId==='string')return own.articleId;
+ for(const loc in TEST){const p=TEST[loc].find(x=>articleCodes(x).includes(key));if(p)return p.id;}
+ for(const loc in data.locations){const p=(data.locations[loc]?.extras||{})[key];if(p)return key;}
+ return null;
+}
+function matchLocalArticle(code){
+ const key=normCode(code),articleId=codeForArticle(key);
+ return items(activeLoc).find(p=>p.id===articleId||articleCodes(p).includes(key))||null;
+}
+function updateScanStatus(text){const e=$('scanStatus');if(e)e.textContent=text;}
+function scannerFailure(error){
+ const n=String(error?.name||'');
+ if(n==='NotAllowedError'||n==='PermissionDeniedError')return 'El navegador ha bloqueado la cámara. Autorízala en los ajustes del sitio o introduce el código manualmente.';
+ if(n==='NotFoundError'||n==='DevicesNotFoundError')return 'No hay ninguna cámara disponible. Puedes introducir el código manualmente.';
+ if(n==='NotReadableError')return 'La cámara está siendo usada por otra aplicación.';
+ if(!navigator.onLine)return 'Sin conexión para descargar el lector. La entrada manual sigue disponible.';
+ return 'No se pudo abrir el lector de códigos. Prueba otra vez o escribe el código.';
+}
+function loadScanLibrary(){
+ if(window.Html5Qrcode)return Promise.resolve(window.Html5Qrcode);
+ if(scanLibraryPromise)return scanLibraryPromise;
+ scanLibraryPromise=new Promise((resolve,reject)=>{
+  const t=document.createElement('script');
+  t.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+  t.async=true;t.crossOrigin='anonymous';
+  t.onload=()=>window.Html5Qrcode?resolve(window.Html5Qrcode):reject(new Error('Lector no disponible'));
+  t.onerror=()=>reject(new Error('Error al cargar librería de códigos'));
+  document.head.appendChild(t);
+ }).catch(e=>{scanLibraryPromise=null;throw e;});
+ return scanLibraryPromise;
+}
+async function shutdownScanCamera(){
+ const reader=scanReader;scanReader=null;
+ if(reader){try{if(reader.isScanning)await reader.stop();reader.clear();}catch(e){}}
+}
+function stopScanner(){
+ ++scanActive;scanMode=null;scanBusy=false;scanUnknownCode='';
+ $('scanOverlay').hidden=true;
+ const reader=scanReader;scanReader=null;
+ if(reader){try{if(reader.isScanning)reader.stop().then(()=>reader.clear()).catch(()=>{});else reader.clear();}catch(e){}}
+}
+function openScanner(mode){
+ if(!['location','verify','article'].includes(mode))return;
+ // No custom permission screen. The button triggers the camera operation.
+ stopScanner();scanMode=mode;scanBusy=false;scanUnknownCode='';
+ $('scanOverlay').hidden=false;$('scanUnknown').hidden=true;
+ $('scanTitle').textContent=mode==='location'?'Escanear ubicación':mode==='verify'?'Verificar ubicación':'Escanear artículo';
+ $('scanManual').value='';$('scanReader').innerHTML='';
+ updateScanStatus('Abriendo cámara tras pulsar Escanear…');
+ startScanner(scanActive);
+}
+async function startScanner(token){
+ if(token!==scanActive||!scanMode)return;
+ if(!navigator.mediaDevices?.getUserMedia){
+  updateScanStatus('Este navegador no permite abrir la cámara desde INVENTA. Escribe el código manualmente.');
+  return;
+ }
+ try{
+  const Scanner=await loadScanLibrary();if(token!==scanActive||!scanMode)return;
+  const formatNames=['QR_CODE','CODE_128','EAN_13','EAN_8','UPC_A','UPC_E','CODE_39','ITF','DATA_MATRIX','CODABAR'];
+  const supported=formatNames.map(n=>window.Html5QrcodeSupportedFormats?.[n]).filter(n=>n!==undefined);
+  const config=supported.length?{formatsToSupport:supported,verbose:false}:{verbose:false};
+  const instance=new Scanner('scanReader',config);scanReader=instance;
+  const onRead=(text)=>{if(token===scanActive&&!scanBusy)handleScanned(text);};
+  const options={fps:10,aspectRatio:1.3,disableFlip:true};
+  await instance.start({facingMode:'environment'},options,onRead,()=>{});
+  if(token!==scanActive){await shutdownScanCamera();return;}
+  updateScanStatus('Cámara abierta. Centra el código de barras o QR hasta reconocerlo.');
+ }catch(err){if(token===scanActive)updateScanStatus(scannerFailure(err));}
+}
+function restartScanner(){
+ if(!scanMode)return;
+ const mode=scanMode;stopScanner();openScanner(mode);
+}
+function submitScanManual(){handleScanned($('scanManual').value);}
+function handleScanned(raw){
+ const code=normCode(raw);
+ if(!printableCode(code)){updateScanStatus('Código vacío o no válido. Revisa la etiqueta.');return;}
+ if(scanBusy)return;
+ scanBusy=true;
+ const mode=scanMode;
+ if(mode==='location'){
+  const loc=Object.keys(TEST).find(k=>normCode(k)===code);
+  if(!loc){updateScanStatus('La ubicación '+code+' no existe en los datos cargados.');scanBusy=false;return;}
+  if(!assignedAisles().includes(aisleFor(loc))){updateScanStatus('Esta ubicación no está asignada al operario.');scanBusy=false;return;}
+  stopScanner();activeAisle=aisleFor(loc);openLocation(loc);return;
+ }
+ if(mode==='verify'){
+  if(code!==normCode(activeLoc)){updateScanStatus('Código '+code+' distinto de '+activeLoc+'. No se confirma la ubicación.');scanBusy=false;return;}
+  stopScanner();verifyValue=code;const d=getLoc(activeLoc);d.verified=true;
+  data.events.push({what:'Ubicación confirmada',loc:activeLoc,mode:'cámara',at:new Date().toISOString()});
+  save();go('articles');return;
+ }
+ if(mode==='article'){
+  const article=matchLocalArticle(code);
+  if(article){stopScanner();openArticle(article.id);return;}
+  scanUnknownCode=code;
+  const globalMatch=codeForArticle(code);
+  const available=items(activeLoc).filter(p=>!p.extra);
+  $('scanUnknownText').textContent=globalMatch?
+   'Este código está vinculado al artículo '+globalMatch+', pero no está listado en la ubicación '+activeLoc+'. No se reasignará automáticamente.':
+   'Código '+code+' no encontrado. Puedes asociarlo a una referencia de esta ubicación para futuras lecturas.';
+  const selector=$('scanLinkArticle');
+  selector.innerHTML='<option value="">Selecciona el artículo correcto…</option>'+available.map(p=>
+   '<option value="'+esc(p.id)+'">'+esc(p.id)+' · '+esc(p.name)+'</option>').join('');
+  selector.disabled=!!globalMatch;
+  $('scanUnknown').hidden=false;
+  updateScanStatus(globalMatch?'Código conocido en otra ubicación: verifica antes de continuar.':'Código desconocido. Confirma la referencia antes de guardarlo.');
+  scanBusy=false;
+ }
+}
+function saveScannedAssociation(){
+ const raw=scanUnknownCode,key=normCode(raw),id=$('scanLinkArticle').value;
+ if(!raw||!id){updateScanStatus('Selecciona el artículo al que pertenece la etiqueta.');return;}
+ if(!items(activeLoc).some(p=>p.id===id)){updateScanStatus('Referencia fuera de esta ubicación.');return;}
+ const registered=codeForArticle(key);
+ if(registered&&registered!==id){updateScanStatus('Conflicto: el código ya corresponde a '+registered+'. No se ha cambiado la relación.');return;}
+ const previous=catalog()[key];
+ const at=new Date().toISOString();
+ catalog()[key]={articleId:id,code:raw,source:'INVENTA',createdAt:previous?.createdAt||at,createdBy:previous?.createdBy||data.worker,updatedAt:at};
+ data.events.push({what:'Código asociado',barcode:key,article:id,worker:data.worker,at});
+ save();stopScanner();savedFeedback='✓ Código vinculado a '+id+' y guardado en la base local.';
+ openArticle(id);
+}
+function scanAddUnexpected(){
+ if(!scanUnknownCode||!confirm('Este código no corresponde a ningún artículo de la ubicación. ¿Quieres registrarlo como artículo no previsto?'))return;
+ const code=scanUnknownCode;
+ stopScanner();showModal('unexpected');
+ $('unknownCode').value=code.slice(0,28);
+}
+function exportBarcodeCatalog(){
+ const catalogData={schema:'INVENTA_BARCODES_V1',exportedAt:new Date().toISOString(),barcodes:catalog()};
+ const blob=new Blob([JSON.stringify(catalogData,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download='INVENTA_BASE_CODIGOS_'+new Date().toISOString().slice(0,10)+'.json';
+ document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),500);
+}
+
 function renderAisles(){
  const aisles=assignedAisles();
  const tiles=aisles.map(a=>{
@@ -288,6 +484,7 @@ function renderLocations(){
   return `<button class="item location-item ${state} ${issue}" onclick="openLocation('${l}')"><span><strong>${l}</strong><small>${detail}</small></span>${suffix}<span class="chev">›</span></button>`;
  }).join('');
  place(`<div class="title"><div class="overline">PASILLO ${activeAisle} · UBICACIONES</div><div class="between"><h1>${activeAisle} · Mis ubicaciones</h1><span class="tag">${counts.counted}/${counts.all} revisadas</span></div><p class="muted">Las ubicaciones con fondo verde ya tienen todos sus artículos revisados.</p></div>
+ <button class="scan-open" onclick="openScanner(\'location\')">▣ Escanear ubicación</button>
  <div class="filters">${options.map(([key,label])=>`<button class="${locationFilter===key?'selected':''}" onclick="setLocationFilter('${key}')">${label}<span>${counts[key]}</span></button>`).join('')}</div>
  ${html || '<div class="card"><p class="muted">No hay ubicaciones con este filtro.</p></div>'}
  <p class="muted">⚠ señala una diferencia o incidencia sin mostrar las existencias teóricas.</p>`,
@@ -295,9 +492,9 @@ function renderLocations(){
 }
 
 function openLocation(loc){if(aisleFor(loc)!==activeAisle)return;savedFeedback='';activeLoc=loc;const d=getLoc(loc);if(d.closed){go('closed')}else if(d.verified){go('articles')}else{verifyValue='';go('verify')}}
-function renderVerify(){place(`<div class="title"><div class="overline">PASO 1 · UBICACIÓN</div><h1>${activeLoc}</h1><p class="muted">Comprueba que estás delante de la ubicación correcta. Puedes leer su etiqueta con un escáner que escriba el código, o confirmarla visualmente.</p></div><div class="card"><div class="field"><label for="locationBarcode">Código de ubicación</label><input class="input" id="locationBarcode" autocapitalize="characters" autocomplete="off" placeholder="${activeLoc}" value="${esc(verifyValue)}"></div><button class="btn" onclick="confirmLocation(false)">Verificar código →</button><div style="height:11px"></div><button class="btn btn-light" onclick="confirmLocation(true)">Confirmar visualmente</button><p id="verifyError" class="muted" style="margin-top:9px"></p></div>`,`<button class="back" onclick="go('locations')">← Ubicaciones del pasillo</button>`);$('locationBarcode').addEventListener('keydown',e=>{if(e.key==='Enter')confirmLocation(false)});}
+function renderVerify(){place(`<div class="title"><div class="overline">PASO 1 · UBICACIÓN</div><h1>${activeLoc}</h1><p class="muted">Comprueba que estás delante de la ubicación correcta. Puedes leer su etiqueta con un escáner que escriba el código, o confirmarla visualmente.</p></div><div class="card"><div class="field"><label for="locationBarcode">Código de ubicación</label><input class="input" id="locationBarcode" autocapitalize="characters" autocomplete="off" placeholder="${activeLoc}" value="${esc(verifyValue)}"></div><button class="scan-open" onclick="openScanner(\'verify\')">▣ Leer etiqueta con cámara</button><button class="btn" onclick="confirmLocation(false)">Verificar código →</button><div style="height:11px"></div><button class="btn btn-light" onclick="confirmLocation(true)">Confirmar visualmente</button><p id="verifyError" class="muted" style="margin-top:9px"></p></div>`,`<button class="back" onclick="go('locations')">← Ubicaciones del pasillo</button>`);$('locationBarcode').addEventListener('keydown',e=>{if(e.key==='Enter')confirmLocation(false)});}
 function confirmLocation(manual){if(!manual&&$('locationBarcode').value.trim().toUpperCase()!==activeLoc){$('verifyError').textContent='El código no coincide con '+activeLoc+'. Revisa la ubicación.';return;}const d=getLoc(activeLoc);d.verified=true;data.events.push({what:'Ubicación confirmada',loc:activeLoc,mode:manual?'visual':'código',at:new Date().toISOString()});save();go('articles');}
-function renderArticles(){const d=getLoc(activeLoc),a=items(activeLoc),p=progress(activeLoc);place(`${savedFeedback?`<div class="alert ${savedFeedback.startsWith('⚠')?'':'green'}" role="status">${savedFeedback}</div>`:""}<div class="title"><div class="overline">PASO 2 · ARTÍCULOS</div><div class="between"><h1>${activeLoc}</h1><span class="tag ${p.done===p.total?'ok':''}">${p.done}/${p.total} contados</span></div><p class="muted">Pulsa un artículo o busca su código. Sin cantidades teóricas.</p></div><p class="article-legend"><b>■ Verde</b>: recuento válido · <span style="color:#ad6e18">■ Naranja</span>: incidencia pendiente</p><div class="field"><input class="input" id="articleSearch" placeholder="Buscar por código o nombre" oninput="filterArticles(this.value)"></div><div id="articleList"></div><div class="card"><button class="btn-outline" style="width:100%" onclick="showModal('unexpected')">+ Artículo que no aparece en la lista</button></div>${a.length===0?'<div class="alert">No hay artículos previstos. Si la ubicación está realmente vacía, puedes confirmarlo abajo.</div>':''}`,`<div class="stack"><button class="btn" onclick="${p.done<p.total?'nextPending()':'closeLocation()'}">${p.done<p.total?'Contar siguiente artículo pendiente →':a.length===0?'Revisar ubicación vacía →':'Revisar y cerrar ubicación →'}</button><button class="back" onclick="go('locations')">← Ubicaciones de ${activeAisle}</button></div>`);filterArticles('');}
+function renderArticles(){const d=getLoc(activeLoc),a=items(activeLoc),p=progress(activeLoc);place(`${savedFeedback?`<div class="alert ${savedFeedback.startsWith('⚠')?'':'green'}" role="status">${savedFeedback}</div>`:""}<div class="title"><div class="overline">PASO 2 · ARTÍCULOS</div><div class="between"><h1>${activeLoc}</h1><span class="tag ${p.done===p.total?'ok':''}">${p.done}/${p.total} contados</span></div><p class="muted">Pulsa un artículo o busca su código. Sin cantidades teóricas.</p></div><p class="article-legend"><b>■ Verde</b>: recuento válido · <span style="color:#ad6e18">■ Naranja</span>: incidencia pendiente</p><button class="scan-open" onclick="openScanner(\'article\')">▣ Escanear artículo</button><div class="field"><input class="input" id="articleSearch" placeholder="Buscar por código o nombre" oninput="filterArticles(this.value)"></div><div id="articleList"></div><div class="card"><button class="btn-outline" style="width:100%" onclick="showModal('unexpected')">+ Artículo que no aparece en la lista</button></div>${a.length===0?'<div class="alert">No hay artículos previstos. Si la ubicación está realmente vacía, puedes confirmarlo abajo.</div>':''}`,`<div class="stack"><button class="btn" onclick="${p.done<p.total?'nextPending()':'closeLocation()'}">${p.done<p.total?'Contar siguiente artículo pendiente →':a.length===0?'Revisar ubicación vacía →':'Revisar y cerrar ubicación →'}</button><button class="back" onclick="go('locations')">← Ubicaciones de ${activeAisle}</button></div>`);filterArticles('');}
 function filterArticles(query){
  const a=items(activeLoc).filter(p=>(p.id+' '+p.name).toLowerCase().includes(String(query).toLowerCase()));
  $('articleList').innerHTML=a.length?a.map(p=>{
@@ -670,14 +867,14 @@ function showModal(m){modal=m;let body='';if(m==='history'){hideModal();openBrea
  +'<div class="field" id="reasonDetailsWrap" hidden><label for="reasonDetails">Explica el motivo</label><textarea id="reasonDetails" class="input" style="min-height:90px" placeholder="Qué ha sucedido y por qué se corrige"></textarea></div>'
  +'<p id="reasonError" class="muted" style="color:#b32836"></p>'
  +'<div class="stack"><button class="btn" onclick="acceptEditReason()">Continuar con la modificación</button><button class="btn-outline" onclick="hideModal()">Cancelar</button></div>';
-}else if(m==='menu'){body=`<h2>Opciones de prueba</h2><p class="muted">Versión instalada: v${APP_VERSION}. Usuario: ${esc(data.worker)}. Los recuentos se guardan en este dispositivo.</p><div class="stack" style="margin-top:12px"><button class="btn-outline" onclick="hideModal();checkForUpdates(true)">↻ Buscar actualizaciones</button><button class="btn-outline" onclick="installHelp()">Cómo instalar INVENTA</button><button class="btn-outline" onclick="resetDemo()">Restablecer datos de prueba</button><button class="btn-outline" onclick="logout()">Cambiar operario</button><button class="btn" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='help'){body=`<h2>Instalar INVENTA</h2><p class="muted">En iPhone: abre esta dirección desde Safari, pulsa Compartir y elige <b>Añadir a pantalla de inicio</b>. Después abre el icono INVENTA. En Android: menú de Chrome → Instalar aplicación.</p><p class="muted" style="margin-top:10px">Los archivos básicos se guardan tras la primera carga. Los datos de prueba son solo locales.</p><button class="btn" style="margin-top:12px" onclick="hideModal()">Entendido</button>`;}else if(m==='unexpected'){body=`<h2>Artículo no listado</h2><p class="muted">Registra provisionalmente un artículo encontrado en ${activeLoc}. En la aplicación definitiva se comunicará una incidencia al responsable.</p><div class="field" style="margin-top:11px"><label for="unknownCode">Código de artículo</label><input class="input" id="unknownCode" placeholder="Ej. PRD0009999"></div><div class="field"><label for="unknownName">Descripción (opcional)</label><input class="input" id="unknownName" placeholder="Artículo encontrado"></div><button class="btn" onclick="addUnexpected()">Añadir a esta ubicación</button><button class="back" onclick="hideModal()">Cancelar</button><p id="modalError" class="muted"></p>`;}else if(m==='missing'){const rem=items(activeLoc).filter(p=>!getLoc(activeLoc).counts[p.id]).length;body=`<h2>Quedan artículos sin revisar</h2><p class="muted">Debes contar o marcar «No encontrado» en ${rem} artículo(s) antes de cerrar ${activeLoc}.</p><button class="btn" style="margin-top:11px" onclick="hideModal()">Seguir contando</button>`;}else if(m==='emptycount'){body=`<h2>Sin cantidades</h2><p class="muted">Todavía no hay unidades apuntadas. Si el producto no está en esta ubicación, utiliza «No encontrado».</p><button class="btn" style="margin-top:10px" onclick="markNotFound()">No encontrado</button><button class="btn-outline" style="width:100%;margin-top:8px" onclick="hideModal()">Seguir contando</button>`;}
+}else if(m==='menu'){body=`<h2>Opciones de prueba</h2><p class="muted">Versión instalada: v${APP_VERSION}. Usuario: ${esc(data.worker)}. Los recuentos se guardan en este dispositivo.</p><div class="stack" style="margin-top:12px"><button class="btn-outline" onclick="hideModal();checkForUpdates(true)">↻ Buscar actualizaciones</button><button class="btn-outline" onclick="exportBarcodeCatalog()">Exportar base de códigos (JSON)</button><button class="btn-outline" onclick="installHelp()">Cómo instalar INVENTA</button><button class="btn-outline" onclick="resetDemo()">Restablecer datos de prueba</button><button class="btn-outline" onclick="logout()">Cambiar operario</button><button class="btn" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='help'){body=`<h2>Instalar INVENTA</h2><p class="muted">En iPhone: abre esta dirección desde Safari, pulsa Compartir y elige <b>Añadir a pantalla de inicio</b>. Después abre el icono INVENTA. En Android: menú de Chrome → Instalar aplicación.</p><p class="muted" style="margin-top:10px">Los archivos básicos se guardan tras la primera carga. Los datos de prueba son solo locales.</p><button class="btn" style="margin-top:12px" onclick="hideModal()">Entendido</button>`;}else if(m==='unexpected'){body=`<h2>Artículo no listado</h2><p class="muted">Registra provisionalmente un artículo encontrado en ${activeLoc}. En la aplicación definitiva se comunicará una incidencia al responsable.</p><div class="field" style="margin-top:11px"><label for="unknownCode">Código de artículo</label><input class="input" id="unknownCode" placeholder="Ej. PRD0009999"></div><div class="field"><label for="unknownName">Descripción (opcional)</label><input class="input" id="unknownName" placeholder="Artículo encontrado"></div><button class="btn" onclick="addUnexpected()">Añadir a esta ubicación</button><button class="back" onclick="hideModal()">Cancelar</button><p id="modalError" class="muted"></p>`;}else if(m==='missing'){const rem=items(activeLoc).filter(p=>!getLoc(activeLoc).counts[p.id]).length;body=`<h2>Quedan artículos sin revisar</h2><p class="muted">Debes contar o marcar «No encontrado» en ${rem} artículo(s) antes de cerrar ${activeLoc}.</p><button class="btn" style="margin-top:11px" onclick="hideModal()">Seguir contando</button>`;}else if(m==='emptycount'){body=`<h2>Sin cantidades</h2><p class="muted">Todavía no hay unidades apuntadas. Si el producto no está en esta ubicación, utiliza «No encontrado».</p><button class="btn" style="margin-top:10px" onclick="markNotFound()">No encontrado</button><button class="btn-outline" style="width:100%;margin-top:8px" onclick="hideModal()">Seguir contando</button>`;}
 $('overlay').innerHTML=`<div class="modalback" onclick="if(event.target===this)hideModal()"><div class="modal">${body}</div></div>`;}
 function hideModal(){$('overlay').innerHTML='';modal='';}
 function removeEntry(i){hideModal();openBreakdown();if(i>=0&&i<pendingEntries.length)openEntryEdit(i);}
 function addUnexpected(){const code=$('unknownCode').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,28);if(!code){$('modalError').textContent='Introduce un código.';return;}if(items(activeLoc).some(p=>p.id===code)){$('modalError').textContent='Ese artículo ya existe en la ubicación.';return;}const name=$('unknownName').value.trim().slice(0,90);getLoc(activeLoc).extras[code]={name:name||'Artículo encontrado no previsto'};data.events.push({what:'Artículo provisional',loc:activeLoc,article:code,at:new Date().toISOString()});save();hideModal();go('articles');}
 function installHelp(){hideModal();showModal('help')}
 function logout(){data.worker='';activeAisle='';save();hideModal();go('login')}
-function resetDemo(){if(!confirm('¿Borrar todos los recuentos de esta DEMO en este dispositivo?'))return;clearDraft('Operario 1');clearDraft('Operario 2');data=blank();save();hideModal();go('login')}
+function resetDemo(){if(!confirm('¿Borrar todos los recuentos de esta DEMO? La base de códigos aprendidos se conservará.'))return;const codes={...catalog()};clearDraft('Operario 1');clearDraft('Operario 2');data=blank();data.barcodeCatalog=codes;save();hideModal();go('login')}
 window.addEventListener('online',()=>{if(screen==='locations')render()});window.addEventListener('offline',()=>{if(screen==='locations')render()});
 window.addEventListener('load',initInventaUpdates);
 if(data.worker){const d=readDraft(data.worker);if(d)restoreDraft(d);}
