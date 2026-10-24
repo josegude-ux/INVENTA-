@@ -259,7 +259,7 @@ function statusLabel(p){if(p.flagged)return '⚠ Revisar';if(p.complete)return '
 function statusArticle(loc,p){return getLoc(loc).counts[p.id];}
 function incidentArticle(loc,p){return getLoc(loc).incidents[p.id];}
 let updateReady=false, updating=false, lastCheck=0, hadController=false, bootAt=Date.now(), reloadedForUpdate=false;
-function countingInProgress(){return ['count','review','discrepancy'].includes(screen);}
+function countingInProgress(){return ['count','review','discrepancy','edit-detail'].includes(screen)||!!scanMode;}
 function showPendingUpdate(){
  const el=$('updateBanner');if(!el)return;
  if(!updateReady){el.hidden=true;return;}
