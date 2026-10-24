@@ -7,7 +7,8 @@ var BASE='https://wlejxnpphysogrzcxjfh.supabase.co';
 var KEY='sb_publishable_gPeof-fUW3yITvNXqsjHVw_-PjB1Fyd';
 var STORE='inventa-real-auth-v1';
 var session=null,profile=null,section='dashboard',pending=false,notice='';
-var catalogView='aisles',catalogAisle='',catalogLocation='',renderSerial=0;
+var catalogView='aisles',catalogAisle='',catalogLocation='',renderSerial=0,refreshTask=null;
+var permissionVersions={};
 function safe(s){return String(s===null||s===undefined?'':s).replace(/[&<>"']/g,function(k){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[k];});}
 function val(id){var e=document.getElementById(id);return e?e.value.trim():'';}
 function show(html,footer){if(typeof place==='function')place(html,footer||'<button class="back" onclick="go(\'home\')">← Menú principal</button>');}
@@ -19,8 +20,17 @@ function alertBox(){return notice?'<div class="alert" role="status">'+safe(notic
 function heading(k,t,sub){return '<div class="title"><div class="overline">'+safe(k)+'</div><h1>'+safe(t)+'</h1><p class="muted">'+safe(sub||'')+'</p></div>';}
 function activity(k){notice=k;return k;}
 function authHeaders(){var headers={'apikey':KEY,'Content-Type':'application/json'};if(session&&session.access_token)headers.Authorization='Bearer '+session.access_token;return headers;}
-async function request(url,options){var o=options||{};var headers=authHeaders();if(url.indexOf('/auth/v1/token')===0||url.indexOf('/auth/v1/signup')===0)delete headers.Authorization;o.headers=Object.assign(headers,o.headers||{});var res=await fetch(BASE+url,o);var data=await res.text(),obj;try{obj=JSON.parse(data);}catch(e){obj=data;}if(!res.ok){var msg=obj&&typeof obj==='object'?(obj.message||obj.msg||obj.error_description||obj.error||obj.hint||obj.code):obj;throw Error(String(msg||'Error '+res.status));}return obj;}
-async function refresh(){if(!session||!session.refresh_token)return false;try{var s=await request('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:session.refresh_token})});session=s;localStorage.setItem(STORE,JSON.stringify(s));return true;}catch(e){session=null;profile=null;localStorage.removeItem(STORE);return false;}}
+async function request(url,options){var o=options||{};var headers=authHeaders();if(url.indexOf('/auth/v1/token')===0||url.indexOf('/auth/v1/signup')===0)delete headers.Authorization;o.headers=Object.assign(headers,o.headers||{});var res=await fetch(BASE+url,o);var data=await res.text(),obj;try{obj=JSON.parse(data);}catch(e){obj=data;}if(!res.ok){var msg=obj&&typeof obj==='object'?(obj.message||obj.msg||obj.error_description||obj.error||obj.hint||obj.code):obj;var err=Error(String(msg||'Error '+res.status));err.status=res.status;err.code=obj&&obj.code;throw err;}return obj;}
+function saveSession(s){if(s&&!s.expires_at)s.expires_at=Math.floor(Date.now()/1000)+(s.expires_in||3600);session=s;localStorage.setItem(STORE,JSON.stringify(s));}
+async function refresh(){
+ if(!session||!session.refresh_token)return false;
+ if(refreshTask)return refreshTask;
+ refreshTask=(async function(){
+  try{saveSession(await request('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:session.refresh_token})}));return true;}
+  catch(e){if(e.status===400||e.status===401){session=null;profile=null;localStorage.removeItem(STORE);}throw e;}
+ })();
+ try{return await refreshTask;}finally{refreshTask=null;}
+}
 async function api(table,params,method,body){if(session&&session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();var opts={method:method||'GET',headers:method&&method!=='GET'?{'Prefer':'return=representation'}:{}};if(body!==undefined)opts.body=JSON.stringify(body);return request('/rest/v1/'+table+(params?'?'+params:''),opts);}
 function isManager(){return !!(session&&profile&&profile.enabled&&['supervisor','admin'].includes(profile.role));}
 function isAdmin(){return isManager()&&profile.role==='admin';}
@@ -31,7 +41,7 @@ async function signIn(){
  var s=await request('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:email,password:password})});
  session=s;localStorage.setItem(STORE,JSON.stringify(s));
  await loadProfile();
- if(!isManager()){if(error)error.textContent='Cuenta identificada, pero todavía sin permisos de Supervisor o Administrador. Un administrador debe asignarte el rol.';return;}
+ if(!profile||!profile.enabled){if(error)error.textContent='Cuenta identificada. Pendiente de aprobación por un Administrador.';return;}
  notice='Sesión iniciada. Los permisos se verifican también en Supabase.';if(typeof managerUser!=='undefined')managerUser=profile.display_name||profile.role;go('home');
  }catch(e){if(error)error.textContent=e.message;}
 }
@@ -39,8 +49,9 @@ async function register(){
  var error=document.getElementById('managerError');try{
  var email=val('managerEmail'),password=val('managerPassword');
  if(password.length<8)throw Error('La contraseña debe tener al menos ocho caracteres.');
- var res=await request('/auth/v1/signup',{method:'POST',body:JSON.stringify({email:email,password:password})});
- if(error)error.textContent='Cuenta solicitada. Confirma tu correo si Supabase te envía un enlace. El rol inicial será Operario hasta que un Administrador lo cambie.';
+ if(!email)throw Error('Introduce tu correo real.');
+ var res=await request('/auth/v1/signup?redirect_to='+encodeURIComponent('https://josegude-ux.github.io/INVENTA-/'),{method:'POST',body:JSON.stringify({email:email,password:password,data:{display_name:val('managerName')}})});
+ if(error)error.textContent='Cuenta solicitada. Confirma tu correo si Supabase te envía un enlace. Tu cuenta queda pendiente de aprobación; empieza como Operario sin acceso a datos.';
  return res;
  }catch(e){if(error)error.textContent=e.message;}
 }
@@ -48,14 +59,15 @@ async function loadProfile(){var u=session&&session.user;if(!u)return;var arr=aw
 async function restore(){try{session=JSON.parse(localStorage.getItem(STORE)||'null');if(!session)return;if(session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();if(session)await loadProfile();if(isManager()&&typeof managerUser!=='undefined')managerUser=profile.display_name||profile.role;}catch(e){session=null;profile=null;}}
 async function logout(){try{if(session)await request('/auth/v1/logout',{method:'POST'});}catch(e){}session=null;profile=null;localStorage.removeItem(STORE);if(typeof managerUser!=='undefined')managerUser='';if(typeof consultUser!=='undefined')consultUser='';notice='';go('home');}
 function renderLogin(){
- show(heading('SUPERVISOR / ADMINISTRADOR','Acceso seguro','INVENTA usa cuentas personales y permisos de Supabase.')
+ show(heading('CUENTA PERSONAL','Acceso seguro','INVENTA usa cuentas personales y permisos de Supabase.')
   +card('Iniciar sesión',
-  field('managerEmail','Correo electrónico','usuario@empresa.es','email')
+  field('managerName','Nombre visible (para solicitar alta)','Tu nombre')
+  +field('managerEmail','Correo electrónico','Tu correo real','email')
   +field('managerPassword','Contraseña','Contraseña','password')
   +'<button class="btn" onclick="INVENTA_MGMT.signIn()">Entrar →</button>'
   +'<p id="managerError" class="muted" role="status" style="margin-top:10px"></p>'
-  +button('Crear cuenta (acceso inicial: Operario)','register()'))
-  +'<div class="alert">El PIN 1234 solo pertenece a la demostración antigua. Las cuentas reales empiezan como Operario; el primer Administrador debe habilitarse de forma controlada en Supabase.</div>');
+  +button('Solicitar alta (pendiente de aprobación)','register()')+(session?button('Cerrar esta sesión','logout()'):''))
+  +'<div class="alert">El PIN 1234 solo pertenece a la demostración antigua. Las cuentas reales necesitan confirmar correo y aprobación; empiezan como Operario deshabilitado; el primer Administrador debe habilitarse de forma controlada en Supabase.</div>');
 }
 function tabs(){return [
  ['dashboard','Resumen'],
@@ -114,7 +126,7 @@ async function dataFor(tab){
   var arr=await Promise.all([api('campaigns','select=*&order=created_at.desc&limit=10'),api('locations','select=code'),api('products','select=code'),api('incidents','select=*&status=neq.resolved&limit=10'),api('assignments','select=*&order=created_at.desc&limit=10')]);return {campaigns:arr[0],locations:arr[1],products:arr[2],incidents:arr[3],assignments:arr[4]};
  }
  if(tab==='campaigns')return {campaigns:await api('campaigns','select=*&order=created_at.desc&limit=100')};
- if(tab==='users')return {profiles:await api('profiles','select=*&order=created_at.desc&limit=300')};
+ if(tab==='users'){var people=await api('rpc/admin_user_directory','', 'POST',{});people.forEach(function(p){permissionVersions[p.user_id]=p.version;});return {profiles:people};}
  if(tab==='assignments'){var a=await Promise.all([api('assignments','select=*&order=created_at.desc&limit=200'),api('campaigns','select=*&order=created_at.desc&limit=100'),api('locations','select=*&order=code&limit=1500'),api('profiles','select=*&order=display_name&limit=500')]);return {assignments:a[0],campaigns:a[1],locations:a[2],profiles:a[3]};}
  if(tab==='incidents'){var a=await Promise.all([api('incidents','select=*&order=created_at.desc&limit=100'),api('campaigns','select=*&order=created_at.desc&limit=100'),api('locations','select=code&order=code&limit=1500')]);return {incidents:a[0],campaigns:a[1],locations:a[2]};}
  if(tab==='catalog'){
@@ -161,9 +173,10 @@ function contentFor(tab,d){
  if(tab==='users'){
   return card('Usuarios y permisos',
   small('Todos empiezan como Operario. Solo un Administrador puede cambiar roles o activar/desactivar usuarios.')
-  +empty(d.profiles.map(function(u){return '<div style="border-top:1px solid #ddd;padding:10px 0"><b>'+safe(u.display_name||short(u.user_id))+'</b><div class="muted">'+safe(u.user_id)+'</div>'
+  +empty(d.profiles.map(function(u){return '<div style="border-top:1px solid #ddd;padding:10px 0"><b>'+safe(u.display_name||short(u.user_id))+'</b><div class="muted">'+safe(u.user_id)+'</div>'+small((u.email||'')+' · '+(u.email_confirmed?'Correo confirmado':'Correo pendiente de confirmar'))
    +'<select class="input" id="role_'+safe(u.user_id)+'"><option value="operator" '+(u.role==='operator'?'selected':'')+'>Operario</option><option value="supervisor" '+(u.role==='supervisor'?'selected':'')+'>Supervisor</option><option value="admin" '+(u.role==='admin'?'selected':'')+'>Administrador</option></select>'
    +'<label><input type="checkbox" id="enabled_'+safe(u.user_id)+'" '+(u.enabled?'checked':'')+'> Usuario habilitado</label>'
+   +field('reason_'+u.user_id,'Motivo del cambio','Explica el alta o cambio de permisos')
    +button('Guardar permisos','updateUser(\''+u.user_id+'\')')+'</div>'; })));
  }
  if(tab==='assignments'){
@@ -201,7 +214,7 @@ function contentFor(tab,d){
  }
  if(tab==='history'){
   return card('Historial de operaciones',small('Auditoría de cambios; no editable desde la aplicación.')
-   +empty(d.history.map(function(x){return row(x.relation_name+' · '+x.operation,(x.actor_id?short(x.actor_id):'Sistema')+' · '+ftime(x.created_at));})));
+   +empty(d.history.map(function(x){return row(x.relation_name+' · '+x.operation+' · '+x.record_id,(x.actor_id?short(x.actor_id):'Sistema')+' · '+ftime(x.created_at)+(x.after_row&&x.after_row.permission_reason?' · Motivo: '+x.after_row.permission_reason:'')+(x.relation_name==='profiles'&&x.before_row?' · '+x.before_row.role+'/'+x.before_row.enabled+' → '+x.after_row.role+'/'+x.after_row.enabled:''));})));
  }
  return '';
 }
@@ -304,6 +317,7 @@ function backCatalog(){
  notice='';render();
 }
 async function render(){
+ try{await loadProfile();}catch(e){show(card('Sin conexión verificada',small(e.message)));return;}
  if(!check())return;
  var s=section,serial=++renderSerial;
  show(shell(card('Cargando información…',small('Consultando datos autorizados.'))));
@@ -315,7 +329,7 @@ async function render(){
 function open(s){if(!check())return;section=s;if(s==='catalog'){catalogView='aisles';catalogAisle='';catalogLocation='';}notice='';render();}
 async function mutate(action,message){
  if(pending)return;pending=true;notice='';
- try{await action();notice=message||'Guardado correctamente.';await render();}
+ try{await loadProfile();if(!check())return;await action();notice=message||'Guardado correctamente.';await render();}
  catch(e){notice='No se ha podido guardar: '+e.message;await render();}
  finally{pending=false;}
 }
@@ -349,9 +363,10 @@ async function importCSV(){
  }catch(e){notice='Error CSV: '+e.message;render();}
 }
 function newMovement(){mutate(function(){return api('movements','', 'POST',{campaign_id:required(val('moveCamp'),'campaña abierta'),source_location:required(val('moveSource'),'origen'),destination_location:required(val('moveDestination'),'destino'),product_code:required(val('moveProduct'),'artículo'),lot:val('moveLot'),quantity:qty(val('moveQty')),reason:required(val('moveReason'),'motivo'),actor_id:getId(),client_mutation_id:uuid()});},'Movimiento interno registrado sin escribir en BC.');}
-function updateUser(id){if(!isAdmin())return;if(id===getId()&&(!document.getElementById('enabled_'+id).checked||val('role_'+id)!=='admin')){notice='Para evitar bloquear el único administrador, no puedes quitarte el rol ni desactivar tu propia cuenta desde esta pantalla.';render();return;}mutate(function(){return api('profiles','user_id=eq.'+id,'PATCH',{role:val('role_'+id),enabled:document.getElementById('enabled_'+id).checked});},'Permisos actualizados y registrados.');}
-var apiObject={openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
+function updateUser(id){if(!isAdmin())return;if(id===getId()&&(!document.getElementById('enabled_'+id).checked||val('role_'+id)!=='admin')){notice='Para evitar bloquear el único administrador, no puedes quitarte el rol ni desactivar tu propia cuenta desde esta pantalla.';render();return;}mutate(function(){var reason=val('reason_'+id);if(reason.length<5)throw Error('Explica el motivo con al menos cinco caracteres.');return api('profiles','user_id=eq.'+id+'&version=eq.'+permissionVersions[id],'PATCH',{role:val('role_'+id),enabled:document.getElementById('enabled_'+id).checked,permission_reason:reason}).then(function(rows){if(!rows.length)throw Error('El perfil cambió en otro dispositivo. Recarga y revisa los permisos.');});},'Permisos actualizados y registrados.');}
+var apiObject={isAuthenticated:function(){return !!(session&&profile&&profile.enabled);},openCounts:function(){window.INVENTA_REAL.open();},realApi:api,refreshProfile:loadProfile,getUserId:getId,openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
 Object.defineProperty(apiObject,'profile',{get:function(){return profile;}});
 window.INVENTA_MGMT=apiObject;
+window.addEventListener('storage',function(e){if(e.key===STORE){session=null;profile=null;renderSerial++;restore().then(function(){if(typeof go==='function')go('home');});}});
 window.addEventListener('DOMContentLoaded',function(){restore().then(function(){if(typeof screen!=='undefined'&&screen==='home'&&typeof render==='function')window.render&&window.render();}).catch(function(){});});
 })();

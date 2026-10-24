@@ -1,6 +1,8 @@
 # Puesta en marcha de INVENTA (gestión real)
 
 ## Estado actual
+Desde v0.28.0 existe un acceso separado **Recuento real · individual** con cola por usuario y envío confirmado al servidor. Ver PRUEBAS_DISPOSITIVOS.md para límites y aceptación pendiente.
+
 La interfaz de recuento de INVENTA sigue utilizando referencias ficticias locales para que se puedan mantener las pruebas de modalidad individual/pareja, escáner y edición. **No está conectada a los recuentos de Supabase.**
 
 La nueva Gestión almacén usa un proyecto independiente:
@@ -12,11 +14,13 @@ La nueva Gestión almacén usa un proyecto independiente:
 ## Primer Administrador
 
 1. Abrir INVENTA > **Acceso Supervisor / Administrador** > **Crear cuenta**; introducir un correo propio y contraseña robusta. Confirmar el enlace recibido si está habilitada la confirmación de correo.
-2. La cuenta se crea con rol de Operario de forma intencionada: **no existe una contraseña de administrador predefinida**.
+2. La cuenta se crea con rol de Operario **deshabilitado**, de forma intencionada: **no existe una contraseña de administrador predefinida**.
 3. El propietario de Supabase, una vez verificada esa cuenta y su identidad, ejecuta en **SQL Editor** (sustituyendo el correo):
 
-   UPDATE public.profiles SET role = 'admin'
-   WHERE user_id = (SELECT id FROM auth.users WHERE email = 'correo-del-responsable@empresa.es');
+   UPDATE public.profiles SET role = 'admin', enabled = true,
+     permission_reason = 'Alta inicial verificada por el propietario'
+   WHERE user_id = (SELECT id FROM auth.users
+     WHERE email = 'SUSTITUIR_POR_CORREO_REAL' AND email_confirmed_at IS NOT NULL);
 
 4. Tras reiniciar sesión aparecerá Gestión almacén. Desde **Usuarios y permisos** podrá nombrar supervisores y habilitar otros administradores. No es necesario repetir SQL para esos usuarios.
 
@@ -69,3 +73,8 @@ Tablas: profiles, campaigns, locations, products, barcodes, fixed_positions, sto
 6. Validar conflictos por movimientos en ubicaciones ya contadas y cierre de incidencias.
 7. Probar con dos dispositivos antes de indicar sincronización funcional.
 8. Autorizar manualmente cualquier exportación o ajuste en Business Central.
+
+## Entrega v0.28.0
+Altas pendientes, verificación de correo para habilitar, directorio restringido a Administración, versión de perfil, motivo de permisos y protección del último Administrador en servidor. Auditoría de perfil con user_id, autor y antes/después. Reintentos idempotentes y correcciones de cadena única.
+
+La pareja/escáner/teclado original permanecen en DEMO; el nuevo formulario real individual no los sustituye. Consulta y gestión reales existentes se mantienen. La validación en dispositivos y la carga oficial BC siguen pendientes.
