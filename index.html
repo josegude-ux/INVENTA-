@@ -158,6 +158,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 #scanUnknown button.scan-secondary{background:#f7e7c9;color:#714b13;border:1px solid #ddbb7b}
 #scanLinkArticle{font-size:15px}
 </style></head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
+<input type="file" id="scanImportFile" accept="application/json,.json" hidden onchange="importBarcodeFile(this)">
 <div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
   <div class="scan-card">
     <h2 id="scanTitle">Escanear código</h2>
@@ -189,7 +190,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.24.0';
+const APP_VERSION='0.24.1';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -296,7 +297,7 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();if(s==='review'||s==='discrepancy'||s==='edit-detail')saveDraft();showPendingUpdate();}
-function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.24</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
+function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.24.1</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
 function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='login')renderLogin();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderLocations();}
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
@@ -304,6 +305,7 @@ function login(){if($('pin').value!=='1234'){$('loginError').textContent='PIN in
 
 /* Escáner móvil. La cámara se abre al pulsar; solo el sistema operativo gestiona permisos. */
 const normCode=v=>String(v??'').trim().toUpperCase();
+let pendingUnknownArticleCode='';
 const printableCode=v=>typeof v==='string'&&v.length>=3&&v.length<=180&&!/[\x00-\x1f\x7f]/.test(v);
 let scanMode=null,scanActive=0,scanReader=null,scanBusy=false,scanUnknownCode='',scanLibraryPromise=null,scanPendingStart=null;
 function catalog(){return data.barcodeCatalog||(data.barcodeCatalog={});}
@@ -387,7 +389,7 @@ function restartScanner(){
  if(!scanMode)return;
  const mode=scanMode;stopScanner();openScanner(mode);
 }
-function submitScanManual(){handleScanned($('scanManual').value);}
+function submitScanManual(){scanBusy=false;$('scanUnknown').hidden=true;handleScanned($('scanManual').value);}
 function handleScanned(raw){
  const code=normCode(raw);
  if(!printableCode(code)){updateScanStatus('Código vacío o no válido. Revisa la etiqueta.');return;}
@@ -421,7 +423,8 @@ function handleScanned(raw){
   selector.disabled=!!globalMatch;
   $('scanUnknown').hidden=false;
   updateScanStatus(globalMatch?'Código conocido en otra ubicación: verifica antes de continuar.':'Código desconocido. Confirma la referencia antes de guardarlo.');
-  scanBusy=false;
+  // Congelamos el primer resultado hasta que el operario lo asocie o pulse Reintentar.
+  // De otro modo la cámara vuelve a leer el mismo código y restablece el selector constantemente.
  }
 }
 function saveScannedAssociation(){
@@ -440,9 +443,39 @@ function saveScannedAssociation(){
 function scanAddUnexpected(){
  if(!scanUnknownCode||!confirm('Este código no corresponde a ningún artículo de la ubicación. ¿Quieres registrarlo como artículo no previsto?'))return;
  const code=scanUnknownCode;
+ pendingUnknownArticleCode=code;
  stopScanner();showModal('unexpected');
- $('unknownCode').value=code.slice(0,28);
+ $('unknownCode').value=code.replace(/[^A-Z0-9-]/g,'').slice(0,28);
 }
+async function importBarcodeFile(input){
+ const file=input?.files?.[0];if(!file)return;
+ input.value='';
+ if(file.size>2*1024*1024){alert('Archivo demasiado grande para la base de prueba (máximo 2 MB).');return;}
+ try{
+  const raw=JSON.parse(await file.text());
+  if(raw?.schema!=='INVENTA_BARCODES_V1'||!raw.barcodes||typeof raw.barcodes!=='object'||Array.isArray(raw.barcodes))throw Error('Formato no reconocido');
+  const rows=Object.entries(raw.barcodes);if(rows.length>20000)throw Error('Demasiados códigos');
+  const known=new Set(Object.values(TEST).flat().map(p=>p.id));
+  for(const loc of Object.values(data.locations))for(const id of Object.keys(loc.extras||{}))known.add(id);
+  let loaded=0,conflicts=0,unknown=0;
+  const pending=[];
+  for(const [rawCode,entry] of rows){
+    const code=normCode(rawCode),id=String(entry?.articleId||'');
+    if(!printableCode(code)||!known.has(id)){unknown++;continue;}
+    const prior=codeForArticle(code);
+    if(prior&&prior!==id){conflicts++;continue;}
+    if(prior===id)continue;
+    const at=new Date().toISOString();
+    pending.push([code,{articleId:id,code,source:'INVENTA-import',createdAt:entry.createdAt||at,createdBy:entry.createdBy||'Importado',updatedAt:at}]);
+  }
+  if(!pending.length){alert('Sin asociaciones nuevas. Conflictos: '+conflicts+'; no reconocidas: '+unknown+'.');return;}
+  if(!confirm('Importar '+pending.length+' códigos nuevos? Se omiten '+conflicts+' conflictos y '+unknown+' códigos no reconocidos.'))return;
+  for(const [key,value] of pending){catalog()[key]=value;loaded++;}
+  data.events.push({what:'Base de códigos importada',loaded,conflicts,unknown,at:new Date().toISOString()});save();
+  alert('Importados '+loaded+' códigos. Conflictos omitidos: '+conflicts+'.');
+ }catch(e){alert('No se pudo importar la base: '+e.message);}
+}
+
 function exportBarcodeCatalog(){
  const catalogData={schema:'INVENTA_BARCODES_V1',exportedAt:new Date().toISOString(),barcodes:catalog()};
  const blob=new Blob([JSON.stringify(catalogData,null,2)],{type:'application/json'});
@@ -867,11 +900,11 @@ function showModal(m){modal=m;let body='';if(m==='history'){hideModal();openBrea
  +'<div class="field" id="reasonDetailsWrap" hidden><label for="reasonDetails">Explica el motivo</label><textarea id="reasonDetails" class="input" style="min-height:90px" placeholder="Qué ha sucedido y por qué se corrige"></textarea></div>'
  +'<p id="reasonError" class="muted" style="color:#b32836"></p>'
  +'<div class="stack"><button class="btn" onclick="acceptEditReason()">Continuar con la modificación</button><button class="btn-outline" onclick="hideModal()">Cancelar</button></div>';
-}else if(m==='menu'){body=`<h2>Opciones de prueba</h2><p class="muted">Versión instalada: v${APP_VERSION}. Usuario: ${esc(data.worker)}. Los recuentos se guardan en este dispositivo.</p><div class="stack" style="margin-top:12px"><button class="btn-outline" onclick="hideModal();checkForUpdates(true)">↻ Buscar actualizaciones</button><button class="btn-outline" onclick="exportBarcodeCatalog()">Exportar base de códigos (JSON)</button><button class="btn-outline" onclick="installHelp()">Cómo instalar INVENTA</button><button class="btn-outline" onclick="resetDemo()">Restablecer datos de prueba</button><button class="btn-outline" onclick="logout()">Cambiar operario</button><button class="btn" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='help'){body=`<h2>Instalar INVENTA</h2><p class="muted">En iPhone: abre esta dirección desde Safari, pulsa Compartir y elige <b>Añadir a pantalla de inicio</b>. Después abre el icono INVENTA. En Android: menú de Chrome → Instalar aplicación.</p><p class="muted" style="margin-top:10px">Los archivos básicos se guardan tras la primera carga. Los datos de prueba son solo locales.</p><button class="btn" style="margin-top:12px" onclick="hideModal()">Entendido</button>`;}else if(m==='unexpected'){body=`<h2>Artículo no listado</h2><p class="muted">Registra provisionalmente un artículo encontrado en ${activeLoc}. En la aplicación definitiva se comunicará una incidencia al responsable.</p><div class="field" style="margin-top:11px"><label for="unknownCode">Código de artículo</label><input class="input" id="unknownCode" placeholder="Ej. PRD0009999"></div><div class="field"><label for="unknownName">Descripción (opcional)</label><input class="input" id="unknownName" placeholder="Artículo encontrado"></div><button class="btn" onclick="addUnexpected()">Añadir a esta ubicación</button><button class="back" onclick="hideModal()">Cancelar</button><p id="modalError" class="muted"></p>`;}else if(m==='missing'){const rem=items(activeLoc).filter(p=>!getLoc(activeLoc).counts[p.id]).length;body=`<h2>Quedan artículos sin revisar</h2><p class="muted">Debes contar o marcar «No encontrado» en ${rem} artículo(s) antes de cerrar ${activeLoc}.</p><button class="btn" style="margin-top:11px" onclick="hideModal()">Seguir contando</button>`;}else if(m==='emptycount'){body=`<h2>Sin cantidades</h2><p class="muted">Todavía no hay unidades apuntadas. Si el producto no está en esta ubicación, utiliza «No encontrado».</p><button class="btn" style="margin-top:10px" onclick="markNotFound()">No encontrado</button><button class="btn-outline" style="width:100%;margin-top:8px" onclick="hideModal()">Seguir contando</button>`;}
+}else if(m==='menu'){body=`<h2>Opciones de prueba</h2><p class="muted">Versión instalada: v${APP_VERSION}. Usuario: ${esc(data.worker)}. Los recuentos se guardan en este dispositivo.</p><div class="stack" style="margin-top:12px"><button class="btn-outline" onclick="hideModal();checkForUpdates(true)">↻ Buscar actualizaciones</button><button class="btn-outline" onclick="exportBarcodeCatalog()">Exportar base de códigos (JSON)</button><button class="btn-outline" onclick="hideModal();$(\'scanImportFile\').click()">Importar base de códigos (JSON)</button><button class="btn-outline" onclick="installHelp()">Cómo instalar INVENTA</button><button class="btn-outline" onclick="resetDemo()">Restablecer datos de prueba</button><button class="btn-outline" onclick="logout()">Cambiar operario</button><button class="btn" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='help'){body=`<h2>Instalar INVENTA</h2><p class="muted">En iPhone: abre esta dirección desde Safari, pulsa Compartir y elige <b>Añadir a pantalla de inicio</b>. Después abre el icono INVENTA. En Android: menú de Chrome → Instalar aplicación.</p><p class="muted" style="margin-top:10px">Los archivos básicos se guardan tras la primera carga. Los datos de prueba son solo locales.</p><button class="btn" style="margin-top:12px" onclick="hideModal()">Entendido</button>`;}else if(m==='unexpected'){body=`<h2>Artículo no listado</h2><p class="muted">Registra provisionalmente un artículo encontrado en ${activeLoc}. En la aplicación definitiva se comunicará una incidencia al responsable.</p><div class="field" style="margin-top:11px"><label for="unknownCode">Código de artículo</label><input class="input" id="unknownCode" placeholder="Ej. PRD0009999"></div><div class="field"><label for="unknownName">Descripción (opcional)</label><input class="input" id="unknownName" placeholder="Artículo encontrado"></div><button class="btn" onclick="addUnexpected()">Añadir a esta ubicación</button><button class="back" onclick="hideModal()">Cancelar</button><p id="modalError" class="muted"></p>`;}else if(m==='missing'){const rem=items(activeLoc).filter(p=>!getLoc(activeLoc).counts[p.id]).length;body=`<h2>Quedan artículos sin revisar</h2><p class="muted">Debes contar o marcar «No encontrado» en ${rem} artículo(s) antes de cerrar ${activeLoc}.</p><button class="btn" style="margin-top:11px" onclick="hideModal()">Seguir contando</button>`;}else if(m==='emptycount'){body=`<h2>Sin cantidades</h2><p class="muted">Todavía no hay unidades apuntadas. Si el producto no está en esta ubicación, utiliza «No encontrado».</p><button class="btn" style="margin-top:10px" onclick="markNotFound()">No encontrado</button><button class="btn-outline" style="width:100%;margin-top:8px" onclick="hideModal()">Seguir contando</button>`;}
 $('overlay').innerHTML=`<div class="modalback" onclick="if(event.target===this)hideModal()"><div class="modal">${body}</div></div>`;}
-function hideModal(){$('overlay').innerHTML='';modal='';}
+function hideModal(){$('overlay').innerHTML='';modal='';if(pendingUnknownArticleCode&&screen!=='scanner-saving')pendingUnknownArticleCode='';}
 function removeEntry(i){hideModal();openBreakdown();if(i>=0&&i<pendingEntries.length)openEntryEdit(i);}
-function addUnexpected(){const code=$('unknownCode').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,28);if(!code){$('modalError').textContent='Introduce un código.';return;}if(items(activeLoc).some(p=>p.id===code)){$('modalError').textContent='Ese artículo ya existe en la ubicación.';return;}const name=$('unknownName').value.trim().slice(0,90);getLoc(activeLoc).extras[code]={name:name||'Artículo encontrado no previsto'};data.events.push({what:'Artículo provisional',loc:activeLoc,article:code,at:new Date().toISOString()});save();hideModal();go('articles');}
+function addUnexpected(){const code=$('unknownCode').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,28);if(!code){$('modalError').textContent='Introduce un código.';return;}if(items(activeLoc).some(p=>p.id===code)){$('modalError').textContent='Ese artículo ya existe en la ubicación.';return;}const pending=pendingUnknownArticleCode;const associated=pending?codeForArticle(pending):null;if(associated&&associated!==code){$('modalError').textContent='El código escaneado ya está vinculado a '+associated+'. Requiere revisión.';return;}const name=$('unknownName').value.trim().slice(0,90);getLoc(activeLoc).extras[code]={name:name||'Artículo encontrado no previsto'};const at=new Date().toISOString();if(pending){catalog()[normCode(pending)]={articleId:code,code:pending,source:'INVENTA',createdAt:at,createdBy:data.worker,updatedAt:at};}data.events.push({what:'Artículo provisional',loc:activeLoc,article:code,barcode:pending||null,at});pendingUnknownArticleCode='';save();hideModal();go('articles');}
 function installHelp(){hideModal();showModal('help')}
 function logout(){data.worker='';activeAisle='';save();hideModal();go('login')}
 function resetDemo(){if(!confirm('¿Borrar todos los recuentos de esta DEMO? La base de códigos aprendidos se conservará.'))return;const codes={...catalog()};clearDraft('Operario 1');clearDraft('Operario 2');data=blank();data.barcodeCatalog=codes;save();hideModal();go('login')}
