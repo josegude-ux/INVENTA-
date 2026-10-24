@@ -10,12 +10,13 @@ const worker=fs.readFileSync(path.join(root,'service-worker.js'),'utf8');
 const core=fs.readFileSync(path.join(root,'consultation-core.js'),'utf8');
 const ui=fs.readFileSync(path.join(root,'consultation-ui.js'),'utf8');
 const consult=require('../consultation-core.js');
+const importer=require('../bc-excel-import.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.29\.1'/);
- assert.match(worker,/inventa-demo-v0291-01/);
- assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.29\.1'/);
+ assert.match(index,/APP_VERSION='0\.30\.0'/);
+ assert.match(worker,/inventa-demo-v0300-01/);
+ assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.0'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
  assert.match(index,/consultation-ui\.js/);
@@ -181,7 +182,33 @@ test('El Operario no puede entrar en el catálogo de gestión',async()=>{
 
 test('cada script publicado tiene versión y está precargado en la misma caché',()=>{
  const scripts=[...index.matchAll(/src="(\.\/[^"]+\.js\?v=[^"]+)"/g)].map(x=>x[1]);
- assert.equal(scripts.length,4);
+ assert.equal(scripts.length,5);
  scripts.forEach(src=>assert.ok(worker.includes("'"+src+"'")));
 });
 
+
+test('importador BC utiliza Stock calculado, conserva lotes y detecta negativos',()=>{
+ const head=['Nombre sección','Cód. almacén','Nº documento almacén','Nº producto','Cód. ubicación','Descripción','Nº lote','Fecha caducidad','Stock calculado','Cant. (stock físico)','Cantidad','Cód. zona','Cód. unidad medida'];
+ const r1=['A','COR_01_COR','H','PRD001','K17-P02','ARTÍCULO','L1',46916,12,999,0,'10-PAS-K','CAJA'];
+ const r2=['A','COR_01_COR','H','PRD001','K17-P02','ARTÍCULO','L2',null,-2,0,0,'10-PAS-K','CAJA'];
+ const result=importer.parseRows([head,r1,r2],'BC.xlsx');
+ assert.equal(result.errors.length,0);
+ assert.equal(result.rows.length,2);
+ assert.equal(result.rows[0].quantity,12);
+ assert.equal(result.rows[1].quantity,-2);
+ assert.equal(result.negative,1);
+ assert.equal(result.rows[0].expiry_date,'2028-06-12');
+ assert.equal(result.rows[1].lot,'L2');
+ assert.equal(result.warehouse,'COR_01_COR');
+ const dup=importer.parseRows([head,r1,r1],'BC.xlsx');
+ assert.ok(dup.errors.some(x=>x.includes('repite')));
+ const mixed=importer.parseRows([head,r1,[...r2.slice(0,1),'OTRO_ALMACEN',...r2.slice(2)]],'BC.xlsx');
+ assert.ok(mixed.errors.some(x=>x.includes('mezcla almacenes')));
+});
+test('Consulta admite y etiqueta stock negativo oficial BC sin afectar posiciones fijas',()=>{
+ const data=consult.aggregate({products:[{code:'PRD001',description:'ABC'}],locations:[{code:'K17-P02'}],
+ stock:[{location_code:'K17-P02',product_code:'PRD001',lot:'L2',quantity:-2}],fixed:[]});
+ assert.equal(data.locations[0].articles[0].amount,-2);
+ assert.equal(data.locations[0].articles[0].lots[0].amount,-2);
+ assert.match(ui,/STOCK NEGATIVO BC/);
+});

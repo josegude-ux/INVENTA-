@@ -31,14 +31,14 @@
   }
   (data.stock||[]).forEach(function(s){
    var qty=Number(s.quantity);
-   if(!s.product_code||!s.location_code||!Number.isFinite(qty)||qty<=0)return;
+   if(!s.product_code||!s.location_code||!Number.isFinite(qty)||qty===0)return;
    var entry=pair(s.product_code,s.location_code);
    entry.amount+=qty;
    var lot=String(s.lot||'').trim();
    if(lot){
     var existing=entry.lots.find(function(l){return l.code===lot;});
-    if(existing)existing.amount+=qty;
-    else entry.lots.push({code:lot,amount:qty});
+    if(existing){existing.amount+=qty;if(!existing.expiryDate&&s.expiry_date)existing.expiryDate=s.expiry_date;}
+    else entry.lots.push({code:lot,amount:qty,expiryDate:s.expiry_date||null});
    }
   });
   (data.fixed||[]).forEach(function(f){

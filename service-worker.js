@@ -1,6 +1,6 @@
 /* INVENTA: versioned offline shell with network-first navigation. */
-const CACHE='inventa-demo-v0291-01';
-const FILES=['./','./index.html','./warehouse-management.js?v=0.29.1','./real-counts.js?v=0.29.1','./consultation-core.js?v=0.29.1','./consultation-ui.js?v=0.29.1','./manifest.webmanifest','./assets/menu/settings-3d.webp','./assets/brand/inventa-warehouse.webp','./assets/brand/inventa-logo.svg','./assets/brand/app-icon-192.png','./assets/brand/app-icon-512.png','./assets/menu/inventory-3d.webp','./assets/menu/consult-3d.webp','./assets/menu/management-3d.webp'];
+const CACHE='inventa-demo-v0300-01';
+const FILES=['./','./index.html','./warehouse-management.js?v=0.30.0','./bc-excel-import.js?v=0.30.0','./real-counts.js?v=0.30.0','./consultation-core.js?v=0.30.0','./consultation-ui.js?v=0.30.0','./manifest.webmanifest','./assets/menu/settings-3d.webp','./assets/brand/inventa-warehouse.webp','./assets/brand/inventa-logo.svg','./assets/brand/app-icon-192.png','./assets/brand/app-icon-512.png','./assets/menu/inventory-3d.webp','./assets/menu/consult-3d.webp','./assets/menu/management-3d.webp'];
 const SCANNER_LIBRARY='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
 const INDEX_URL=new URL('./index.html',self.registration.scope).href;
 self.addEventListener('install',event=>{
