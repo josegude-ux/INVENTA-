@@ -1,4 +1,4 @@
-# INVENTA · v0.25.0
+# INVENTA · v0.25.1
 
 Aplicación PWA de inventario y gestión de almacén para móvil y PC. **Dos subsistemas diferenciados en esta etapa:**
 
