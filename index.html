@@ -190,7 +190,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.24.1';
+const APP_VERSION='0.24.2';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -297,32 +297,33 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();if(s==='review'||s==='discrepancy'||s==='edit-detail')saveDraft();showPendingUpdate();}
-function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.24.1</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
+function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.24.2</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
 function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='login')renderLogin();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderLocations();}
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
 function login(){if($('pin').value!=='1234'){$('loginError').textContent='PIN incorrecto. Usa el PIN de demostración.';return;}data.worker=$('worker').value;activeAisle='';save();const d=readDraft(data.worker);if(d){restoreDraft(d);render();}else go('aisles');}
 
 /* Escáner móvil. La cámara se abre al pulsar; solo el sistema operativo gestiona permisos. */
-const normCode=v=>String(v??'').trim().toUpperCase();
+const barcodeKey=v=>String(v??'').trim();
+const normCode=v=>barcodeKey(v).toUpperCase();
 let pendingUnknownArticleCode='';
-const printableCode=v=>typeof v==='string'&&v.length>=3&&v.length<=180&&!/[\x00-\x1f\x7f]/.test(v);
+const printableCode=v=>typeof v==='string'&&v.length>=3&&v.length<=512&&!/[\x00-\x1f\x7f]/.test(v);
 let scanMode=null,scanActive=0,scanReader=null,scanBusy=false,scanUnknownCode='',scanLibraryPromise=null,scanPendingStart=null;
 function catalog(){return data.barcodeCatalog||(data.barcodeCatalog={});}
 function articleCodes(p){
- return [p.id,p.barcode,p.ean,p.gtin,...(Array.isArray(p.barcodes)?p.barcodes:[])].filter(Boolean).map(normCode);
+ return [p.barcode,p.ean,p.gtin,...(Array.isArray(p.barcodes)?p.barcodes:[])].filter(Boolean).map(barcodeKey);
 }
 function codeForArticle(code){
- const key=normCode(code);
- const own=catalog()[key];
+ const raw=barcodeKey(code),upper=normCode(code);
+ const own=catalog()[raw];
  if(own&&typeof own.articleId==='string')return own.articleId;
- for(const loc in TEST){const p=TEST[loc].find(x=>articleCodes(x).includes(key));if(p)return p.id;}
- for(const loc in data.locations){const p=(data.locations[loc]?.extras||{})[key];if(p)return key;}
+ for(const loc in TEST){const p=TEST[loc].find(x=>normCode(x.id)===upper||articleCodes(x).includes(raw));if(p)return p.id;}
+ for(const loc in data.locations){const p=(data.locations[loc]?.extras||{})[upper];if(p)return upper;}
  return null;
 }
 function matchLocalArticle(code){
- const key=normCode(code),articleId=codeForArticle(key);
- return items(activeLoc).find(p=>p.id===articleId||articleCodes(p).includes(key))||null;
+ const raw=barcodeKey(code),id=codeForArticle(raw);
+ return items(activeLoc).find(p=>p.id===id||normCode(p.id)===normCode(raw)||articleCodes(p).includes(raw))||null;
 }
 function updateScanStatus(text){const e=$('scanStatus');if(e)e.textContent=text;}
 function scannerFailure(error){
@@ -391,7 +392,7 @@ function restartScanner(){
 }
 function submitScanManual(){scanBusy=false;$('scanUnknown').hidden=true;handleScanned($('scanManual').value);}
 function handleScanned(raw){
- const code=normCode(raw);
+ const code=barcodeKey(raw);
  if(!printableCode(code)){updateScanStatus('Código vacío o no válido. Revisa la etiqueta.');return;}
  if(scanBusy)return;
  scanBusy=true;
@@ -428,7 +429,7 @@ function handleScanned(raw){
  }
 }
 function saveScannedAssociation(){
- const raw=scanUnknownCode,key=normCode(raw),id=$('scanLinkArticle').value;
+ const raw=scanUnknownCode,key=barcodeKey(raw),id=$('scanLinkArticle').value;
  if(!raw||!id){updateScanStatus('Selecciona el artículo al que pertenece la etiqueta.');return;}
  if(!items(activeLoc).some(p=>p.id===id)){updateScanStatus('Referencia fuera de esta ubicación.');return;}
  const registered=codeForArticle(key);
@@ -460,7 +461,7 @@ async function importBarcodeFile(input){
   let loaded=0,conflicts=0,unknown=0;
   const pending=[];
   for(const [rawCode,entry] of rows){
-    const code=normCode(rawCode),id=String(entry?.articleId||'');
+    const code=barcodeKey(rawCode),id=String(entry?.articleId||'');
     if(!printableCode(code)||!known.has(id)){unknown++;continue;}
     const prior=codeForArticle(code);
     if(prior&&prior!==id){conflicts++;continue;}
@@ -904,7 +905,7 @@ function showModal(m){modal=m;let body='';if(m==='history'){hideModal();openBrea
 $('overlay').innerHTML=`<div class="modalback" onclick="if(event.target===this)hideModal()"><div class="modal">${body}</div></div>`;}
 function hideModal(){$('overlay').innerHTML='';modal='';if(pendingUnknownArticleCode&&screen!=='scanner-saving')pendingUnknownArticleCode='';}
 function removeEntry(i){hideModal();openBreakdown();if(i>=0&&i<pendingEntries.length)openEntryEdit(i);}
-function addUnexpected(){const code=$('unknownCode').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,28);if(!code){$('modalError').textContent='Introduce un código.';return;}if(items(activeLoc).some(p=>p.id===code)){$('modalError').textContent='Ese artículo ya existe en la ubicación.';return;}const pending=pendingUnknownArticleCode;const associated=pending?codeForArticle(pending):null;if(associated&&associated!==code){$('modalError').textContent='El código escaneado ya está vinculado a '+associated+'. Requiere revisión.';return;}const name=$('unknownName').value.trim().slice(0,90);getLoc(activeLoc).extras[code]={name:name||'Artículo encontrado no previsto'};const at=new Date().toISOString();if(pending){catalog()[normCode(pending)]={articleId:code,code:pending,source:'INVENTA',createdAt:at,createdBy:data.worker,updatedAt:at};}data.events.push({what:'Artículo provisional',loc:activeLoc,article:code,barcode:pending||null,at});pendingUnknownArticleCode='';save();hideModal();go('articles');}
+function addUnexpected(){const code=$('unknownCode').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,28);if(!code){$('modalError').textContent='Introduce un código.';return;}if(items(activeLoc).some(p=>p.id===code)){$('modalError').textContent='Ese artículo ya existe en la ubicación.';return;}const pending=pendingUnknownArticleCode;const associated=pending?codeForArticle(pending):null;if(associated&&associated!==code){$('modalError').textContent='El código escaneado ya está vinculado a '+associated+'. Requiere revisión.';return;}const name=$('unknownName').value.trim().slice(0,90);getLoc(activeLoc).extras[code]={name:name||'Artículo encontrado no previsto'};const at=new Date().toISOString();if(pending){catalog()[barcodeKey(pending)]={articleId:code,code:pending,source:'INVENTA',createdAt:at,createdBy:data.worker,updatedAt:at};}data.events.push({what:'Artículo provisional',loc:activeLoc,article:code,barcode:pending||null,at});pendingUnknownArticleCode='';save();hideModal();go('articles');}
 function installHelp(){hideModal();showModal('help')}
 function logout(){data.worker='';activeAisle='';save();hideModal();go('login')}
 function resetDemo(){if(!confirm('¿Borrar todos los recuentos de esta DEMO? La base de códigos aprendidos se conservará.'))return;const codes={...catalog()};clearDraft('Operario 1');clearDraft('Operario 2');data=blank();data.barcodeCatalog=codes;save();hideModal();go('login')}
