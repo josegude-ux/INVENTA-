@@ -28,7 +28,7 @@
    +(pos.amount<0?'<span class="tag warn">STOCK NEGATIVO BC</span>':'');
  }
  function lots(pos){
-  return pos.lots.length?'<small>Lotes: '+pos.lots.map(function(l){return esc(l.code)+' ('+number(l.amount)+')';}).join(', ')+'</small>':'';
+  return pos.lots.length?'<small>Lotes: '+pos.lots.map(function(l){return esc(l.code)+' ('+number(l.amount)+')'+(l.expiryDate?' · Cad. '+esc(l.expiryDate.split('-').reverse().join('/')):'');}).join(', ')+'</small>':'';
  }
  function articleCard(a){
   return '<div class="card"><h2>'+esc(a.name)+'</h2><p class="muted">'+esc(a.id)+'</p>'
@@ -118,7 +118,7 @@
     +'<div class="card"><h2>'+esc(product?product.name:selectedProduct)+'</h2><p class="muted">'+esc(selectedProduct)+'</p>'
     +'<p style="margin:12px 0">Cantidad total: <b>'+number(pos?pos.amount:0)+' '+esc(product?product.unit:'UD')+'</b> '+(pos?tags(pos):'')+'</p>'
     +'<h3>Cantidades por lote</h3>'
-    +(pos&&pos.lots.length?pos.lots.map(function(l){return '<div class="consult-line"><b>'+esc(l.code||'SIN LOTE')+'</b><strong>'+number(l.amount)+' '+esc(product?product.unit:'UD')+'</strong></div>';}).join(''):'<p class="muted">Sin lotes con existencias.</p>')+'</div>';return;
+    +(pos&&pos.lots.length?pos.lots.map(function(l){return '<div class="consult-line"><span><b>'+esc(l.code||'SIN LOTE')+'</b>'+(l.expiryDate?'<small>Cad. '+esc(l.expiryDate.split('-').reverse().join('/'))+'</small>':'')+'</span><strong>'+number(l.amount)+' '+esc(product?product.unit:'UD')+'</strong></div>';}).join(''):'<p class="muted">Sin lotes con existencias.</p>')+'</div>';return;
   }
   if(selectedLocation){
    var loc=all.find(function(l){return l.code===selectedLocation;});
