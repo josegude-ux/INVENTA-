@@ -7,6 +7,7 @@ var BASE='https://wlejxnpphysogrzcxjfh.supabase.co';
 var KEY='sb_publishable_gPeof-fUW3yITvNXqsjHVw_-PjB1Fyd';
 var STORE='inventa-real-auth-v1';
 var session=null,profile=null,section='dashboard',pending=false,notice='';
+var catalogView='aisles',catalogAisle='',catalogLocation='',renderSerial=0;
 function safe(s){return String(s===null||s===undefined?'':s).replace(/[&<>"']/g,function(k){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[k];});}
 function val(id){var e=document.getElementById(id);return e?e.value.trim():'';}
 function show(html,footer){if(typeof place==='function')place(html,footer||'<button class="back" onclick="go(\'home\')">← Menú principal</button>');}
@@ -61,7 +62,7 @@ function tabs(){return [
  ['campaigns','Campañas'],
  ['assignments','Asignaciones'],
  ['incidents','Incidencias'],
- ['catalog','Artículos y ubicaciones'],
+ ['catalog','Ubicaciones'],
  ['snapshot','Existencias BC'],
  ['movements','Movimientos'],
  ['history','Auditoría']
@@ -116,7 +117,24 @@ async function dataFor(tab){
  if(tab==='users')return {profiles:await api('profiles','select=*&order=created_at.desc&limit=300')};
  if(tab==='assignments'){var a=await Promise.all([api('assignments','select=*&order=created_at.desc&limit=200'),api('campaigns','select=*&order=created_at.desc&limit=100'),api('locations','select=*&order=code&limit=1500'),api('profiles','select=*&order=display_name&limit=500')]);return {assignments:a[0],campaigns:a[1],locations:a[2],profiles:a[3]};}
  if(tab==='incidents'){var a=await Promise.all([api('incidents','select=*&order=created_at.desc&limit=100'),api('campaigns','select=*&order=created_at.desc&limit=100'),api('locations','select=code&order=code&limit=1500')]);return {incidents:a[0],campaigns:a[1],locations:a[2]};}
- if(tab==='catalog'){var a=await Promise.all([api('locations','select=*&order=code&limit=500'),api('products','select=*&order=code&limit=500'),api('fixed_positions','select=*&order=priority&limit=500')]);return {locations:a[0],products:a[1],fixed:a[2]};}
+ if(tab==='catalog'){
+  var locations=await allConsultRows('locations','select=code,aisle,zone,description,enabled&order=code');
+  if(catalogView!=='detail')return {locations:locations};
+  var id=catalogLocation;
+  var latest=await api('stock_snapshot','select=campaign_id,imported_at&order=imported_at.desc&limit=1');
+  var campaignId=latest[0]&&latest[0].campaign_id;
+  var records=await Promise.all([
+   allConsultRows('fixed_positions','select=product_code,location_code,priority&location_code=eq.'+encodeURIComponent(id)+'&order=priority,product_code'),
+   campaignId?allConsultRows('stock_snapshot','select=product_code,location_code,lot,quantity&campaign_id=eq.'+encodeURIComponent(campaignId)+'&location_code=eq.'+encodeURIComponent(id)+'&order=product_code,lot'):Promise.resolve([])
+  ]);
+  var ids=[...new Set(records[0].concat(records[1]).map(function(r){return r.product_code;}))];
+  var products=[];
+  for(var start=0;start<ids.length;start+=70){
+   var keyset=ids.slice(start,start+70).map(function(k){return '"'+String(k).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"';});
+   products.push.apply(products,await api('products','select=code,description,unit&code=in.'+encodeURIComponent('('+keyset.join(',')+')')));
+  }
+  return {locations:locations,fixed:records[0],stock:records[1],products:products,hasImport:!!campaignId};
+ }
  if(tab==='snapshot'){var a=await Promise.all([api('campaigns','select=*&order=created_at.desc&limit=100'),api('locations','select=code&limit=1500'),api('products','select=code&limit=1500'),api('stock_snapshot','select=*&limit=100')]);return {campaigns:a[0],locations:a[1],products:a[2],snapshot:a[3]};}
  if(tab==='movements'){var a=await Promise.all([api('campaigns','select=*&status=eq.active&limit=1'),api('locations','select=code&limit=1500'),api('products','select=code&limit=1500'),api('movements','select=*&order=created_at.desc&limit=100')]);return {campaigns:a[0],locations:a[1],products:a[2],movements:a[3]};}
  if(tab==='history')return {history:await api('audit_events','select=*&order=created_at.desc&limit=100')};
@@ -165,12 +183,7 @@ function contentFor(tab,d){
     return '<div style="padding:10px 0;border-bottom:1px solid #ddd"><b>'+safe(x.category+' · '+x.status)+'</b>'+small(x.location_code+' · '+x.description+' · '+ftime(x.created_at))
     +(x.status!=='resolved'?field('incResolution_'+x.id,'Solución','Motivo de resolución')+button('Resolver incidencia','resolveIncident(\''+x.id+'\')'):'')+'</div>'; })));
  }
- if(tab==='catalog'){
-  return card('Crear ubicación',field('locCode','Código','K00-P01')+field('locAisle','Pasillo','K')+field('locZone','Zona','Zona A')+field('locDescription','Descripción','Opcional')+button('Guardar ubicación','newLocation()'))
-   +card('Crear artículo',field('prodCode','Código artículo','PRD000123')+field('prodDesc','Descripción','Nombre')+field('prodUnit','Unidad','UD')+button('Guardar artículo','newProduct()'))
-   +card('Ubicación fija preferente',select('fixedProd','Artículo',d.products,'code','description')+select('fixedLoc','Ubicación',d.locations,'code','code')+field('fixedPriority','Prioridad (1 = primera)','1','number')+button('Añadir ubicación fija','newFixed()'))
-   +card('Maestros registrados',row('Ubicaciones',d.locations.length+' (mostrando hasta 500)')+row('Artículos',d.products.length+' (mostrando hasta 500)')+row('Preferencias fijas',d.fixed.length+' (hasta 500)'));
- }
+ if(tab==='catalog')return catalogContent(d);
  if(tab==='snapshot'){
   return card('Existencias BC · Lectura restringida',small('Las cantidades teóricas solo se consultan desde perfiles de gestión. Nunca se envían a la interfaz de recuento ciego.')
    +row('Líneas de stock visibles',d.snapshot.length+' (hasta 100)'))
@@ -192,16 +205,113 @@ function contentFor(tab,d){
  }
  return '';
 }
+// Gestión de ubicaciones: primero pasillos A-T, luego ubicaciones y finalmente su contenido.
+function locationAisle(l){
+ var aisle=String(l.aisle||'').trim().toUpperCase();
+ return (aisle||String(l.code||'').trim().toUpperCase()).charAt(0);
+}
+function catalogCodeAction(fn,id,label,classes){
+ return '<button type="button" class="'+(classes||'btn-outline')+'" onclick="INVENTA_MGMT.'+fn+'('+safe(JSON.stringify(id))+')">'+label+'</button>';
+}
+function catalogMaintenance(){
+ return '<details class="catalog-maintenance"><summary>⚙ Opciones de mantenimiento</summary>'
+  +'<div class="catalog-maintenance-body"><h3>Crear artículo</h3>'
+  +field('prodCode','Código','PRD000123')+field('prodDesc','Descripción','Nombre')+field('prodUnit','Unidad','UD')
+  +button('Guardar artículo','newProduct()')+'</div></details>';
+}
+function catalogContent(d){
+ var locs=d.locations||[],letters='ABCDEFGHIJKLMNOPQRST'.split('');
+ if(catalogView==='aisles'){
+  var byAisle=new Map(letters.map(function(letter){return [letter,0];}));
+  locs.forEach(function(l){var a=locationAisle(l);if(byAisle.has(a))byAisle.set(a,byAisle.get(a)+1);});
+  var other=locs.filter(function(l){return !byAisle.has(locationAisle(l));});
+  return heading('UBICACIONES','Selecciona un pasillo','De la A a la T. Después podrás consultar sus ubicaciones.')
+   +'<div class="catalog-aisles">'+letters.map(function(letter){
+    return '<button type="button" class="catalog-aisle" onclick="INVENTA_MGMT.openCatalogAisle(\''+letter+'\')">'
+     +'<b>'+letter+'</b><small>'+byAisle.get(letter)+' ubic.</small></button>';
+   }).join('')+'</div>'
+   +(other.length?catalogCodeAction('openCatalogAisle','OTROS','Otras ubicaciones ('+other.length+')','btn-outline catalog-full'):'')
+   +catalogMaintenance();
+ }
+ if(catalogView==='locations'){
+  var inAisle=locs.filter(function(l){return catalogAisle==='OTROS'?!letters.includes(locationAisle(l)):locationAisle(l)===catalogAisle;});
+  return heading('UBICACIONES','Pasillo '+catalogAisle,inAisle.length+' ubicaciones registradas')
+   +button('← Todos los pasillos','backCatalog()')
+   +'<div class="field" style="margin-top:14px"><label for="catalogSearch">Buscar ubicación</label>'
+   +'<input id="catalogSearch" class="input" placeholder="Código o descripción" oninput="INVENTA_MGMT.filterCatalogLocations(this.value)"></div>'
+   +'<div id="catalogLocationList">'+(inAisle.length?inAisle.map(function(l){
+    return '<button type="button" class="item catalog-location" data-catalog-location="'+safe((l.code+' '+(l.description||'')).toLowerCase())+'" '
+      +'onclick="INVENTA_MGMT.openCatalogLocation('+safe(JSON.stringify(l.code))+')"><span><strong>'+safe(l.code)+'</strong>'
+      +'<small>'+safe(l.description||l.zone||'')+'</small></span><span class="chev">›</span></button>';
+   }).join(''):'<div class="card"><p class="muted">Este pasillo aún no tiene ubicaciones registradas.</p></div>')+'</div>'
+   +'<details class="catalog-maintenance"><summary>＋ Añadir ubicación</summary><div class="catalog-maintenance-body">'
+   +field('locCode','Código','Ejemplo: '+(catalogAisle==='OTROS'?'K':'A')+'00-P01')
+   +'<input type="hidden" id="locAisle" value="'+safe(catalogAisle==='OTROS'?'':catalogAisle)+'">'
+   +field('locZone','Zona','Opcional')+field('locDescription','Descripción','Opcional')
+   +button('Guardar nueva ubicación','newLocation()')+'</div></details>';
+ }
+ var location=locs.find(function(l){return l.code===catalogLocation;});
+ var fixed=d.fixed||[],stocks=d.stock||[],pmap=new Map((d.products||[]).map(function(p){return [p.code,p];}));
+ var byProduct=new Map();
+ function add(code){
+  if(!byProduct.has(code))byProduct.set(code,{code:code,total:0,lots:[],fixed:false,priority:99});
+  return byProduct.get(code);
+ }
+ fixed.forEach(function(f){var x=add(f.product_code);x.fixed=true;x.priority=Math.min(x.priority,f.priority||1);});
+ stocks.forEach(function(s){var q=Number(s.quantity)||0;if(q<=0)return;var x=add(s.product_code);x.total+=q;if(s.lot)x.lots.push({code:s.lot,quantity:q});});
+ var entries=[...byProduct.values()].sort(function(a,b){return (Number(b.fixed)-Number(a.fixed))||(a.priority-b.priority)||a.code.localeCompare(b.code,'es',{numeric:true});});
+ var display=entries.length?entries.map(function(e){
+  var p=pmap.get(e.code)||{},name=p.description||'Artículo sin descripción',unit=p.unit||'UD';
+  return '<div class="catalog-product"><div><b>'+safe(e.code)+'</b><small>'+safe(name)+'</small>'
+   +(e.lots.length?'<small>Lotes: '+e.lots.map(function(l){return safe(l.code)+' ('+l.quantity.toLocaleString('es-ES')+')';}).join(', ')+'</small>':'')
+   +'</div><div class="catalog-product-right"><b>'+e.total.toLocaleString('es-ES')+' '+safe(unit)+'</b>'
+   +(e.fixed?'<span class="tag ok">FIJA</span>':'')
+   +(e.fixed&&e.total===0?'<span class="tag warn">'+(d.hasImport?'SIN STOCK':'SIN DATOS BC')+'</span>':'')
+   +'</div></div>';
+ }).join(''):'<p class="muted">No hay artículos ni posiciones fijas registrados aquí.</p>';
+ return heading('PASILLO '+catalogAisle,'Ubicación '+catalogLocation,location?(location.description||location.zone||''):'')
+  +button('← Volver al pasillo '+catalogAisle,'backCatalog()')
+  +card('Artículos en esta ubicación',small(d.hasImport?'Existencias de la última importación BC.':'Todavía no hay existencias BC importadas.')
+    +'<div class="catalog-product-list">'+display+'</div>')
+  +'<details class="catalog-maintenance"><summary>＋ Asignar posición fija</summary><div class="catalog-maintenance-body">'
+  +small('La posición fija seguirá figurando aunque no tenga existencias.')
+  +field('fixedProd','Código del artículo','PRD000123')
+  +'<input type="hidden" id="fixedLoc" value="'+safe(catalogLocation)+'">'
+  +'<input type="hidden" id="fixedPriority" value="1">'
+  +button('Guardar posición fija','newFixed()')+'</div></details>';
+}
+function filterCatalogLocations(query){
+ var term=String(query||'').trim().toLowerCase();
+ if(typeof document==='undefined')return;
+ document.querySelectorAll('[data-catalog-location]').forEach(function(node){
+  node.hidden=!node.getAttribute('data-catalog-location').includes(term);
+ });
+}
+function openCatalogAisle(aisle){
+ if(section!=='catalog'||!check())return;
+ if(aisle!=='OTROS'&&!/^[A-T]$/.test(aisle))return;
+ catalogAisle=aisle;catalogLocation='';catalogView='locations';notice='';render();
+}
+function openCatalogLocation(code){
+ if(section!=='catalog'||!check())return;
+ catalogLocation=String(code);catalogView='detail';notice='';render();
+}
+function backCatalog(){
+ if(section!=='catalog'||!check())return;
+ if(catalogView==='detail'){catalogView='locations';catalogLocation='';}
+ else{catalogView='aisles';catalogAisle='';}
+ notice='';render();
+}
 async function render(){
  if(!check())return;
- var s=section;
+ var s=section,serial=++renderSerial;
  show(shell(card('Cargando información…',small('Consultando datos autorizados.'))));
  try{
- var d=await dataFor(s);if(s!==section||!check())return;
+ var d=await dataFor(s);if(serial!==renderSerial||s!==section||!check())return;
  show(shell(contentFor(s,d)));
  }catch(e){show(shell(card('No se pudo cargar',small(e.message)+button('Reintentar','render()'))));}
 }
-function open(s){if(!check())return;section=s;notice='';render();}
+function open(s){if(!check())return;section=s;if(s==='catalog'){catalogView='aisles';catalogAisle='';catalogLocation='';}notice='';render();}
 async function mutate(action,message){
  if(pending)return;pending=true;notice='';
  try{await action();notice=message||'Guardado correctamente.';await render();}
@@ -239,7 +349,7 @@ async function importCSV(){
 }
 function newMovement(){mutate(function(){return api('movements','', 'POST',{campaign_id:required(val('moveCamp'),'campaña abierta'),source_location:required(val('moveSource'),'origen'),destination_location:required(val('moveDestination'),'destino'),product_code:required(val('moveProduct'),'artículo'),lot:val('moveLot'),quantity:qty(val('moveQty')),reason:required(val('moveReason'),'motivo'),actor_id:getId(),client_mutation_id:uuid()});},'Movimiento interno registrado sin escribir en BC.');}
 function updateUser(id){if(!isAdmin())return;if(id===getId()&&(!document.getElementById('enabled_'+id).checked||val('role_'+id)!=='admin')){notice='Para evitar bloquear el único administrador, no puedes quitarte el rol ni desactivar tu propia cuenta desde esta pantalla.';render();return;}mutate(function(){return api('profiles','user_id=eq.'+id,'PATCH',{role:val('role_'+id),enabled:document.getElementById('enabled_'+id).checked});},'Permisos actualizados y registrados.');}
-var apiObject={readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
+var apiObject={openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
 Object.defineProperty(apiObject,'profile',{get:function(){return profile;}});
 window.INVENTA_MGMT=apiObject;
 window.addEventListener('DOMContentLoaded',function(){restore().then(function(){if(typeof screen!=='undefined'&&screen==='home'&&typeof render==='function')window.render&&window.render();}).catch(function(){});});
