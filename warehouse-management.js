@@ -124,6 +124,27 @@ async function readConsultData(){
   importedAt:active?active.updated_at:(latest[0]&&latest[0].imported_at||null)};
 }
 function curr(a){return a.find(function(x){return x.status==='active';});}
+// INVENTA ya almacena las líneas importadas. Al iniciar o recuperar la app
+// se vuelve a leer el sello del último stock BC, sin reimportar ni modificarlo.
+async function refreshBCStatus(){
+ var el=typeof document==='undefined'?null:document.getElementById('bcLiveStatus');
+ if(!el||!isManager())return;
+ el.textContent='Consultando la última exportación BC en Supabase…';
+ try{
+  await loadProfile();
+  if(!isManager())return;
+  var active=await api('bc_import_current','select=import_id,updated_at&limit=1');
+  if(!active||!active.length){if(el.isConnected)el.textContent='Sin exportación BC publicada todavía.';return;}
+  var id=active[0].import_id;
+  var rows=await api('bc_import_batches','select=warehouse,stock_rows,committed_at&id=eq.'+encodeURIComponent(id)+'&limit=1');
+  if(!el.isConnected)return;
+  var last=active[0].updated_at;
+  var stale=Date.now()-new Date(last).getTime()>24*60*60*1000;
+  el.textContent='Supabase conectado · Almacén '+(rows[0]&&rows[0].warehouse||'BC')
+   +' · '+(rows[0]&&rows[0].stock_rows||0)+' líneas de stock · Actualización: '+ftime(last)
+   +(stale?' · Exportación BC con más de 24 horas':'');
+ }catch(e){if(el.isConnected)el.textContent='No se pudo comprobar la sincronización BC: '+e.message;}
+}
 async function dataFor(tab){
  if(tab==='dashboard'){
   var arr=await Promise.all([api('campaigns','select=*&order=created_at.desc&limit=10'),api('locations','select=code'),api('products','select=code'),api('incidents','select=*&status=neq.resolved&limit=10'),api('assignments','select=*&order=created_at.desc&limit=10')]);return {campaigns:arr[0],locations:arr[1],products:arr[2],incidents:arr[3],assignments:arr[4]};
@@ -469,7 +490,7 @@ async function importCSV(){
 }
 function newMovement(){mutate(function(){return api('movements','', 'POST',{campaign_id:required(val('moveCamp'),'campaña abierta'),source_location:required(val('moveSource'),'origen'),destination_location:required(val('moveDestination'),'destino'),product_code:required(val('moveProduct'),'artículo'),lot:val('moveLot'),quantity:qty(val('moveQty')),reason:required(val('moveReason'),'motivo'),actor_id:getId(),client_mutation_id:uuid()});},'Movimiento interno registrado sin escribir en BC.');}
 function updateUser(id){if(!isAdmin())return;if(id===getId()&&(!document.getElementById('enabled_'+id).checked||val('role_'+id)!=='admin')){notice='Para evitar bloquear el único administrador, no puedes quitarte el rol ni desactivar tu propia cuenta desde esta pantalla.';render();return;}mutate(function(){var reason=val('reason_'+id);if(reason.length<5)throw Error('Explica el motivo con al menos cinco caracteres.');return api('profiles','user_id=eq.'+id+'&version=eq.'+permissionVersions[id],'PATCH',{role:val('role_'+id),enabled:document.getElementById('enabled_'+id).checked,permission_reason:reason}).then(function(rows){if(!rows.length)throw Error('El perfil cambió en otro dispositivo. Recarga y revisa los permisos.');});},'Permisos actualizados y registrados.');}
-var apiObject={isSaving:function(){return pending;},changeFixedPosition:changeFixedPosition,toggleCatalogFixed:toggleCatalogFixed,filterFixedReport:filterFixedReport,exportFixedReport:exportFixedReport,printFixedReport:printFixedReport,cancelView:function(){renderSerial++;},isAuthenticated:function(){return !!(session&&profile&&profile.enabled);},openCounts:function(){window.INVENTA_REAL.open();},realApi:api,refreshProfile:loadProfile,getUserId:getId,openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
+var apiObject={refreshBCStatus:refreshBCStatus,isSaving:function(){return pending;},changeFixedPosition:changeFixedPosition,toggleCatalogFixed:toggleCatalogFixed,filterFixedReport:filterFixedReport,exportFixedReport:exportFixedReport,printFixedReport:printFixedReport,cancelView:function(){renderSerial++;},isAuthenticated:function(){return !!(session&&profile&&profile.enabled);},openCounts:function(){window.INVENTA_REAL.open();},realApi:api,refreshProfile:loadProfile,getUserId:getId,openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
 Object.defineProperty(apiObject,'profile',{get:function(){return profile;}});
 window.INVENTA_MGMT=apiObject;
 window.addEventListener('storage',function(e){if(e.key===STORE){session=null;profile=null;renderSerial++;restore().then(function(){if(typeof go==='function')go('home');});}});
