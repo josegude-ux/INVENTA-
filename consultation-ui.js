@@ -137,7 +137,8 @@
    return;
   }
   var letters='ABCDEFGHIJKLMNOPQRST'.split('');
-  var present=letters;
+  var present=[...new Set(all.map(function(l){return aisle(l.code);}))]
+   .filter(function(a){return letters.includes(a);}).sort();
   var other=all.filter(function(l){return !letters.includes(aisle(l.code));});
   box.innerHTML='<p class="muted" style="margin-bottom:12px">Selecciona el pasillo que quieres consultar.</p>'
    +(present.length?present.map(function(a){

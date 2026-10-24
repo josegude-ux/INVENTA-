@@ -31,23 +31,23 @@ La nueva Gestión almacén usa un proyecto independiente:
 - **Asignaciones**: seleccionar campaña, ubicación y operario, y actualizar estado.
 - **Incidencias**: registrar y resolver con texto justificativo.
 - **Artículos y ubicaciones**: crear maestros, asignar ubicación fija y prioridad 1.
-- **Existencias BC**: consulta del snapshot; solo Administrador puede modificarlo (RLS).
+- **Existencias BC**: pestaña con historial; el stock visible procede de la última importación Excel publicada.
 - **Movimientos**: registrar traslados internos con artículo, lote, cantidad, motivo, origen y destino; **no exporta a BC**.
 - **Auditoría**: eventos registrados en servidor (solo lectura).
 
 ## Operación adicional de Administrador
 - **Campañas**: crear como borrador, activar una (máximo una activa) y cerrar. Una campaña cerrada no puede reabrirse.
 - **Usuarios y permisos**: roles y estado habilitado.
-- **Existencias BC**: introducir línea o importar CSV.
+- **Existencias BC**: importar el Excel completo del almacén (diario BC) y publicarlo de forma atómica.
 
-### CSV de existencias
-Exportar desde Business Central a CSV delimitado por punto y coma, formato:
-\`\`\`csv
-ubicacion;articulo;lote;cantidad
-K00-P01;PRD0003563;L-001;200
-K00-P02;PRD0002411;;72
-\`\`\`
-Antes de importar deben existir ubicaciones y artículos. Seleccionar la campaña de destino en la pestaña Existencias BC. Una combinación de campaña + ubicación + artículo + lote no admite duplicados. La importación se realiza en grupos de 100 líneas; si alguna tanda falla, revisar cuáles se incorporaron antes de reintentar para evitar conflictos. La carga de este fichero no ajusta Business Central.
+### Importación Excel BC (recomendado desde v0.30)
+1. En Business Central exporta el **Diario de inventario físico de almacén** a `.xlsx` (un almacén completo).
+2. En INVENTA → Gestión almacén → **Existencias BC** → selecciona el archivo → **Analizar**.
+3. Revisa la vista previa (artículos, ubicaciones, negativos, avisos). Solo se usa la columna **Stock calculado**; nunca Cant. (stock físico) ni Cantidad.
+4. Confirma que es una exportación completa y publica. La publicación es atómica: si se interrumpe la subida, el stock visible no cambia.
+5. Consulta y catálogo leen únicamente el lote marcado como actual. No se borran artículos, ubicaciones, posiciones fijas ni recuentos físicos.
+
+Fixture de prueba ficticio: `tests/fixtures/diario-inventario-fisico-DEMO.xlsx`.
 
 ## Modelo y seguridad
 Migraciones de Supabase aplicadas:

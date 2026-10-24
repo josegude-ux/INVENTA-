@@ -272,14 +272,19 @@ function catalogContent(d){
   return byProduct.get(code);
  }
  fixed.forEach(function(f){var x=add(f.product_code);x.fixed=true;x.priority=Math.min(x.priority,f.priority||1);});
- stocks.forEach(function(s){var q=Number(s.quantity)||0;if(q<=0)return;var x=add(s.product_code);x.total+=q;if(s.lot)x.lots.push({code:s.lot,quantity:q});});
- var entries=[...byProduct.values()].sort(function(a,b){return (Number(b.fixed)-Number(a.fixed))||(a.priority-b.priority)||a.code.localeCompare(b.code,'es',{numeric:true});});
- var display=entries.length?entries.map(function(e){
+  stocks.forEach(function(s){
+   var q=Number(s.quantity);
+   if(!Number.isFinite(q)||q===0)return;
+   var x=add(s.product_code);x.total+=q;if(s.lot)x.lots.push({code:s.lot,quantity:q});
+  });
+  var entries=[...byProduct.values()].sort(function(a,b){return (Number(b.fixed)-Number(a.fixed))||(a.priority-b.priority)||a.code.localeCompare(b.code,'es',{numeric:true});});
+  var display=entries.length?entries.map(function(e){
   var p=pmap.get(e.code)||{},name=p.description||'Artículo sin descripción',unit=p.unit||'UD';
   return '<div class="catalog-product"><div><b>'+safe(e.code)+'</b><small>'+safe(name)+'</small>'
    +(e.lots.length?'<small>Lotes: '+e.lots.map(function(l){return safe(l.code)+' ('+l.quantity.toLocaleString('es-ES')+')';}).join(', ')+'</small>':'')
    +'</div><div class="catalog-product-right"><b>'+e.total.toLocaleString('es-ES')+' '+safe(unit)+'</b>'
    +(e.fixed?'<span class="tag ok">FIJA</span>':'')
+   +(e.total<0?'<span class="tag warn">STOCK NEGATIVO BC</span>':'')
    +(e.fixed&&e.total===0?'<span class="tag warn">'+(d.hasImport?'SIN STOCK':'SIN DATOS BC')+'</span>':'')
    +'</div></div>';
  }).join(''):'<p class="muted">No hay artículos ni posiciones fijas registrados aquí.</p>';
