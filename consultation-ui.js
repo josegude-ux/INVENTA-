@@ -1,7 +1,7 @@
 /* INVENTA · Consulta por artículo y por ubicación, incluidas posiciones fijas a cero. */
 (function(root){
  'use strict';
- var model=null,mode='location',loadError='',loadId=0,selectedAisle='',selectedLocation='',selectedProduct='',history=[];
+ var model=null,mode='location',loadError='',loadId=0,selectedAisle='',selectedLocation='',selectedProduct='',history=[],fixedActionBusy=false;
  function demoData(){
   var products=new Map(),stock=[];
   for(var pair of Object.entries(TEST)){
@@ -146,7 +146,10 @@
     +'<div class="card'+(pos&&pos.fixed?' consult-fixed':'')+'"><h2>'+esc(product?product.name:selectedProduct)+'</h2><p class="muted">'+esc(selectedProduct)+'</p>'
     +'<p style="margin:12px 0">Cantidad total: <b>'+number(pos?pos.amount:0)+' '+esc(product?product.unit:'UD')+'</b> '+(pos?tags(pos):'')+'</p>'
     +'<h3>Cantidades por lote</h3>'
-    +(pos&&pos.lots.length?pos.lots.map(function(l){return '<div class="consult-line"><span><b>'+esc(l.code||'SIN LOTE')+'</b>'+(l.expiryDate?'<small>Cad. '+esc(l.expiryDate.split('-').reverse().join('/'))+'</small>':'')+'</span><strong>'+number(l.amount)+' '+esc(product?product.unit:'UD')+'</strong></div>';}).join(''):'<p class="muted">Sin lotes con existencias.</p>')+'</div>';return;
+    +(pos&&pos.lots.length?pos.lots.map(function(l){return '<div class="consult-line"><span><b>'+esc(l.code||'SIN LOTE')+'</b>'+(l.expiryDate?'<small>Cad. '+esc(l.expiryDate.split('-').reverse().join('/'))+'</small>':'')+'</span><strong>'+number(l.amount)+' '+esc(product?product.unit:'UD')+'</strong></div>';}).join(''):'<p class="muted">Sin lotes con existencias.</p>')
+    +(root.INVENTA_MGMT&&root.INVENTA_MGMT.isAdmin()&&!root.INVENTA_CONSULT_DEMO?
+      '<button class="btn-outline" style="width:100%;margin-top:14px" onclick="INVENTA_CONSULT_UI.toggleFixed()">'+(pos&&pos.fixed?'Desmarcar posición fija':'Marcar posición fija en esta ubicación')+'</button>':'')
+    +'</div>';return;
   }
   if(selectedLocation){
    var loc=all.find(function(l){return l.code===selectedLocation;});
@@ -177,6 +180,28 @@
    }).join(''):'<div class="alert">No hay pasillos registrados todavía.</div>')
    +(other.length?'<button class="item aisle-item" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\'OTROS\')"><span class="aisle-letter">+</span><span class="aisle-details"><strong>Otras ubicaciones</strong><small>'+other.length+' ubicaciones registradas</small></span><span class="chev">›</span></button>':'');
  }
+ function toggleFixed(){
+  if(fixedActionBusy||!model||!selectedLocation||!selectedProduct)return;
+  var mgr=root.INVENTA_MGMT;
+  if(!mgr||!mgr.isAdmin()||root.INVENTA_CONSULT_DEMO)return;
+  var location=selectedLocation,product=selectedProduct;
+  var loc=model.locations.find(function(l){return l.code===location;});
+  var pos=loc&&loc.articles.find(function(p){return p.productCode===product;});
+  var alreadyFixed=!!(pos&&pos.fixed);
+  fixedActionBusy=true;
+  mgr.changeFixedPosition(product,location,alreadyFixed).then(function(changed){
+   if(!changed)return;
+   return mgr.readConsultData().then(function(payload){
+    if(screen!=='consult'||selectedLocation!==location||selectedProduct!==product)return;
+    model=root.INVENTA_CONSULT.aggregate(payload);
+    filter($('consultSearch')?$('consultSearch').value:'');
+    var status=$('consultSource');
+    if(status)status.textContent='Posición '+(alreadyFixed?'desmarcada':'marcada')+' y guardada en Supabase.';
+   });
+  }).catch(function(e){
+   var status=$('consultSource');if(status)status.textContent='No se pudo guardar la posición fija: '+e.message;
+  }).finally(function(){fixedActionBusy=false;});
+ }
  function lookup(code){
   if(!model)return null;
   var normalized=normCode(code),barcode=barcodeKey(code);
@@ -187,5 +212,5 @@
   return null;
  }
  function applyScan(match){if(match&&['article','location'].includes(match.mode))mode=match.mode;}
- root.INVENTA_CONSULT_UI={render:render,filter:filter,setMode:setMode,navigate:navigate,back:back,lookup:lookup,applyScan:applyScan};
+ root.INVENTA_CONSULT_UI={render:render,filter:filter,setMode:setMode,navigate:navigate,back:back,toggleFixed:toggleFixed,lookup:lookup,applyScan:applyScan};
 })(window);
