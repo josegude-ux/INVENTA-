@@ -191,14 +191,14 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.24.4';
+const APP_VERSION='0.24.5';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
 const blank=()=>({version:1,worker:'',countSession:null,locations:{},events:[]});
 function load(){try{const p=JSON.parse(localStorage.getItem(KEY));if(p?.version===1&&p.locations){if(p.demoInventoryOpen===undefined)p.demoInventoryOpen=!!p.countSession;return p;}}catch(e){}return blank();}
 let data=load(),screen='home',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all',lastPallet=null,repeatMode=false,overwriteInput=false,resumedDraft=false,editReason='',editOriginal=null,editReasonChoice='',editReasonNote='',editingIndex=-1,entryEdits=[];
-let consultUser='';
+let consultUser='',managerUser='';
 const fmt=n=>Number(n).toLocaleString('es-ES');
 const esc=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const valid=s=>/^\d{1,8}$/.test(String(s))&&Number(s)>0&&Number.isSafeInteger(Number(s));
@@ -337,15 +337,57 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();if(s==='review'||s==='discrepancy'||s==='edit-detail')saveDraft();showPendingUpdate();}
-function header(){const counting=!['home','consult-login','consult'].includes(screen);return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo · v${APP_VERSION}${counting&&data.worker&&data.countSession?' · '+esc(sessionLabel()):screen==='consult'?' · Consulta':''}</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${counting&&data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`;}
-function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='home')renderHome();else if(screen==='consult-login')renderConsultLogin();else if(screen==='consult')renderConsult();else if(screen==='login')renderLogin();else if(screen==='session')renderSession();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderHome();}
+function header(){const counting=!['home','manager-login','management','consult-login','consult'].includes(screen);return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo · v${APP_VERSION}${counting&&data.worker&&data.countSession?' · '+esc(sessionLabel()):screen==='consult'?' · Consulta':screen==='management'?' · Gestión almacén':''}</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${counting&&data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`;}
+function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='home')renderHome();else if(screen==='manager-login')renderManagerLogin();else if(screen==='management')renderManagement();else if(screen==='consult-login')renderConsultLogin();else if(screen==='consult')renderConsult();else if(screen==='login')renderLogin();else if(screen==='session')renderSession();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderHome();}
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 
+
+function isManager(){return managerUser==='Supervisor (demo)'||managerUser==='Administrador (demo)';}
+function startInventoryFromHome(){managerUser='';consultUser='';go('login');}
+function openConsultFromHome(){
+ if(isManager()){consultUser=managerUser;go('consult');return;}
+ consultUser='';go('consult-login');
+}
 function renderHome(){
- place(`<div class="title"><div class="overline">MENÚ PRINCIPAL</div><h1>¿Qué quieres hacer?</h1><p class="muted">Selecciona el tipo de operación antes de identificarte.</p></div>
- <button class="item home-choice" onclick="go('login')"><span><strong>📦 Hacer inventario</strong><small>Recuento ciego. Después elegirás individual o en pareja.</small></span><span class="chev">›</span></button>
- <button class="item home-choice" onclick="go('consult-login')"><span><strong>🔎 Realizar consulta</strong><small>Búsqueda individual de artículos, existencias y ubicaciones.</small></span><span class="chev">›</span></button>
- <div class="alert">Esta demo usa datos de ejemplo y no dispone todavía de permisos centralizados.</div>`);
+ const management=isManager()?`<button class="item home-choice" onclick="go('management')"><span><strong>🏭 Gestión almacén</strong><small>Funciones de gestión para supervisor y administrador.</small></span><span class="chev">›</span></button>`:'';
+ const profile=isManager()
+  ?`<div class="card"><div class="between"><div><b>${esc(managerUser)}</b><p class="muted">Perfil de gestión identificado (solo demo)</p></div><button class="tinybtn" onclick="logoutManager()">Salir</button></div></div>`
+  :'<button class="btn-outline" style="width:100%;margin-top:7px;margin-bottom:12px" onclick="go(\'manager-login\')">Identificar Supervisor / Administrador</button>';
+ place(`<div class="title"><div class="overline">MENÚ PRINCIPAL</div><h1>¿Qué quieres hacer?</h1><p class="muted">Elige Inventario o Consulta. Gestión almacén aparece solo al identificar un perfil autorizado.</p></div>
+ ${profile}
+ <button class="item home-choice" onclick="startInventoryFromHome()"><span><strong>📦 Hacer inventario</strong><small>Recuento ciego. Después elegirás individual o en pareja.</small></span><span class="chev">›</span></button>
+ <button class="item home-choice" onclick="openConsultFromHome()"><span><strong>🔎 Realizar consulta</strong><small>Búsqueda individual de artículos, existencias y ubicaciones.</small></span><span class="chev">›</span></button>
+ ${management}
+ <div class="alert">DEMO local: perfiles y cantidades de ejemplo. Los permisos reales necesitan autenticación y comprobación centralizada.</div>`);
+}
+function renderManagerLogin(){
+ place(`<div class="title"><div class="overline">PERFIL DE GESTIÓN · DEMO</div><h1>Identificarse</h1><p class="muted">Solo supervisor y administrador dispondrán del tercer apartado en el menú principal.</p></div>
+ <div class="card"><div class="field"><label for="managerAccount">Perfil</label><select id="managerAccount" class="input"><option>Supervisor (demo)</option><option>Administrador (demo)</option></select></div>
+ <div class="field"><label for="managerPin">PIN de prueba</label><input id="managerPin" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="4 cifras" autocomplete="off"></div>
+ <button class="btn" onclick="loginManager()">Entrar al menú →</button><p class="muted" id="managerError" role="alert" style="margin-top:10px"></p></div>
+ <div class="alert">PIN de demostración: <b>1234</b>. Este acceso todavía no gestiona permisos reales ni se conecta a la base central.</div>`,
+ '<button class="back" onclick="go(\'home\')">← Menú principal</button>');
+}
+function loginManager(){
+ if($('managerPin')?.value!=='1234'){$('managerError').textContent='PIN incorrecto. Usa 1234 en la demo.';return;}
+ const value=$('managerAccount')?.value;
+ if(value!=='Supervisor (demo)'&&value!=='Administrador (demo)')return;
+ managerUser=value;consultUser='';go('home');
+}
+function logoutManager(){managerUser='';consultUser='';go('home');}
+function renderManagement(){
+ if(!isManager()){go('manager-login');return;}
+ const administrator=managerUser==='Administrador (demo)';
+ const rows=[
+  ['Asignaciones de recuento','Organizar pasillos, ubicaciones, equipos y relevos.'],
+  ['Seguimiento e incidencias','Revisar diferencias, recuentos pendientes y traslados.'],
+  ['Organización del almacén','Gestionar propuestas de reubicación y ubicaciones fijas.']
+ ];
+ if(administrator)rows.push(['Administración','Usuarios, permisos, bases de datos y apertura/cierre de inventarios.']);
+ place(`<div class="title"><div class="overline">GESTIÓN ALMACÉN · ${administrator?'ADMINISTRADOR':'SUPERVISOR'}</div><h1>Gestión almacén</h1><p class="muted">Acceso diferenciado para ${esc(managerUser)}.</p></div>
+ <div class="alert">Estructura inicial de prueba. Las herramientas de gestión todavía no están habilitadas y no modifican BC.</div>
+ ${rows.map(([title,subtitle])=>`<div class="card"><h2>${esc(title)}</h2><p class="muted" style="margin-top:6px">${esc(subtitle)}</p></div>`).join('')}`,
+ '<button class="back" onclick="go(\'home\')">← Menú principal</button>');
 }
 function consultRole(){return consultUser==='Supervisor (demo)'?'supervisor':consultUser==='Administrador (demo)'?'admin':'operator';}
 function consultBlocked(){return !!data.demoInventoryOpen&&consultRole()==='operator';}
@@ -360,7 +402,9 @@ function renderConsultLogin(){
 function loginConsult(){
  if($('consultPin')?.value!=='1234'){$('consultError').textContent='PIN incorrecto. Usa 1234 en la demo.';return;}
  consultUser=$('consultAccount').value;
+ if(isManager())managerUser='';
  if(consultBlocked()){$('consultError').textContent='Consulta bloqueada para operarios durante un inventario abierto.';consultUser='';return;}
+ if(consultRole()==='supervisor'||consultRole()==='admin')managerUser=consultUser;
  go('consult');
 }
 function consultStock(){
