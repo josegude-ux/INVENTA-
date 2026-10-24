@@ -1,0 +1,83 @@
+---
+description: Reglas funcionales y técnicas de INVENTA, inventario y consulta de almacén con Business Central, PWA y futura sincronización Supabase.
+alwaysApply: true
+---
+
+# INVENTA — Contexto y reglas del proyecto (24-10-2026)
+
+## Identidad, repositorio y límites
+- Proyecto: INVENTA, aplicación PWA de inventarios y consulta para iPhone, Android y PC.
+- Repositorio fuente: `josegude-ux/INVENTA-`; publicación: `https://josegude-ux.github.io/INVENTA-/`.
+- No confundir con las aplicaciones **Control de Cargas**, **Control de Tanques** ni **Mi Jornada**. No modificar sus repositorios o bases de datos por implicación.
+- Continuar sobre los archivos y la estética existentes: `index.html`, `service-worker.js`, `manifest.webmanifest`. Mantener la experiencia aprobada del teclado de recuento (B).
+- Estado inicial verificado: demo local v0.24.7, datos TEST incrustados, credenciales y roles ficticios, localStorage y sin conexión real a BC/Supabase. Un PIN de demostración **no es autenticación**.
+- Priorizar funcionalidad, corrección del inventario y seguridad antes que rediseños. Evitar sustituir la aplicación entera sin justificarlo.
+
+## Navegación aprobada
+- Inicio: elegir **Hacer inventario** o **Realizar consulta**. Un Supervisor o Administrador identificado verá además **Gestión almacén**; el Operario no.
+- Inventario: se identifica al operario y después elige **recuento individual** o **en pareja**. Este orden está aprobado: NO invertirlo.
+- Pareja: dos operarios juntos, **un único móvil y un único recuento**, no resultados independientes ni entradas duplicadas. Identificar ambos al inicio, mostrar nombres, permitir relevo y conservar autoría de cada tramo/apunte. No pedir doble confirmación por artículo.
+- Consulta: uso individual; búsqueda por nombre/código/barcode y ubicación; cantidades teóricas de BC y localizaciones, indicando ubicación fija preferente cuando exista.
+- Gestión almacén: Supervisor gestiona asignaciones, seguimiento, incidencias, peticiones de recuento y organización; Administrador además usuarios, permisos y apertura/cierre de campañas. La pantalla actual es solo maqueta.
+
+## Roles, permisos y recuento ciego
+- Roles definitivos: **Operario, Supervisor, Administrador**.
+- Durante una campaña activa, el **Operario no puede ver cantidades teóricas de BC** ni entrar en Consulta; nunca se las debe filtrar por respuestas API, código cliente, caché ni rutas alternativas. Recuento ciego incluso cuando lo repite.
+- Supervisor y Administrador **sí pueden acceder a Consulta durante el inventario**, con teórico BC, contado, diferencias y ubicación fija. Pueden ordenar recuentos ciegos. Consultar no implica autorización para modificar BC.
+- Fuera de campañas, Consulta es accesible al Operario según permisos definitivos que se configuren.
+- La autorización debe validarse en backend/RLS, no únicamente ocultando botones. La demo actual no satisface aún este requisito, y sus valores `TEST.theoretical` están expuestos al navegador; **no llevar esta demo a producción con esos datos**.
+- Registro de quién hizo y corrigió operaciones con momento, motivo y antes/después. Separar sesiones reales de operadores y supervisores en dispositivos compartidos.
+
+## Dos tipos de campaña
+- **Microrecuento**: durante el año, por pasillo/zona o selección de ubicaciones, normalmente una persona. No asumir que el almacén paraliza operaciones: la operativa en microrecuentos requiere validación de reglas.
+- **Inventario anual**: inventario integral, normalmente parejas que cuentan juntas, almacén sin actividad normal y snapshot de BC al inicio. INVENTA no puede por sí sola bloquear las operaciones en BC: requiere procedimiento/permisos de empresa.
+- Permitir recuentos adicionales solicitados por Supervisor sin borrar primero, manteniendo su autoría y resultados. El segundo recuento debe seguir siendo ciego.
+- Tolerancia **cero**: diferencia distinta de cero requiere incidencia/revisión; no establecer umbrales permisivos.
+
+## Artículos, ubicaciones, BC y Consulta
+- Se importarán maestros y existencias desde Business Central (BC): artículo, descripción, unidades, ubicaciones reales, lote cuando corresponda, identificadores y, en su caso, caducidad.
+- La referencia puede estar **correctamente inventariada en BC en una ubicación distinta de su fija**: eso no es una discrepancia de existencias.
+- En base de ubicaciones del Asignador BC, **`Fijo = 1` tiene prioridad** para la ubicación habitual. Distinguir en Consulta: “En ubicación fija”, “Existencias fuera de ubicación fija”, “Sin ubicación fija definida”.
+- La demo `TEST` no contiene campo de ubicación fija ni datos reales de BC; no inferir o inventar prioridades a partir del nombre de un pasillo.
+- Los artículos sin ubicación deben agruparse y registrarse como tales, sin crear ubicaciones ficticias.
+- Buscar por ubicación y por artículo; soporte de escaneo de cámara de códigos de barras/QR y entrada manual.
+
+## Movimientos durante inventario
+- Un operario puede mover mercancía físicamente entre ubicaciones **aunque origen o destino ya estén contados/cerrados**, o aunque la mercancía del origen no se hubiera contado aún.
+- INVENTA registra movimiento interno con artículo, lote si procede, cantidad, origen, destino, usuarios, sello horario y motivo; **no registra automáticamente el movimiento en BC durante la campaña**.
+- Ajustar para conciliación el teórico tomado del snapshot con los movimientos internos documentados, según orden temporal, sin sobrescribir recuentos previos ni contabilizar dos veces.
+- Si el movimiento afecta ubicación contada, conservar recuento original, generar revisión/incidencia trazable; si supera existencias esperadas, marcar incidencia. Nunca ocultar discrepancias alterando contados en silencio.
+
+## Conteo y correcciones
+- Mantener modo unidades sueltas y palés mediante desglose de **4 factores** (palés × cajas/base × alturas × unidades/caja). Varias líneas suman un total por referencia.
+- Se pueden corregir **líneas concretas** desde “Modificar cantidades” o “Ver/corregir”, que deben converger al mismo editor.
+- **No borrar líneas de recuento ni el historial**. Registrar motivo obligatorio, valores anteriores/nuevos, autor, pareja activa si la hay, fecha/hora y vínculo al original.
+- El escáner debe operar con permiso de cámara del sistema, sin diálogo interno innecesario. Códigos desconocidos: operario puede asociarlos a artículo existente sin aprobación previa; 1 código no puede apuntar ambiguamente a varios artículos, un artículo admite múltiples códigos.
+- Permitir corregir una asociación equivocada, dejando auditoría y marcando recuentos potencialmente afectados para revisión (nunca reajustarlos automáticamente).
+- Relevo de operario sin perder cantidades ni autorías. Preparar control de concurrencia para varios dispositivos.
+
+## Datos, sincronización y despliegue
+- Objetivo: Supabase como base central de INVENTA (la plaza gratuita liberada al pausar `control-tanques-staging`), separada de `control-cargas-movil`. **No reutilizar ni alterar la base de Cargas o Tanques.**
+- Antes de crear el proyecto real, confirmar nombre/organización si aún no están definidos y que la plaza siga libre.
+- Modelo de datos sugerido: usuarios/roles, campañas, asignaciones, ubicaciones, artículos, stock snapshot BC por ubicación/lote, códigos asociados, sesiones/equipos, entradas de conteo, revisiones/correcciones, movimientos, incidencias, auditoría, importaciones y conciliaciones/exportaciones.
+- Diseñar claves idempotentes, auditoría append-only, concurrencia optimista, RLS de mínimo privilegio, garantías de aislamiento por campaña y seguridad de datos teóricos.
+- Para la PWA mantener offline utilizable con cola de cambios; identificar conflictos, sincronización y reconexión de forma explícita. **No afirmar sincronización real sin probarla entre dos dispositivos**.
+- Mantener `service-worker.js` con navegación **network-first** (offline fallback); incrementar `APP_VERSION` y nombre de caché juntos al publicar cambios de aplicación. No borrar almacenamiento local de usuarios durante migraciones.
+- BC: importar primero a la aplicación, nunca modificar inventario oficial automáticamente. Salida conciliada/exportación con revisión y autorización humana.
+
+## Prioridades de desarrollo para Cursor
+1. Auditar el repositorio y documentar flujos reales, defectos y diferencias entre demo y requisitos. No eliminar funciones ya aprobadas.
+2. Crear plan implementable y pruebas de integración (seguridad de stock teórico, pareja/un móvil, incidencias por movimientos, corrección inmutable, campañas micro/anual).
+3. Preparar proyecto Supabase INVENTA **independiente**, esquema y políticas RLS con tests que demuestren que un Operario no puede acceder al teórico durante campaña activa ni por API.
+4. Implementar autenticación real, perfiles y menú por rol; migrar de `TEST` a datos importados BC. Garantizar que Gestión almacén del Supervisor funciona realmente.
+5. Sincronizar operaciones con persistencia offline, concurrencia y trazabilidad. Probar escenarios con varios dispositivos, pérdidas de conexión, sesiones y relevos.
+6. Añadir conciliación de movimientos, recuentos ciegos adicionales, informes y exportación revisada a BC.
+7. Sólo después optimizar presentación. Mantener interfaz española y experiencia rápida en móvil.
+
+## Normas para cambios y revisiones
+- Antes de ejecutar tareas largas, inspeccionar el código real. Enumerar supuestos no confirmados en vez de inventar reglas.
+- Hacer commits pequeños y descriptivos; incluir versión y actualización de caché si afecta archivos publicados; verificar estado de GitHub Pages.
+- No almacenar secretos de Supabase en GitHub ni en navegador (usar claves publicables con RLS; jamás `service_role` en cliente).
+- Acompañar cada feature de pruebas y de un resultado verificable. Marcar explícitamente qué sigue siendo **demo**.
+- No borrar registros históricos, ni eliminar proyectos o datos reales, ni publicar cambios de inventario en BC sin autorización explícita.
+- Si alguna instrucción de Cursor entra en conflicto con este documento o con una decisión posterior del usuario, pedir aclaración para la contradicción concreta y conservar datos existentes.
