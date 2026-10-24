@@ -57,7 +57,7 @@ async function register(){
 }
 async function loadProfile(){var u=session&&session.user;if(!u)return;var arr=await api('profiles','user_id=eq.'+encodeURIComponent(u.id)+'&select=*');profile=arr&&arr[0]||null;}
 async function restore(){try{session=JSON.parse(localStorage.getItem(STORE)||'null');if(!session)return;if(session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();if(session)await loadProfile();if(isManager()&&typeof managerUser!=='undefined')managerUser=profile.display_name||profile.role;}catch(e){session=null;profile=null;}}
-async function logout(){try{if(session)await request('/auth/v1/logout',{method:'POST'});}catch(e){}session=null;profile=null;localStorage.removeItem(STORE);if(typeof managerUser!=='undefined')managerUser='';if(typeof consultUser!=='undefined')consultUser='';notice='';go('home');}
+async function logout(){fixedReportRows=[];try{if(session)await request('/auth/v1/logout',{method:'POST'});}catch(e){}session=null;profile=null;localStorage.removeItem(STORE);if(typeof managerUser!=='undefined')managerUser='';if(typeof consultUser!=='undefined')consultUser='';notice='';go('home');}
 function renderLogin(){
  show(heading('CUENTA PERSONAL','Acceso seguro','INVENTA usa cuentas personales y permisos de Supabase.')
   +card('Iniciar sesión',
@@ -430,9 +430,9 @@ function makeFixedCSV(rows){
  var values=rows.map(function(r){
   return [r.product_code,r.product_description,r.location_code,r.aisle,r.priority,r.stock_quantity,r.unit,ftime(r.assigned_at)];
  });
- return '\\uFEFF'+[cols].concat(values).map(function(row){
+ return '\uFEFF'+[cols].concat(values).map(function(row){
   return row.map(function(v){return '"'+String(v===null||v===undefined?'':v).replace(/"/g,'""')+'"';}).join(';');
- }).join('\\r\\n');
+ }).join('\r\n');
 }
 function exportFixedReport(){
  if(!isAdmin()||section!=='fixed')return;
