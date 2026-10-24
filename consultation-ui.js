@@ -24,7 +24,8 @@
  function number(n){return Number(n).toLocaleString('es-ES',{maximumFractionDigits:3});}
  function tags(pos){
   return (pos.fixed?'<span class="tag ok">FIJA'+(pos.priority>1?' · prioridad '+pos.priority:'')+'</span>':'')
-   +(pos.amount===0?'<span class="tag warn">SIN STOCK</span>':'');
+   +(pos.amount===0?'<span class="tag warn">SIN STOCK</span>':'')
+   +(pos.amount<0?'<span class="tag warn">STOCK NEGATIVO BC</span>':'');
  }
  function lots(pos){
   return pos.lots.length?'<small>Lotes: '+pos.lots.map(function(l){return esc(l.code)+' ('+number(l.amount)+')';}).join(', ')+'</small>':'';
