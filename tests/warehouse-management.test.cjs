@@ -11,12 +11,13 @@ const core=fs.readFileSync(path.join(root,'consultation-core.js'),'utf8');
 const ui=fs.readFileSync(path.join(root,'consultation-ui.js'),'utf8');
 const consult=require('../consultation-core.js');
 const importer=require('../bc-excel-import.js');
+const fixedImport=require('../fixed-positions-import.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.30\.3'/);
- assert.match(worker,/inventa-demo-v0303-01/);
- assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.3'/);
+ assert.match(index,/APP_VERSION='0\.30\.4'/);
+ assert.match(worker,/inventa-demo-v0304-01/);
+ assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.4'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
  assert.match(index,/consultation-ui\.js/);
@@ -184,7 +185,7 @@ test('El Operario no puede entrar en el catálogo de gestión',async()=>{
 
 test('cada script publicado tiene versión y está precargado en la misma caché',()=>{
  const scripts=[...index.matchAll(/src="(\.\/[^"]+\.js\?v=[^"]+)"/g)].map(x=>x[1]);
- assert.equal(scripts.length,5);
+ assert.equal(scripts.length,6);
  scripts.forEach(src=>assert.ok(worker.includes("'"+src+"'")));
 });
 
@@ -393,4 +394,44 @@ test('Aplicación lee el último snapshot BC al abrir sin reimportar Excel',()=>
  assert.match(index,/visibilitychange/);
  assert.match(index,/catalog-product\.catalog-fixed-shade/);
  assert.doesNotMatch(index,/APP_VERSION='0\.30\.2'/);
+});
+
+
+test('Importación fijos: detecta Fijo=1, ignora blancos, consolida pares repetidos',()=>{
+ const header=['Filtro almacén','Filtro zona','Nº producto','Cód. ubicación','Descripción','Fijo','Cantidad (base)','Cód. unidad medida'];
+ const a=['COR_01_COR','10-PAS-K','PRD0003563','K00-P01','GIN SEAGRAM',1,1690,'BOTELLA'];
+ const b=['COR_01_COR','10-PAS-K','PRD0003563','K00-P01','GIN SEAGRAM',1,1690,'UD'];
+ const c=['COR_01_COR','10-PAS-K','PRD0099999','K00-P03','ART NO FIJO',null,100,'UD'];
+ const result=fixedImport.parseRows([['Informe BC'],header,a,b,c],'Base unificada.xlsx');
+ assert.deepEqual(result.errors,[]);
+ assert.equal(result.sourceRows,3);
+ assert.equal(result.fixedRows,2);
+ assert.equal(result.uniquePositions,1);
+ assert.equal(result.duplicates,1);
+ assert.equal(result.warehouse,'COR_01_COR');
+ assert.equal(result.items[0].product_code,'PRD0003563');
+ assert.equal(result.items[0].location_code,'K00-P01');
+ assert.equal(result.items[0].zone,'10-PAS-K');
+ assert.equal(result.items[0].unit,'BOTELLA');
+ assert.equal(result.items[1].unit,'UD');
+ assert.ok(result.warnings.some(w=>w.includes('duplicado')||w.includes('repetido')));
+});
+test('Importación fijos: bloquea mezcla de almacenes y Fijo inválido',()=>{
+ const headers=['Filtro almacén','Filtro zona','Nº producto','Cód. ubicación','Descripción','Fijo','Cantidad (base)','Cód. unidad medida'];
+ const rows=[
+  ['COR_01_COR','10-PAS-K','PRD1','K00-P01','Primero',1,12,'UD'],
+  ['OTRO_ALMACEN','10-PAS-K','PRD2','K00-P02','Segundo',1,23,'UD']
+ ];
+ const mixed=fixedImport.parseRows([headers,...rows],'mezcla.xlsx');
+ assert.ok(mixed.errors.some(x=>x.includes('único almacén')));
+ const bad=fixedImport.parseRows([headers,[...rows[0].slice(0,5),'desconocido',...rows[0].slice(6)]],'mal.xlsx');
+ assert.ok(bad.errors.some(x=>x.includes('Fijo no reconocido')));
+});
+test('Informe de fijos se pagina para mostrar el inventario completo, sin cargar 1944 tarjetas',()=>{
+ assert.match(code,/rpc\/admin_fixed_positions_report','limit=1000&offset=/);
+ assert.match(code,/records\.slice\(0,100\)/);
+ assert.match(code,/fixedReportRows\.filter/);
+ assert.match(code,/INVENTA_FIXED_IMPORT\.panel/);
+ assert.match(index,/fixed-positions-import\.js\?v=0\.30\.4/);
+ assert.match(worker,/fixed-positions-import\.js\?v=0\.30\.4/);
 });
