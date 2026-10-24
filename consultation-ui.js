@@ -124,13 +124,15 @@
     +(loc&&loc.articles.length?loc.articles.filter(function(p){var a=byProduct.get(p.productCode);return !term||[p.productCode,a&&a.name].some(function(v){return String(v||'').toLocaleLowerCase('es').includes(term);});}).map(function(p){var a=byProduct.get(p.productCode);return '<button class="item" style="width:100%;text-align:left" onclick="INVENTA_CONSULT_UI.navigate(\'product\',\''+esc(p.productCode)+'\')"><span><strong>'+esc(a?a.name:p.productCode)+'</strong><small>'+esc(p.productCode)+' · '+number(p.amount)+' '+esc(a?a.unit:'UD')+'</small>'+tags(p)+'</span><span class="chev">›</span></button>';}).join(''):'<div class="alert">Ubicación vacía.</div>');return;
   }
   if(selectedAisle){
-   var locs=all.filter(function(l){return aisle(l.code)===selectedAisle&&(!term||l.code.toLocaleLowerCase('es').includes(term));});
+   var locs=all.filter(function(l){return (selectedAisle==='OTROS'?!'ABCDEFGHIJKLMNOPQRST'.includes(aisle(l.code)):aisle(l.code)===selectedAisle)&&(!term||l.code.toLocaleLowerCase('es').includes(term));});
    box.innerHTML='<button class="back" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\'\')">← Todos los pasillos</button><h2 style="margin:12px 0">Pasillo '+esc(selectedAisle)+'</h2>'
     +(locs.map(function(l){return '<button class="item" style="width:100%;text-align:left" onclick="INVENTA_CONSULT_UI.navigate(\'location\',\''+esc(l.code)+'\')"><span><strong>'+esc(l.code)+'</strong><small>'+l.articles.length+' artículos con stock o fija · '+(l.articles.some(function(p){return p.amount>0;})?'Con existencias':'Sin existencias')+'</small></span><span class="chev">›</span></button>';}).join('')||'<div class="alert">No hay ubicaciones registradas en este pasillo.</div>');return;
   }
   var letters='ABCDEFGHIJKLMNOPQRST'.split('');
-  box.innerHTML='<p class="muted" style="margin-bottom:12px">Selecciona un pasillo para consultar sus ubicaciones, incluso vacías.</p>'
-   +letters.map(function(a){var locs=all.filter(function(l){return aisle(l.code)===a;});return '<button class="item" style="width:100%;text-align:left" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\''+a+'\')"><span><strong>Pasillo '+a+'</strong><small>'+locs.length+' ubicaciones</small></span><span class="chev">›</span></button>';}).join('');
+  var other=all.filter(function(l){return !letters.includes(aisle(l.code));});
+  box.innerHTML='<p class="muted" style="margin-bottom:12px">Selecciona un pasillo de la A a la T, igual que en Inventario.</p>'
+   +'<div class="catalog-aisles">'+letters.map(function(a){var count=all.filter(function(l){return aisle(l.code)===a;}).length;return '<button type="button" class="catalog-aisle" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\''+a+'\')"><b>'+a+'</b><small>'+count+' ubic.</small></button>';}).join('')+'</div>'
+   +(other.length?'<button class="btn-outline" style="width:100%;margin-top:12px" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\'OTROS\')">Otras ubicaciones ('+other.length+')</button>':'');
  }
  function lookup(code){
   if(!model)return null;
