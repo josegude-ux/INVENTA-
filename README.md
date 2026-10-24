@@ -1,22 +1,48 @@
-# INVENTA — Demostración instalable del operario v0.15
+# INVENTA · v0.25.0
 
-Esta versión sirve exclusivamente para probar una experiencia móvil de inventario, sin tocar Business Central ni Supabase.
+Aplicación PWA de inventario y gestión de almacén para móvil y PC. **Dos subsistemas diferenciados en esta etapa:**
 
-## Instalación
+1. **Inventario y Consulta (DEMO):** datos ficticios, recuento individual o en pareja (un único móvil), registro local, escáner de códigos, correcciones y navegador sin conexión. El PIN \`1234\` es solamente de demostración.
+2. **Gestión de almacén (Supabase real):** inicio de sesión por correo y contraseña, roles protegidos en servidor y persistencia centralizada de campañas, asignaciones, incidencias, maestros, prioridades de ubicación fija, stock teórico, movimientos y auditoría.
 
-En iPhone/iPad, abrir la URL publicada por HTTPS con Safari > Compartir > Añadir a pantalla de inicio. En Android, abrir con Chrome > Instalar aplicación.
+**No usar recuentos de esta versión para inventarios reales:** el módulo de operario aún no sincroniza con la base central y la consulta de prueba aún muestra artículos ficticios. Ningún dato de esta PWA modifica Business Central.
 
-## Recorrido
+## Enlaces y arquitectura
 
-1. Identificarse: operario 1/2 y PIN ficticio **1234**.
-2. Seleccionar una ubicación ficticia. Confirmar su etiqueta o visualmente.
-3. Seleccionar artículo, o registrar provisionalmente otro no listado. Las existencias teóricas nunca se muestran.
-4. Contar con el teclado aprobado (B): introducir sueltos o palés (cajas por base × alturas × unidades/caja), sumar varias líneas, deshacer.
-5. Revisar el total y guardar. Si la diferencia absoluta supera una tolerancia de prueba `max(2 unidades, floor(5% teórico))`, aparece una advertencia sin revelar el teórico.
-6. Marcar artículos no encontrados y cerrar la ubicación únicamente cuando todos están revisados. Revisiones y cambios en la demo no requieren autorización real.
+- Aplicación: https://josegude-ux.github.io/INVENTA-/
+- GitHub: https://github.com/josegude-ux/INVENTA-
+- Supabase: proyecto \`INVENTA\` (\`wlejxnpphysogrzcxjfh\`), separado de Control de Cargas y Tanques.
+- \`index.html\`: interfaz y recuentos ficticios aprobados.
+- \`warehouse-management.js\`: gestión conectada directamente a Supabase mediante REST y Auth, sin paquetes adicionales.
+- \`service-worker.js\`: shell offline y actualización con navegación network-first.
+- \`.cursor/rules/inventa.mdc\`: reglas y alcance acordados para evolucionar los recuentos.
+- \`docs/OPERACION.md\`: puesta en marcha, perfiles, CSV y requisitos pendientes.
 
-**Seguridad**: El PIN es ficticio. El almacenamiento local es una simulación. El trabajo en varios dispositivos, el bloqueo real de ubicaciones, el respaldo y los conflictos offline serán responsabilidad del backend definitivo. Esta versión NO debe usarse para inventarios reales.
+## Funciones de Supervisor
 
-## Publicación en GitHub desde el iPhone
+- Consultar campañas, estado, asignaciones y auditoría.
+- Asignar ubicaciones a operarios y controlar estados.
+- Registrar y resolver incidencias con motivo e historial.
+- Crear artículos, ubicaciones y posiciones fijas, dando prioridad a \`1\`.
+- Consultar stock teórico de BC sin exponerlo a Operarios; registrar movimientos internos sin modificar BC.
 
-Los 8 archivos están en la raíz del ZIP, sin subcarpetas. En la app Archivos del iPhone, descomprime el ZIP. En github.com/josegude-ux/INVENTA-, usa Add file > Upload files y selecciona **todos** los archivos extraídos (incluidas las cuatro imágenes PNG), y confirma Commit changes. Por último, Settings > Pages > Deploy from a branch > main > /(root). Al terminar la publicación, visita `https://josegude-ux.github.io/INVENTA-/` desde Safari y Share > Add to Home Screen.
+## Funciones adicionales de Administrador
+
+- Crear, abrir y cerrar campañas micro y anuales.
+- Habilitar/deshabilitar usuarios y asignar roles.
+- Importar stock teórico manualmente o desde CSV.
+- Administrar todos los módulos de Supervisor.
+
+## Seguridad
+
+La base contiene doce tablas con RLS. Los nuevos registros de usuario obtienen el rol **operator** por defecto. La promoción inicial a administrador se realiza una sola vez desde Supabase tras registrar la cuenta, **no desde una pantalla pública ni con el PIN de la demo**. Los recuentos y movimientos son de inserción inmutable; el historial registra modificaciones relevantes. El navegador solo utiliza la **clave publicable**. Jamás subir una clave \`service_role\`.
+
+## Pruebas
+
+- Verificación de sintaxis de los tres scripts: correcta.
+- Simulación del inicio de sesión del Administrador y carga del panel: correcta.
+- Supabase: creación de esquema y migraciones registrada.
+- RLS: Operario no puede leer el stock ficticio insertado para una prueba; Supervisor sí puede. Los datos de la prueba fueron revertidos.
+- Advisor de seguridad inicial: sin advertencias.
+
+**Pendiente para puesta en servicio real:** crear y promover el primer administrador, conectar el recuento operario con Supabase, importar maestros/existencias auténticos de BC, probar sincronización multiusuario/offline y validar la conciliación de movimientos. **No afirmar que esas funciones están completas.**
