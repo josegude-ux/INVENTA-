@@ -123,6 +123,15 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 .audit-line{padding:9px 0;border-top:1px solid #ecf0f5}
 .audit-line b{display:block;font-size:13px}
 .audit-line small{display:block;color:#63778e;font-size:11px;line-height:1.4;margin-top:4px}
+
+.entry-detail.entry-changed{background:#f0faf4;border-left:4px solid #2f9767;padding:10px 6px}
+.entry-detail .entry-edit{border:1px solid #91cbb1;background:#e4f6ed;color:#16673d;border-radius:9px;padding:10px;font-size:13px;font-weight:850}
+.entry-change-label{display:block;margin-top:4px;font-size:11px;font-weight:900;color:#16673d}
+.inline-entry-editor{width:100%;flex-basis:100%;background:#f0f6fc;padding:13px;border-radius:12px;display:flex;flex-direction:column;gap:8px}
+.inline-entry-editor label{display:block;font-size:12px;font-weight:850;color:#34536a}
+.inline-entry-editor .input{margin-top:5px;min-width:0}
+.entry-detail:has(.inline-entry-editor){flex-wrap:wrap}
+.entry-factor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 </style></head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
 <script>
 'use strict';
@@ -135,12 +144,12 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.22.0';
+const APP_VERSION='0.23.0';
 const KEY='inventa-demo-operario-v015';
 const DRAFT_KEY='inventa-demo-draft-v020:';
 const blank=()=>({version:1,worker:'',locations:{},events:[]});
 function load(){try{const p=JSON.parse(localStorage.getItem(KEY));if(p?.version===1&&p.locations)return p;}catch(e){}return blank();}
-let data=load(),screen=data.worker?'aisles':'login',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all',lastPallet=null,repeatMode=false,overwriteInput=false,resumedDraft=false,editReason='',editOriginal=null,editReasonChoice='',editReasonNote='';
+let data=load(),screen=data.worker?'aisles':'login',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all',lastPallet=null,repeatMode=false,overwriteInput=false,resumedDraft=false,editReason='',editOriginal=null,editReasonChoice='',editReasonNote='',editingIndex=-1,entryEdits=[];
 const fmt=n=>Number(n).toLocaleString('es-ES');
 const esc=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const valid=s=>/^\d{1,8}$/.test(String(s))&&Number(s)>0&&Number.isSafeInteger(Number(s));
@@ -165,7 +174,7 @@ function saveDraft(){
  const d={version:2,worker:data.worker,loc:activeLoc,article:activeArticle,screen,
   entries:pendingEntries.map(e=>({...e})),mode:cMode,step:cStep,input:cInput,
   parts:[...cParts],lastPallet:lastPallet?[...lastPallet]:null,
-  repeatMode,overwriteInput,editReason,editOriginal,editReasonChoice,editReasonNote,feedback:countFeedback,at:new Date().toISOString()};
+  repeatMode,overwriteInput,editReason,editOriginal,editReasonChoice,editReasonNote,entryEdits:entryEdits.map(x=>({...x})),feedback:countFeedback,at:new Date().toISOString()};
  try{localStorage.setItem(draftKey(data.worker),JSON.stringify(d));}catch(e){}
 }
 function restoreDraft(d){
@@ -175,7 +184,7 @@ function restoreDraft(d){
  cInput=/^\d{0,8}$/.test(String(d.input||''))?String(d.input||''):'';
  cParts=Array.isArray(d.parts)&&d.parts.length===4?d.parts.map(n=>Number(n)||0):[0,0,0,0];
  lastPallet=Array.isArray(d.lastPallet)&&d.lastPallet.length===4?d.lastPallet.map(Number):null;
- repeatMode=!!d.repeatMode&&!!lastPallet;overwriteInput=!!d.overwriteInput;editReason=String(d.editReason||'');editOriginal=d.editOriginal??null;editReasonChoice=String(d.editReasonChoice||'');editReasonNote=String(d.editReasonNote||'');
+ repeatMode=!!d.repeatMode&&!!lastPallet;overwriteInput=!!d.overwriteInput;editReason=String(d.editReason||'');editOriginal=d.editOriginal??null;editReasonChoice=String(d.editReasonChoice||'');editReasonNote=String(d.editReasonNote||'');entryEdits=Array.isArray(d.entryEdits)?d.entryEdits.map(x=>({...x})):[];editingIndex=-1;
  countFeedback=d.feedback||'Recuento recuperado automáticamente. Todavía sin guardar.';
  screen=d.screen;resumedDraft=true;
 }
@@ -241,7 +250,7 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();if(s==='review'||s==='discrepancy'||s==='edit-detail')saveDraft();showPendingUpdate();}
-function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.22</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
+function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.23</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
 function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='login')renderLogin();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderLocations();}
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
@@ -313,7 +322,7 @@ function openArticle(id){
 function beginArticle(modifying){
  const rec=getLoc(activeLoc).counts[activeArticle];
  if(modifying&&rec&&!editReason){showModal('reason');return;}
- if(!modifying){editReason='';editOriginal=null;editReasonChoice='';editReasonNote='';}
+ if(!modifying){editReason='';editOriginal=null;editReasonChoice='';editReasonNote='';entryEdits=[];}
  pendingEntries=rec&&modifying&&!rec.notFound?rec.entries.map(x=>({...x})):[];
  cMode='direct';cStep=0;cInput='';cParts=[0,0,0,0];
  lastPallet=bestPreviousPallet(pendingEntries);repeatMode=false;overwriteInput=false;countFeedback='';
@@ -341,13 +350,29 @@ function entryDescription(e){
  return e.detail||((e.kind||'Apunte')+' · '+fmt(e.amount||0)+' unidades');
 }
 function entryRows(entries,editable=false){
- if(!entries.length)return '<p class="muted">Sin apuntes.</p>';
- return entries.map((e,i)=>'<div class="entry-detail"><div class="entry-index">'+(i+1)+'</div><div class="entry-main"><b>'+esc(e.kind==='directa'?'Cantidad directa':(e.kind==='palés'||e.kind==='palé'?'Palés':(e.kind||'Apunte')))+'</b><small>'+esc(entryDescription(e))+'</small></div><strong>+'+fmt(e.amount)+' </strong>'+(editable?'<button class="entry-delete" onclick="removeEditEntry('+i+')">Quitar</button>':'')+'</div>').join('');
+ if(!entries.length)return '<p class="muted">Todavía no hay cantidades añadidas.</p>';
+ return entries.map((e,i)=>{
+  const isPallet=Array.isArray(e.factors)&&e.factors.length===4;
+  const original=(getLoc(activeLoc).counts[activeArticle]?.entries||[])[i];
+  const changed=editable&&editOriginal!==null&&original&&
+   (original.amount!==e.amount||JSON.stringify(original.factors||[])!==JSON.stringify(e.factors||[]));
+  let editor='';
+  if(editable&&editingIndex===i){
+   if(isPallet){
+    const labels=['Nº palés','Cajas por base','Alturas','Unidades por caja'];
+    editor='<div class="inline-entry-editor"><div class="entry-factor-grid">'+e.factors.map((n,j)=>
+      '<label>'+labels[j]+'<input id="editFactor'+i+'_'+j+'" class="input" type="number" inputmode="numeric" min="1" max="99999999" step="1" value="'+n+'"></label>').join('')+'</div><p id="editEntryError" class="edit-reason-error"></p><button class="btn" onclick="applyEntryEdit('+i+')">Guardar cambio de este palé</button><button class="back" onclick="closeEntryEdit()">Cancelar edición</button></div>';
+   }else{
+    editor='<div class="inline-entry-editor"><label>Unidades de este apunte<input id="editNumber'+i+'" class="input" type="number" inputmode="numeric" min="1" max="99999999" step="1" value="'+e.amount+'"></label><p id="editEntryError" class="edit-reason-error"></p><button class="btn" onclick="applyEntryEdit('+i+')">Guardar cambio de esta cantidad</button><button class="back" onclick="closeEntryEdit()">Cancelar edición</button></div>';
+   }
+  }
+  return '<div class="entry-detail '+(changed?'entry-changed':'')+'" id="entryRow'+i+'"><div class="entry-index">'+(i+1)+'</div><div class="entry-main"><b>'+esc(isPallet?'Palés':e.kind==='directa'?'Cantidad directa':e.kind==='palé'?'Palé anterior':(e.kind||'Apunte'))+'</b><small>'+esc(entryDescription(e))+'</small>'+(changed?'<span class="entry-change-label">MODIFICADO · antes '+fmt(original.amount)+'</span>':'')+'</div><strong>+'+fmt(e.amount)+'</strong>'+(editable?'<button class="entry-edit" onclick="openEntryEdit('+i+')">Modificar</button>':'')+editor+'</div>';
+ }).join('');
 }
 function startEditDetail(){
  const rec=getLoc(activeLoc).counts[activeArticle];
  if(!rec){hideModal();beginArticle(false);return;}
- hideModal();editOriginal=rec.amount;editReason='';editReasonChoice='';editReasonNote='';
+ hideModal();editOriginal=rec.amount;editReason='';editReasonChoice='';editReasonNote='';entryEdits=[];editingIndex=-1;
  pendingEntries=cloneEntries(rec.entries);
  cMode='direct';cStep=0;cInput='';cParts=[0,0,0,0];repeatMode=false;overwriteInput=false;
  lastPallet=bestPreviousPallet(pendingEntries);
@@ -373,19 +398,47 @@ function requireEditReason(){
  return true;
 }
 function resumeEditCounter(){
- if(!requireEditReason())return;
+ if(editOriginal!==null&&!requireEditReason())return;
  countFeedback='Modificación justificada. Añade cantidades sin perder el desglose original.';
  go('count');
 }
-function removeEditEntry(i){
- if(!requireEditReason())return;
- const e=pendingEntries[i];if(!e)return;
- if(!confirm('¿Quitar el apunte de '+fmt(e.amount)+' unidades del recuento propuesto? El original se conservará.'))return;
- pendingEntries.splice(i,1);
- lastPallet=bestPreviousPallet(pendingEntries);
+function openBreakdown(){
+ if(!activeArticle)return;
+ editingIndex=-1;
+ go('edit-detail');
+}
+function openEntryEdit(i){
+ if(!Number.isInteger(i)||i<0||i>=pendingEntries.length)return;
+ editingIndex=i;renderEditDetail();
+ const row=$('entryRow'+i);if(row&&typeof row.scrollIntoView==='function')row.scrollIntoView({block:'center',behavior:'smooth'});
+}
+function closeEntryEdit(){editingIndex=-1;renderEditDetail();}
+function applyEntryEdit(i){
+ const entry=pendingEntries[i],err=$('editEntryError');
+ if(!entry||i!==editingIndex)return;
+ const isPallet=Array.isArray(entry.factors)&&entry.factors.length===4;
+ const fields=isPallet?entry.factors.map((_,j)=>$('editFactor'+i+'_'+j)?.value):[$('editNumber'+i)?.value];
+ const numbers=fields.map(v=>Number(v));
+ if(fields.some(v=>v===undefined||v===null||String(v).trim()==='')||numbers.some(n=>!Number.isSafeInteger(n)||n<=0||n>99999999)){
+  if(err)err.textContent='Introduce cantidades enteras mayores que cero.';return;
+ }
+ const amount=isPallet?numbers.reduce((a,b)=>a*b,1):numbers[0];
+ if(!Number.isSafeInteger(amount)||amount>99999999){
+  if(err)err.textContent='El resultado es demasiado grande.';return;
+ }
+ const previous=cloneEntries([entry])[0];
+ if(amount===entry.amount&&(!isPallet||JSON.stringify(numbers)===JSON.stringify(entry.factors))){editingIndex=-1;renderEditDetail();return;}
+ const updated={...entry,amount,detail:isPallet?numbers[0]+' palés × '+numbers[1]+' cajas/base × '+numbers[2]+' alturas × '+numbers[3]+' unidades/caja':amount+' unidades'};
+ if(isPallet)updated.factors=numbers.slice();
+ pendingEntries[i]=updated;
+ entryEdits.push({index:i,oldAmount:previous.amount,newAmount:amount,oldFactors:Array.isArray(previous.factors)?previous.factors.slice():null,newFactors:isPallet?numbers.slice():null,oldDetail:previous.detail||'',newDetail:updated.detail,worker:data.worker,at:new Date().toISOString()});
+ lastPallet=bestPreviousPallet(pendingEntries);editingIndex=-1;
+ countFeedback='Apunte '+(i+1)+' corregido: '+fmt(previous.amount)+' → '+fmt(amount)+' unidades. Pendiente de confirmar.';
  saveDraft();renderEditDetail();
 }
+
 function cancelEditDetail(){
+ if(editOriginal===null){go('count');return;}
  const original=getLoc(activeLoc).counts[activeArticle];
  const changed=JSON.stringify(pendingEntries)!==JSON.stringify(cloneEntries(original?.entries));
  if(changed&&!confirm('¿Descartar los cambios propuestos? El recuento original seguirá guardado.'))return;
@@ -394,27 +447,33 @@ function cancelEditDetail(){
 }
 function renderEditDetail(){
  const p=getProduct(),rec=getLoc(activeLoc).counts[activeArticle];
- if(!p||!rec){go('articles');return;}
- const originalEntries=cloneEntries(rec.entries);
+ if(!p){go('articles');return;}
+ const saved=!!rec&&editOriginal!==null;
+ const originalEntries=saved?cloneEntries(rec.entries):[];
  const reasons=['Unidad encontrada tras el recuento y reubicada','Corrección de una ubicación equivocada','Error detectado en el recuento inicial','Mercancía movida tras contar','Otro motivo'];
- const historical=(rec.corrections||[]).slice(-6).reverse().map(c=>
-   '<div class="audit-line"><b>'+fmt(c.oldAmount)+' → '+fmt(c.newAmount)+' unidades</b><small>'+esc(c.reason||'Sin motivo')+' · '+esc(c.worker||'Operario')+' · '+esc(c.at||'')+'</small></div>').join('');
- const h='<div class="title"><div class="overline">MODIFICACIÓN JUSTIFICADA</div><h1>'+esc(p.name)+'</h1><p class="muted">'+esc(activeLoc)+' · '+esc(p.id)+'</p></div>'
- +'<div class="card original-record"><h2>Recuento original guardado</h2><p class="muted">Este desglose no se modifica ni se borra.</p>'+entryRows(originalEntries)
- +'<div class="original-total">TOTAL ORIGINAL <strong>'+fmt(rec.amount)+' unidades</strong></div></div>'
- +'<div class="card proposed-record"><h2>Recuento propuesto</h2><p class="muted">Quita apuntes incorrectos o añade unidades y palés.</p>'+entryRows(pendingEntries,true)
- +'<div class="proposed-total">NUEVO TOTAL <strong>'+fmt(countTotal())+' unidades</strong></div>'
- +'<div class="change-total">Diferencia propuesta respecto al original: <b>'+((countTotal()-rec.amount)>0?'+':'')+fmt(countTotal()-rec.amount)+' unidades</b></div></div>'
- +'<div class="card"><h2>Motivo de la modificación</h2><label class="reason-label" for="editReasonSelect">Selecciona el motivo (obligatorio)</label>'
- +'<select class="input" id="editReasonSelect" onchange="changeEditReason()"><option value="">Elegir motivo…</option>'+reasons.map(r=>'<option value="'+esc(r)+'"'+(editReasonChoice===r?' selected':'')+'>'+esc(r)+'</option>').join('')+'</select>'
- +'<div id="editReasonWrap" '+(editReasonChoice==='Otro motivo'?'':'hidden')+'><label class="reason-label" for="editReasonNote">Explica qué ha sucedido</label><textarea class="input edit-note" id="editReasonNote" oninput="captureEditReason()" placeholder="Ej.: apareció una unidad que estaba en otra ubicación">'+esc(editReasonNote)+'</textarea></div>'
- +'<p id="editReasonError" class="edit-reason-error"></p></div>'
+ const historical=saved?(rec.corrections||[]).slice(-6).reverse().map(c=>
+  '<div class="audit-line"><b>'+fmt(c.oldAmount)+' → '+fmt(c.newAmount)+' unidades</b><small>'+esc(c.reason||'Sin motivo')+' · '+esc(c.worker||'Operario')+' · '+esc(c.at||'')+'</small></div>').join(''):'';
+ const total=countTotal();
+ const title='<div class="title"><div class="overline">'+(saved?'MODIFICACIÓN JUSTIFICADA':'DESGLOSE DEL RECUENTO')+'</div><h1>'+esc(p.name)+'</h1><p class="muted">'+esc(activeLoc)+' · '+esc(p.id)+'</p></div>';
+ const original=saved?'<div class="card original-record"><h2>Recuento original guardado</h2><p class="muted">Este desglose no se modifica ni se borra.</p>'+entryRows(originalEntries)+'<div class="original-total">TOTAL ORIGINAL <strong>'+fmt(rec.amount)+' unidades</strong></div></div>':'';
+ const proposed='<div class="card proposed-record"><h2>'+(saved?'Recuento propuesto':'Detalle de las cantidades')+'</h2><p class="muted">Modifica cada apunte directamente; no se elimina ninguna línea.</p>'+entryRows(pendingEntries,true)
+  +'<div class="proposed-total">TOTAL ACUMULADO <strong>'+fmt(total)+' unidades</strong></div>'
+  +(saved?'<div class="change-total">Diferencia respecto al original: <b>'+(total>rec.amount?'+':'')+fmt(total-rec.amount)+' unidades</b></div>':'')+'</div>';
+ const reason=saved?'<div class="card"><h2>Motivo de la modificación</h2><label class="reason-label" for="editReasonSelect">Selecciona el motivo (obligatorio)</label>'
+  +'<select class="input" id="editReasonSelect" onchange="changeEditReason()"><option value="">Elegir motivo…</option>'+reasons.map(r=>'<option value="'+esc(r)+'"'+(editReasonChoice===r?' selected':'')+'>'+esc(r)+'</option>').join('')+'</select>'
+  +'<div id="editReasonWrap" '+(editReasonChoice==='Otro motivo'?'':'hidden')+'><label class="reason-label" for="editReasonNote">Explica qué ha sucedido</label><textarea class="input edit-note" id="editReasonNote" oninput="captureEditReason()" placeholder="Ej.: apareció una unidad en otra ubicación">'+esc(editReasonNote)+'</textarea></div>'
+  +'<p id="editReasonError" class="edit-reason-error"></p></div>':'';
+ const audit=entryEdits.length?'<div class="card"><h2>Correcciones de esta sesión</h2>'+entryEdits.map(x=>'<div class="audit-line"><b>Apunte '+(x.index+1)+': '+fmt(x.oldAmount)+' → '+fmt(x.newAmount)+' unidades</b><small>'+esc(x.oldDetail)+' → '+esc(x.newDetail)+'</small></div>').join('')+'</div>':'';
+ place(title+original+proposed+reason+audit
  +(historical?'<div class="card"><h2>Historial de correcciones anteriores</h2>'+historical+'</div>':'')
- +'<p class="muted">El recuento original permanece intacto hasta guardar una corrección válida. Con tolerancia cero, cualquier diferencia quedará pendiente de revisión.</p>';
- place(h,'<div class="stack"><button class="btn" onclick="resumeEditCounter()">+ Añadir unidades o palés</button><button class="btn-outline" onclick="finishEditDetail()">Revisar y confirmar cambios →</button><button class="back" onclick="cancelEditDetail()">← Salir sin guardar los cambios</button></div>');
+ +'<p class="muted">'+(saved?'El original se conserva hasta confirmar. Una diferencia queda como incidencia pendiente.':'Cada corrección queda vinculada a su apunte antes de guardar el recuento.')+'</p>',
+ '<div class="stack"><button class="btn" onclick="resumeEditCounter()">+ Añadir unidades o palés</button>'
+ +'<button class="btn-outline" onclick="finishEditDetail()">Revisar y confirmar cantidades →</button>'
+ +'<button class="back" onclick="cancelEditDetail()">← '+(saved?'Salir sin guardar los cambios':'Volver al teclado')+'</button></div>');
 }
+
 function finishEditDetail(){
- if(!requireEditReason())return;
+ if(editOriginal!==null&&!requireEditReason())return;
  if(!pendingEntries.length){const err=$('editReasonError');if(err)err.textContent='No hay unidades en el recuento propuesto. Si el artículo no está, registra una incidencia.';return;}
  pendingResult='counted';go('review');
 }
@@ -436,7 +495,7 @@ function getProduct(){return items(activeLoc).find(p=>p.id===activeArticle)}
 function countedUnit(){return 'unidades';}
 function countedUnitUpper(){return 'UNIDADES';}
 function countTotal(){return pendingEntries.reduce((sum,e)=>sum+e.amount,0)}
-function renderCount(){const p=getProduct();const rec=getLoc(activeLoc).counts[p.id];place(`<div class="cproduct"><span>${esc(activeLoc)} · ${esc(p.id)}</span><b>${esc(p.name)}</b><small>Unidad de recuento: <strong>UNIDADES</strong></small></div><div class="modebar"><button id="modeDirect" onclick="setMode('direct')">+ CANTIDAD</button><button id="modePallet" onclick="setMode('pallet')">▦ CÁLCULO DE PALÉS</button></div><div class="reuse-row" id="reusePalletRow" hidden><button onclick="repeatLastPallet()">↻ Repetir el último palé</button></div><div class="between" style="margin-bottom:7px"><span class="muted" id="cStep" style="color:#b9cadd"></span><span id="cProgress" class="tag"></span></div><div class="display"><div class="caption"><span id="cCaption">Cantidad directa</span><span id="cUnit">${countedUnitUpper(p)}</span></div><div class="digits" id="cDigits">0</div><div class="desc" id="cDesc"></div></div><div class="keypad"><button onclick="digit('1')">1</button><button onclick="digit('2')">2</button><button onclick="digit('3')">3</button><button onclick="digit('4')">4</button><button onclick="digit('5')">5</button><button onclick="digit('6')">6</button><button onclick="digit('7')">7</button><button onclick="digit('8')">8</button><button onclick="digit('9')">9</button><button class="ctl" onclick="clearDigit()">BORRAR</button><button onclick="digit('0')">0</button><button class="ctl" onclick="backDigit()">⌫</button></div><button id="cAction" class="addbtn" onclick="actionDigit()">+ AÑADIR AL TOTAL</button><div class="count-feedback" id="countFeedback" role="status" aria-live="polite">Aún no has sumado cantidades.</div><div class="c-tools"><span id="cEntries">0 apuntes</span><button onclick="showModal('history')">VER / CORREGIR ›</button></div>`,`<div class="counter-total"><div class="total-heading">TOTAL ACUMULADO</div><div class="total-reading"><strong id="liveTotal">${fmt(countTotal())}</strong><span class="total-unit">${countedUnitUpper(p)}</span></div><div class="total-staged">● PROVISIONAL · SIN GUARDAR</div></div><div class="counter-footer"><button onclick="cancelCount()">${editOriginal!==null?"← Desglose":"← Artículos"}</button><button onclick="undoEntry()">↶ Deshacer</button><button onclick="prepareReview()">IR A CONFIRMAR →</button></div>`);drawCount();}
+function renderCount(){const p=getProduct();const rec=getLoc(activeLoc).counts[p.id];place(`<div class="cproduct"><span>${esc(activeLoc)} · ${esc(p.id)}</span><b>${esc(p.name)}</b><small>Unidad de recuento: <strong>UNIDADES</strong></small></div><div class="modebar"><button id="modeDirect" onclick="setMode('direct')">+ CANTIDAD</button><button id="modePallet" onclick="setMode('pallet')">▦ CÁLCULO DE PALÉS</button></div><div class="reuse-row" id="reusePalletRow" hidden><button onclick="repeatLastPallet()">↻ Repetir el último palé</button></div><div class="between" style="margin-bottom:7px"><span class="muted" id="cStep" style="color:#b9cadd"></span><span id="cProgress" class="tag"></span></div><div class="display"><div class="caption"><span id="cCaption">Cantidad directa</span><span id="cUnit">${countedUnitUpper(p)}</span></div><div class="digits" id="cDigits">0</div><div class="desc" id="cDesc"></div></div><div class="keypad"><button onclick="digit('1')">1</button><button onclick="digit('2')">2</button><button onclick="digit('3')">3</button><button onclick="digit('4')">4</button><button onclick="digit('5')">5</button><button onclick="digit('6')">6</button><button onclick="digit('7')">7</button><button onclick="digit('8')">8</button><button onclick="digit('9')">9</button><button class="ctl" onclick="clearDigit()">BORRAR</button><button onclick="digit('0')">0</button><button class="ctl" onclick="backDigit()">⌫</button></div><button id="cAction" class="addbtn" onclick="actionDigit()">+ AÑADIR AL TOTAL</button><div class="count-feedback" id="countFeedback" role="status" aria-live="polite">Aún no has sumado cantidades.</div><div class="c-tools"><span id="cEntries">0 apuntes</span><button onclick="openBreakdown()">VER / CORREGIR ›</button></div>`,`<div class="counter-total"><div class="total-heading">TOTAL ACUMULADO</div><div class="total-reading"><strong id="liveTotal">${fmt(countTotal())}</strong><span class="total-unit">${countedUnitUpper(p)}</span></div><div class="total-staged">● PROVISIONAL · SIN GUARDAR</div></div><div class="counter-footer"><button onclick="cancelCount()">${editOriginal!==null?"← Desglose":"← Artículos"}</button><button onclick="openBreakdown()">✎ Corregir</button><button onclick="prepareReview()">IR A CONFIRMAR →</button></div>`);drawCount();}
 function setMode(v){cMode=v;cStep=0;cInput='';cParts=[0,0,0,0];repeatMode=false;overwriteInput=false;countFeedback='';drawCount();}
 function digit(n){if(overwriteInput){cInput='';overwriteInput=false;}if(cInput.length>=8)return;cInput=(cInput+n).replace(/^0+(?=\d)/,'');if(cInput==='0')cInput='';drawCount();}
 function clearDigit(){cInput='';overwriteInput=false;drawCount()};function backDigit(){cInput=cInput.slice(0,-1);overwriteInput=false;drawCount()};
@@ -512,10 +571,10 @@ function actionDigit(){
  if(added)countFeedback='✓ +'+fmt(added)+' UNIDADES AÑADIDAS · TOTAL '+fmt(countTotal())+' · TODAVÍA SIN GUARDAR';
  drawCount();
 }
-function undoEntry(){if(pendingEntries.length){const n=pendingEntries.pop().amount;countFeedback=`↶ Se han quitado ${fmt(n)} unidades · total ${fmt(countTotal())}. Aún sin guardar.`;}drawCount();}
+function undoEntry(){openBreakdown();}
 function cancelCount(){if(editOriginal!==null){countFeedback='';go('edit-detail');return;}if((pendingEntries.length||cInput||cParts.some(Boolean)||repeatMode)&&!confirm('Hay un recuento en curso. ¿Quieres descartarlo y volver al listado?'))return;clearDraft();go('articles');}
 function prepareReview(){if(countTotal()===0){showModal('emptycount');return;}pendingResult='counted';go('review');}
-function renderReview(){const p=getProduct();place(`<div class="title"><div class="overline">PASO 4 · REVISIÓN</div><h1>Confirmar recuento</h1><p class="muted">${esc(activeLoc)} · ${esc(p.name)}</p></div><div class="card" style="text-align:center"><div class="overline">TOTAL CONTADO</div><div style="font-size:48px;font-weight:950;color:#142f4f">${fmt(countTotal())}</div><div class="muted">${countedUnit(p)} · ${pendingEntries.length} apuntes</div></div><div class="card"><h2>Detalle</h2>${pendingEntries.map(e=>`<div class="between" style="border-bottom:1px solid #edf0f5;padding:8px 0"><span class="muted">${esc(e.kind)}: ${esc(e.detail)}</span><b>+${fmt(e.amount)}</b></div>`).join('')}</div><div class="alert">Al confirmar, INVENTA exige coincidencia exacta. Si hay diferencia, se registrará una incidencia pendiente y nunca se marcará el recuento como válido.</div>`,`<div class="stack"><button class="btn" onclick="validateCount()">CONFIRMAR Y GUARDAR ARTÍCULO →</button><button class="back" onclick="go(editOriginal!==null?'edit-detail':'count')">← Modificar cantidades</button></div>`);}
+function renderReview(){const p=getProduct();place(`<div class="title"><div class="overline">PASO 4 · REVISIÓN</div><h1>Confirmar recuento</h1><p class="muted">${esc(activeLoc)} · ${esc(p.name)}</p></div><div class="card" style="text-align:center"><div class="overline">TOTAL CONTADO</div><div style="font-size:48px;font-weight:950;color:#142f4f">${fmt(countTotal())}</div><div class="muted">${countedUnit(p)} · ${pendingEntries.length} apuntes</div></div><div class="card"><h2>Detalle</h2>${pendingEntries.map(e=>`<div class="between" style="border-bottom:1px solid #edf0f5;padding:8px 0"><span class="muted">${esc(e.kind)}: ${esc(e.detail)}</span><b>+${fmt(e.amount)}</b></div>`).join('')}</div><div class="alert">Al confirmar, INVENTA exige coincidencia exacta. Si hay diferencia, se registrará una incidencia pendiente y nunca se marcará el recuento como válido.</div>`,`<div class="stack"><button class="btn" onclick="validateCount()">CONFIRMAR Y GUARDAR ARTÍCULO →</button><button class="back" onclick="openBreakdown()">← Modificar cantidades</button></div>`);}
 const tolerance=expected=>Math.max(2,Math.floor(expected*.05));
 function validateCount(){
  const p=getProduct(),amount=countTotal();
@@ -536,10 +595,10 @@ function registerDiscrepancy(notFound=false){
  const d=getLoc(activeLoc),prior=d.counts[activeArticle];
  if(prior&&!editReason){showModal('reason');return;}
  const amount=notFound?0:countTotal();
- const issue={amount,notFound,reason:editReason||(notFound?'Artículo no encontrado':'Diferencia en recuento'),previousAmount:prior?.amount??null,originalEntries:cloneEntries(prior?.entries),proposedEntries:cloneEntries(pendingEntries),delta:amount-(prior?.amount??0),worker:data.worker,at:new Date().toISOString(),status:'pending'};
+ const issue={amount,notFound,reason:editReason||(notFound?'Artículo no encontrado':'Diferencia en recuento'),previousAmount:prior?.amount??null,originalEntries:cloneEntries(prior?.entries),proposedEntries:cloneEntries(pendingEntries),entryEdits:entryEdits.map(x=>({...x})),delta:amount-(prior?.amount??0),worker:data.worker,at:new Date().toISOString(),status:'pending'};
  d.incidents[activeArticle]=issue;
- data.events.push({what:'Incidencia pendiente (sin validar)',loc:activeLoc,article:activeArticle,amount,oldAmount:issue.previousAmount,reason:issue.reason,originalEntries:cloneEntries(issue.originalEntries),proposedEntries:cloneEntries(issue.proposedEntries),worker:data.worker,at:issue.at});
- save();clearDraft();pendingEntries=[];editReason='';editOriginal=null;editReasonChoice='';editReasonNote='';
+ data.events.push({what:'Incidencia pendiente (sin validar)',loc:activeLoc,article:activeArticle,amount,oldAmount:issue.previousAmount,reason:issue.reason,originalEntries:cloneEntries(issue.originalEntries),proposedEntries:cloneEntries(issue.proposedEntries),entryEdits:entryEdits.map(x=>({...x})),worker:data.worker,at:issue.at});
+ save();clearDraft();pendingEntries=[];editReason='';editOriginal=null;editReasonChoice='';editReasonNote='';entryEdits=[];
  savedFeedback='⚠ Incidencia registrada para revisión. No se ha dado por válido el artículo.';
  go('articles');
 }
@@ -549,13 +608,13 @@ function commitCount(warning,notFound=false){
  const d=getLoc(activeLoc),prior=d.counts[activeArticle];
  if(prior&&!editReason){showModal('reason');return;}
  const rec={entries:pendingEntries.map(x=>({...x})),amount:countTotal(),notFound:false,warning:false,at:new Date().toISOString()};
- if(prior){rec.corrections=[...(prior.corrections||[]),{oldAmount:prior.amount,newAmount:rec.amount,delta:rec.amount-prior.amount,originalEntries:cloneEntries(prior.entries),newEntries:cloneEntries(rec.entries),reason:editReason,worker:data.worker,at:rec.at}];}
+ if(prior){rec.corrections=[...(prior.corrections||[]),{oldAmount:prior.amount,newAmount:rec.amount,delta:rec.amount-prior.amount,originalEntries:cloneEntries(prior.entries),newEntries:cloneEntries(rec.entries),entryEdits:entryEdits.map(x=>({...x})),reason:editReason,worker:data.worker,at:rec.at}];}
  d.counts[activeArticle]=rec;
  const previousIssue=d.incidents[activeArticle];if(previousIssue)delete d.incidents[activeArticle];
- data.events.push({what:prior?'Corrección justificada':'Artículo contado',loc:activeLoc,article:activeArticle,oldAmount:prior?.amount??null,amount:rec.amount,reason:prior?editReason:null,originalEntries:cloneEntries(prior?.entries),newEntries:cloneEntries(rec.entries),worker:data.worker,at:rec.at});
+ data.events.push({what:prior?'Corrección justificada':'Artículo contado',loc:activeLoc,article:activeArticle,oldAmount:prior?.amount??null,amount:rec.amount,reason:prior?editReason:null,originalEntries:cloneEntries(prior?.entries),newEntries:cloneEntries(rec.entries),entryEdits:entryEdits.map(x=>({...x})),worker:data.worker,at:rec.at});
  save();clearDraft();
  savedFeedback='✓ GUARDADO: '+esc(p.name)+' · '+fmt(rec.amount)+' unidades.'+(prior?' Corrección registrada con motivo.':'');
- pendingEntries=[];editReason='';editOriginal=null;editReasonChoice='';editReasonNote='';go('articles');
+ pendingEntries=[];editReason='';editOriginal=null;editReasonChoice='';editReasonNote='';entryEdits=[];go('articles');
 }
 function markNotFound(){
  const p=getProduct();if(!p)return;
@@ -598,7 +657,7 @@ function confirmCloseLocation(){
  save();go('closed');
 }
 function renderClosed(){const p=progress(activeLoc);place(`<div class="card" style="text-align:center;padding:25px 15px"><div class="bigcheck">✅</div><h1 style="margin:9px 0">Ubicación finalizada</h1><h2>${activeLoc}</h2><p class="muted" style="margin-top:7px">${p.done} artículos revisados. La información permanece en esta demo local y NO se ha sincronizado.</p></div><div class="alert">En la app real el responsable tendrá que autorizar cualquier reapertura y revisar todas las diferencias, incluso las inferiores a la tolerancia.</div>`,`<button class="btn" onclick="go('locations')">Ir a otra ubicación →</button>`);}
-function showModal(m){modal=m;let body='';if(m==='history'){body=`<h2>Detalle del recuento</h2>${pendingEntries.length?pendingEntries.map((e,i)=>`<div class="line"><span>${esc(e.detail)}<br><b>+${fmt(e.amount)}</b></span><button onclick="removeEntry(${i})">Eliminar</button></div>`).join(''):'<p class="muted">Sin cantidades añadidas.</p>'}<div class="modal-actions"><button class="btn-outline" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='already-counted'){
+function showModal(m){modal=m;let body='';if(m==='history'){hideModal();openBreakdown();return;}else if(m==='already-counted'){
  const p=getProduct(),rec=getLoc(activeLoc).counts[activeArticle];
  body='<h2>⚠ Artículo ya contado</h2><p class="muted">Este artículo tiene apuntes guardados. Puedes revisar el desglose original antes de proponer cualquier cambio.</p>'
  +'<div class="card" style="margin-top:12px"><b>'+esc(p.name)+'</b><p class="muted">Recuento guardado: <b>'+fmt(rec.amount)+' unidades</b></p></div>'
@@ -614,7 +673,7 @@ function showModal(m){modal=m;let body='';if(m==='history'){body=`<h2>Detalle de
 }else if(m==='menu'){body=`<h2>Opciones de prueba</h2><p class="muted">Versión instalada: v${APP_VERSION}. Usuario: ${esc(data.worker)}. Los recuentos se guardan en este dispositivo.</p><div class="stack" style="margin-top:12px"><button class="btn-outline" onclick="hideModal();checkForUpdates(true)">↻ Buscar actualizaciones</button><button class="btn-outline" onclick="installHelp()">Cómo instalar INVENTA</button><button class="btn-outline" onclick="resetDemo()">Restablecer datos de prueba</button><button class="btn-outline" onclick="logout()">Cambiar operario</button><button class="btn" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='help'){body=`<h2>Instalar INVENTA</h2><p class="muted">En iPhone: abre esta dirección desde Safari, pulsa Compartir y elige <b>Añadir a pantalla de inicio</b>. Después abre el icono INVENTA. En Android: menú de Chrome → Instalar aplicación.</p><p class="muted" style="margin-top:10px">Los archivos básicos se guardan tras la primera carga. Los datos de prueba son solo locales.</p><button class="btn" style="margin-top:12px" onclick="hideModal()">Entendido</button>`;}else if(m==='unexpected'){body=`<h2>Artículo no listado</h2><p class="muted">Registra provisionalmente un artículo encontrado en ${activeLoc}. En la aplicación definitiva se comunicará una incidencia al responsable.</p><div class="field" style="margin-top:11px"><label for="unknownCode">Código de artículo</label><input class="input" id="unknownCode" placeholder="Ej. PRD0009999"></div><div class="field"><label for="unknownName">Descripción (opcional)</label><input class="input" id="unknownName" placeholder="Artículo encontrado"></div><button class="btn" onclick="addUnexpected()">Añadir a esta ubicación</button><button class="back" onclick="hideModal()">Cancelar</button><p id="modalError" class="muted"></p>`;}else if(m==='missing'){const rem=items(activeLoc).filter(p=>!getLoc(activeLoc).counts[p.id]).length;body=`<h2>Quedan artículos sin revisar</h2><p class="muted">Debes contar o marcar «No encontrado» en ${rem} artículo(s) antes de cerrar ${activeLoc}.</p><button class="btn" style="margin-top:11px" onclick="hideModal()">Seguir contando</button>`;}else if(m==='emptycount'){body=`<h2>Sin cantidades</h2><p class="muted">Todavía no hay unidades apuntadas. Si el producto no está en esta ubicación, utiliza «No encontrado».</p><button class="btn" style="margin-top:10px" onclick="markNotFound()">No encontrado</button><button class="btn-outline" style="width:100%;margin-top:8px" onclick="hideModal()">Seguir contando</button>`;}
 $('overlay').innerHTML=`<div class="modalback" onclick="if(event.target===this)hideModal()"><div class="modal">${body}</div></div>`;}
 function hideModal(){$('overlay').innerHTML='';modal='';}
-function removeEntry(i){pendingEntries.splice(i,1);saveDraft();hideModal();renderCount();showModal('history');}
+function removeEntry(i){hideModal();openBreakdown();if(i>=0&&i<pendingEntries.length)openEntryEdit(i);}
 function addUnexpected(){const code=$('unknownCode').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,28);if(!code){$('modalError').textContent='Introduce un código.';return;}if(items(activeLoc).some(p=>p.id===code)){$('modalError').textContent='Ese artículo ya existe en la ubicación.';return;}const name=$('unknownName').value.trim().slice(0,90);getLoc(activeLoc).extras[code]={name:name||'Artículo encontrado no previsto'};data.events.push({what:'Artículo provisional',loc:activeLoc,article:code,at:new Date().toISOString()});save();hideModal();go('articles');}
 function installHelp(){hideModal();showModal('help')}
 function logout(){data.worker='';activeAisle='';save();hideModal();go('login')}
