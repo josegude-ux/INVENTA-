@@ -1,0 +1,17 @@
+name: INVENTA checks
+on:
+  push:
+    branches: [main, feature/backend-seguro-roles]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/warehouse-management.test.cjs
