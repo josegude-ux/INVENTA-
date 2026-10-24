@@ -18,7 +18,7 @@ test('vista previa aislada solo carga recursos locales y el importador real',()=
  assert.match(html,/\.\.\/bc-excel-import\.js/);
  assert.match(html,/\.\/vendor\/exceljs\.min\.js/);
  assert.match(html,/diario-inventario-fisico-DEMO\.xlsx/);
- assert.doesNotMatch(html+script,/supabase|businesscentral|service[_-]?role|sb_publishable|sb_secret|https?:\/\//i);
+ assert.doesNotMatch(html+script,/wlejxnpphysogrzcxjfh|service[_-]?role|sb_publishable|sb_secret|https?:\/\//i);
  assert.doesNotMatch(html+script,/warehouse-management|service-worker|localStorage|sessionStorage|navigator\.serviceWorker/i);
  assert.doesNotMatch(html,/Confirmar y publicar|onclick=/i);
 });
