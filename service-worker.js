@@ -1,23 +1,44 @@
-const CACHE='inventa-demo-v0245-01';
+/* INVENTA: versioned offline shell with network-first navigation. */
+const CACHE='inventa-demo-v0246-01';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.png'];
 const SCANNER_LIBRARY='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
-self.addEventListener('install',e=>{
- e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)));
+const INDEX_URL=new URL('./index.html',self.registration.scope).href;
+self.addEventListener('install',event=>{
+ event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)));
  self.skipWaiting();
 });
-self.addEventListener('activate',e=>{
- e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
- self.clients.claim();
+self.addEventListener('activate',event=>{
+ event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('inventa-demo-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));
 });
-self.addEventListener('fetch',e=>{
- const r=e.request;
- if(r.method!=='GET')return;
- const u=new URL(r.url),externalScanner=u.href===SCANNER_LIBRARY;
- if(u.origin!==self.location.origin&&!externalScanner)return;
- e.respondWith(caches.match(r).then(cached=>cached||fetch(r).then(response=>{
+self.addEventListener('fetch',event=>{
+ const request=event.request;
+ if(request.method!=='GET')return;
+ const url=new URL(request.url);
+ const local=url.origin===self.location.origin;
+ const scanner=url.href===SCANNER_LIBRARY;
+ if(!local&&!scanner)return;
+ const navigation=local&&(request.mode==='navigate'||url.pathname.endsWith('/index.html'));
+ if(navigation){
+  event.respondWith((async()=>{
+   try{
+    // The live file wins whenever the device is online, even if an old app shell exists.
+    const response=await fetch(request,{cache:'no-store'});
+    if(!response.ok)throw new Error('Server status '+response.status);
+    const cache=await caches.open(CACHE);
+    event.waitUntil(cache.put(INDEX_URL,response.clone()).catch(()=>{}));
+    return response;
+   }catch(error){
+    // Offline counting still works with the last downloaded application shell.
+    const old=await caches.match(request)||await caches.match(INDEX_URL,{ignoreSearch:true});
+    return old||Response.error();
+   }
+  })());
+  return;
+ }
+ event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{
   if(response.ok){
-   const cloned=response.clone();
-   caches.open(CACHE).then(c=>c.put(r,cloned)).catch(()=>{});
+   const clone=response.clone();
+   event.waitUntil(caches.open(CACHE).then(cache=>cache.put(request,clone)).catch(()=>{}));
   }
   return response;
  })));
