@@ -104,7 +104,7 @@
   updateBackButton();
   filter('');
  }
- function aisle(code){return String(code||'').trim().toUpperCase().charAt(0);}
+ function aisle(code){var c=String(code||'').trim().toUpperCase();return /^[A-T][0-9]{2,}[-_]/.test(c)?c.charAt(0):'OTROS';}
  function navigate(level,value){
   if(!['aisle','location','product'].includes(level))return;
   if(level==='product'&&!selectedLocation)return;
