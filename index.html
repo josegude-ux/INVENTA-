@@ -181,6 +181,8 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 .catalog-maintenance[open] summary{border-bottom:1px solid #e3e9ef}.catalog-maintenance-body{padding:15px}
 .catalog-maintenance-body h3{margin:0 0 13px;font-size:15px}
 .catalog-product{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-top:1px solid #e9edf2}
+.catalog-product.catalog-fixed-shade{background:#e5effa;border-radius:12px;padding:12px 9px;margin:5px -9px;border-top-color:transparent}
+.fixed-report-row[hidden]{display:none!important}
 .catalog-product:first-child{border-top:0}.catalog-product>div:first-child{min-width:0}.catalog-product b{font-size:13px}
 .catalog-product small{display:block;font-size:11px;color:#657e91;line-height:1.45;margin-top:4px}
 .catalog-product-right{text-align:right;flex:0 0 auto;max-width:45%}.catalog-product-right .tag{display:block;margin-top:5px}
@@ -275,11 +277,11 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
     </div>
   </div>
 </div>
-<script src="./warehouse-management.js?v=0.30.2"></script>
-<script src="./bc-excel-import.js?v=0.30.2"></script>
-<script src="./real-counts.js?v=0.30.2"></script>
-<script src="./consultation-core.js?v=0.30.2"></script>
-<script src="./consultation-ui.js?v=0.30.2"></script>
+<script src="./warehouse-management.js?v=0.30.3"></script>
+<script src="./bc-excel-import.js?v=0.30.3"></script>
+<script src="./real-counts.js?v=0.30.3"></script>
+<script src="./consultation-core.js?v=0.30.3"></script>
+<script src="./consultation-ui.js?v=0.30.3"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -291,7 +293,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.30.2';
+const APP_VERSION='0.30.3';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -451,7 +453,7 @@ function openSettings(){
  $('overlay').innerHTML='<div class="modalback"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Ajustes</h2><p class="muted">INVENTA · v'+APP_VERSION+'</p>'+(authenticated?'<p>'+esc(profile.display_name)+' · '+esc({admin:'Administrador',supervisor:'Supervisor',operator:'Operario'}[profile.role]||'')+'</p>':'<p>Accede con tu cuenta para ver tus funciones.</p>')+'<div class="stack" style="margin-top:16px"><button class="btn-outline" onclick="hideModal();installInventa()">Instalar aplicación</button><button class="btn-outline" onclick="hideModal();safeNavigation(()=>checkForUpdates(true))">Buscar actualizaciones</button>'+(authenticated?'<button class="btn-outline" onclick="safeNavigation(()=>{hideModal();logoutManager();})">Cerrar sesión</button>':'')+((data.worker&&!authenticated)?'<button class="btn-outline" onclick="showModal(\'menu\')">Opciones de demostración</button>':'')+'<button class="btn" onclick="hideModal()">Cerrar ajustes</button></div></section></div>';
  $('settingsTitle').setAttribute('tabindex','-1');$('settingsTitle').focus();
 }
-function header(){const counting=!['home','manager-login','management','consult-login','consult'].includes(screen);return `<div class="hrow"><div class="brand"><div><button class="brand-home" type="button" onclick="navigateHome()" aria-label="INVENTA: ir al menú principal"><img class="brand-wordmark" src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></button><small>Demo · v${APP_VERSION}${counting&&data.worker&&data.countSession?' · '+esc(sessionLabel()):screen==='consult'?' · Consulta':screen==='management'?' · Gestión almacén':''}</small></div></div><div class="topbuttons">${settingsButton()}</div></div>`;}
+function header(){const counting=!['home','manager-login','management','consult-login','consult'].includes(screen);return `<div class="hrow"><div class="brand"><div><button class="brand-home" type="button" onclick="navigateHome()" aria-label="INVENTA: ir al menú principal"><img class="brand-wordmark" src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></button><small>${window.INVENTA_MGMT?.isAuthenticated()&&!window.INVENTA_CONSULT_DEMO?'INVENTA':'Demo'} · v${APP_VERSION}${counting&&data.worker&&data.countSession?' · '+esc(sessionLabel()):screen==='consult'?' · Consulta':screen==='management'?' · Gestión almacén':''}</small></div></div><div class="topbuttons">${settingsButton()}</div></div>`;}
 function render(){let counter=screen==='count';$('app').classList.toggle('landing',screen==='home');$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='home')renderHome();else if(screen==='demo-home')renderDemoHome();else if(screen==='manager-login')renderManagerLogin();else if(screen==='management')renderManagement();else if(screen==='consult-login')renderConsultLogin();else if(screen==='consult')renderConsult();else if(screen==='login')renderLogin();else if(screen==='session')renderSession();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderHome();}
 let navigationBaseline=[];
 function navigationFields(){return Array.from(document.querySelectorAll('#content input,#content select,#content textarea')).filter(el=>!['consultSearch','catalogSearch'].includes(el.id));}
@@ -528,8 +530,14 @@ function renderHome(){
  const cards=(allowed.inventory?tile('inventory','Hacer<br>inventario','Cuenta y registra · Individual','inventory-3d','openAuthorizedHome(\'inventory\')'):'')
  +(allowed.consultation?tile('consultation','Realizar<br>consulta','Encuentra lo que buscas','consult-3d','openAuthorizedHome(\'consultation\')'):'')
  +(allowed.management?tile('management','Gestión<br>del almacén','Organiza y supervisa','management-3d','openAuthorizedHome(\'management\')'):'');
- place(top+'<div class="landing-cards">'+cards+'</div><div class="landing-bottom"><span>Entorno piloto · v'+APP_VERSION+'</span>'+installMarkup()+'<button class="landing-account" onclick="logoutManager()">Cerrar sesión</button>'+(allowed.demo?'<button class="landing-account" onclick="go(\'demo-home\')">Zona de demostración →</button>':'')+'</div><p class="landing-note">Recuentos reales individuales. Las pruebas de pareja y escáner están en la zona de demostración.</p>','');
+ place(top+'<div class="landing-cards">'+cards+'</div>'+(allowed.management?'<p class="landing-note" id="bcLiveStatus" role="status">Comprobando última actualización de BC en Supabase…</p>':'')+'<div class="landing-bottom"><span>Entorno piloto · v'+APP_VERSION+'</span>'+installMarkup()+'<button class="landing-account" onclick="logoutManager()">Cerrar sesión</button>'+(allowed.demo?'<button class="landing-account" onclick="go(\'demo-home\')">Zona de demostración →</button>':'')+'</div><p class="landing-note">Recuentos reales individuales. Las pruebas de pareja y escáner están en la zona de demostración.</p>','');
+ if(allowed.management)window.INVENTA_MGMT.refreshBCStatus();
 }
+document.addEventListener('visibilitychange',function(){
+ if(!document.hidden&&screen==='home'&&window.INVENTA_MGMT&&window.INVENTA_MGMT.isManager()){
+  window.INVENTA_MGMT.refreshBCStatus();
+ }
+}); // reservado para mantenimiento de inicialización
 function openAuthorizedHome(target){
  const p=homePermissions();
  if(!p.authenticated){go('manager-login');return;}
