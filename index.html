@@ -112,7 +112,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.19.0';
+const APP_VERSION='0.20.0';
 const KEY='inventa-demo-operario-v015';
 const DRAFT_KEY='inventa-demo-draft-v020:';
 const blank=()=>({version:1,worker:'',locations:{},events:[]});
@@ -213,7 +213,7 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();if(s==='review'||s==='discrepancy')saveDraft();showPendingUpdate();}
-function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.19</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
+function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.20</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
 function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='login')renderLogin();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderLocations();}
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
