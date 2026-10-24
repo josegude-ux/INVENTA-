@@ -281,8 +281,9 @@ function contentFor(tab,d){
 }
 // Gestión de ubicaciones: primero pasillos A-T, luego ubicaciones y finalmente su contenido.
 function locationAisle(l){
- var aisle=String(l.aisle||'').trim().toUpperCase();
- return (aisle||String(l.code||'').trim().toUpperCase()).charAt(0);
+ var code=String(l.code||'').trim().toUpperCase();
+ // RET, CADCAP, cámaras, racks y otras zonas no pertenecen a un pasillo A–T.
+ return /^[A-T][0-9]{2,}[-_]/.test(code)?code.charAt(0):'OTROS';
 }
 function catalogCodeAction(fn,id,label,classes){
  return '<button type="button" class="'+(classes||'btn-outline')+'" onclick="INVENTA_MGMT.'+fn+'('+safe(JSON.stringify(id))+')">'+label+'</button>';
