@@ -452,7 +452,12 @@ function makeFixedCSV(rows){
   return [r.product_code,r.product_description,r.location_code,r.aisle,r.priority,r.stock_quantity,r.unit,ftime(r.assigned_at)];
  });
  return '\uFEFF'+[cols].concat(values).map(function(row){
-  return row.map(function(v){return '"'+String(v===null||v===undefined?'':v).replace(/"/g,'""')+'"';}).join(';');
+  return row.map(function(v){
+   var value=String(v===null||v===undefined?'':v);
+   // Evita que Excel ejecute fórmulas procedentes de descripciones o códigos.
+   if(/^\s*[=+@]/.test(value)||(/^\s*-/.test(value)&&!/^\s*-\d+(?:\.\d+)?\s*$/.test(value)))value="'"+value;
+   return '"'+value.replace(/"/g,'""')+'"';
+  }).join(';');
  }).join('\r\n');
 }
 function exportFixedReport(){
