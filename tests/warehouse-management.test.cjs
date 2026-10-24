@@ -10,8 +10,8 @@ const worker=fs.readFileSync(path.join(root,'service-worker.js'),'utf8');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.25\.0'/);
- assert.match(worker,/inventa-demo-v0250-01/);
+ assert.match(index,/APP_VERSION='0\.25\.1'/);
+ assert.match(worker,/inventa-demo-v0251-01/);
  assert.match(worker,/'\.\/warehouse-management\.js'/);
  assert.match(index,/warehouse-management\.js/);
  const inline=index.slice(index.indexOf("<script>\n'use strict';")+8,index.lastIndexOf('</script>'));
