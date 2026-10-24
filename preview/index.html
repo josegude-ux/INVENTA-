@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; font-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>INVENTA 0.30.6 · Prueba aislada del importador BC</title>
+  <link rel="stylesheet" href="./preview.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">INVENTA 0.30.6 · VISTA PREVIA AISLADA</p>
+      <h1>Importador Excel de Business Central</h1>
+      <p>Esta página analiza el archivo únicamente en el navegador. No contiene acceso a Supabase, Business Central ni funciones de publicación.</p>
+    </header>
+
+    <section class="notice" aria-label="Garantía de aislamiento">
+      <strong>DEMO segura:</strong> la publicación está deshabilitada. Cierra esta pestaña para descartar todo.
+    </section>
+
+    <section class="card">
+      <h2>1. Elige un Excel ficticio</h2>
+      <p><a href="../tests/fixtures/diario-inventario-fisico-DEMO.xlsx" download>Descargar Excel ficticio incluido</a></p>
+      <label class="file-label" for="bcExcelFile">Abrir selector Archivos (.xlsx)</label>
+      <input id="bcExcelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-describedby="bcExcelSelected">
+      <p id="bcExcelSelected" class="muted" role="status">Ningún archivo seleccionado todavía.</p>
+      <button id="analyseButton" type="button">2. Analizar Excel seleccionado</button>
+      <button id="readerFailureButton" class="secondary" type="button">Simular fallo del lector ExcelJS</button>
+      <div id="bcExcelStatus" aria-live="polite"></div>
+    </section>
+
+    <section id="results" class="card" hidden>
+      <h2>3. Resultado local</h2>
+      <div id="summary"></div>
+      <div id="messages"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Fila</th><th>Ubicación</th><th>Artículo</th><th>Lote</th><th>Stock BC</th><th>Caducidad</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="muted">Vista limitada a las primeras 100 filas interpretadas. No existe botón de publicación.</p>
+    </section>
+  </main>
+
+  <script src="./vendor/exceljs.min.js"></script>
+  <script src="../bc-excel-import.js"></script>
+  <script src="./preview.js"></script>
+</body>
+</html>
