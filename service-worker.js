@@ -1,6 +1,6 @@
 /* INVENTA: versioned offline shell with network-first navigation. */
-const CACHE='inventa-demo-v0280-01';
-const FILES=['./','./index.html','./warehouse-management.js','./real-counts.js','./consultation-core.js','./consultation-ui.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.png'];
+const CACHE='inventa-demo-v0281-01';
+const FILES=['./','./index.html','./warehouse-management.js?v=0.28.1','./real-counts.js?v=0.28.1','./consultation-core.js?v=0.28.1','./consultation-ui.js?v=0.28.1','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.png'];
 const SCANNER_LIBRARY='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
 const INDEX_URL=new URL('./index.html',self.registration.scope).href;
 self.addEventListener('install',event=>{
