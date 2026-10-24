@@ -2,7 +2,7 @@
    El Excel se analiza localmente; solo filas Fijo=1 pasan a Supabase por RPC de Administración. */
 (function(root){
 'use strict';
-var selected=null,busy=false,excelPromise=null,lastResult='';
+var selected=null,busy=false,excelPromise=null,lastResult='',currentFile=null;
 function raw(v){if(v&&typeof v==='object'){if(v instanceof Date)return v;if('result' in v)return v.result;if('text' in v)return v.text;if(Array.isArray(v.richText))return v.richText.map(function(t){return t.text||'';}).join('');}return v;}
 function str(v){v=raw(v);return v===null||v===undefined?'':String(v).trim();}
 function norm(v){return str(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');}
@@ -72,18 +72,45 @@ function loadExcel(){
  if(root.ExcelJS)return Promise.resolve(root.ExcelJS);
  if(excelPromise)return excelPromise;
  excelPromise=new Promise(function(resolve,reject){
-  var s=document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
-  s.crossOrigin='anonymous';
-  s.onload=function(){root.ExcelJS?resolve(root.ExcelJS):reject(Error('No se pudo inicializar el lector Excel.'));};
-  s.onerror=function(){reject(Error('No se pudo descargar el lector Excel. Comprueba la conexión.'));};
-  document.head.appendChild(s);
+  var sources=[
+   'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
+   'https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js'
+  ],done=false,attempt=0;
+  function next(){
+   if(done)return;
+   if(root.ExcelJS){done=true;resolve(root.ExcelJS);return;}
+   if(attempt>=sources.length){
+    done=true;reject(Error('No se ha podido cargar el lector Excel. Comprueba la conexión a Internet y vuelve a intentarlo.'));return;
+   }
+   var source=sources[attempt++],script=document.createElement('script'),settled=false;
+   script.src=source;script.async=true;script.crossOrigin='anonymous';
+   var watchdog=setTimeout(function(){finish(false);},15000);
+   function finish(ok){
+    if(settled||done)return;
+    settled=true;clearTimeout(watchdog);
+    if(ok&&root.ExcelJS){done=true;resolve(root.ExcelJS);}else next();
+   }
+   script.onload=function(){finish(!!root.ExcelJS);};
+   script.onerror=function(){finish(false);};
+   document.head.appendChild(script);
+  }
+  next();
  }).catch(function(e){excelPromise=null;throw e;});
  return excelPromise;
 }
 function status(message,err){
  var el=document.getElementById('fixedExcelStatus');
  if(el)el.innerHTML='<div class="'+(err?'alert red':'alert')+'" role="status" style="margin-top:10px">'+esc(message)+'</div>';
+}
+function fileSelected(input){
+ selected=null;lastResult='';
+ var picked=input&&input.files&&input.files[0]||null;
+ currentFile=picked;
+ var info=document.getElementById('fixedExcelSelected');
+ if(info)info.textContent=picked?'Archivo elegido: '+picked.name+' · '+Math.round(picked.size/1024)+' KB':'Ningún archivo seleccionado todavía.';
+ var area=document.getElementById('fixedExcelPreview');
+ if(area)area.innerHTML='';
+ if(picked)status('Archivo seleccionado. Pulsa «Analizar Excel» para comprobar las posiciones fijas.');
 }
 function preview(){
  if(!selected)return '';
@@ -110,8 +137,10 @@ function panel(imports){
  imports=Array.isArray(imports)?imports:[];
  var html='<div class="card"><h2>Importar posiciones fijas desde Excel BC</h2>'
  +'<p class="muted">Archivo recomendado: <b>Base unificada ubicaciones almacén.xlsx</b>. Solo se importan las filas con <b>Fijo = 1</b>. No se usa Cantidad (base) como stock.</p>'
- +'<input id="fixedExcelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="input" style="margin:10px 0;font-size:14px">'
- +'<button class="btn-outline" style="width:100%" onclick="INVENTA_FIXED_IMPORT.analyse()">Analizar Excel y previsualizar</button>'
+ +'<label for="fixedExcelFile" style="display:block;margin-top:12px;font-size:14px;font-weight:800">1. Elegir archivo Excel (.xlsx)</label>'
+ +'<input id="fixedExcelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="input" aria-describedby="fixedExcelSelected" onchange="INVENTA_FIXED_IMPORT.fileSelected(this)" style="display:block;width:100%;height:auto;min-height:56px;margin:8px 0;line-height:1.4;font-size:16px">'
+ +'<p id="fixedExcelSelected" class="muted" role="status" style="margin:8px 0 14px;overflow-wrap:anywhere">Ningún archivo seleccionado todavía.</p>'
+ +'<button type="button" class="btn-outline" style="width:100%;min-height:54px" onclick="INVENTA_FIXED_IMPORT.analyse()">2. Analizar Excel seleccionado</button>'
  +'<div id="fixedExcelStatus" aria-live="polite">'+(lastResult?'<div class="alert">'+esc(lastResult)+'</div>':'')+'</div>'
  +'<div id="fixedExcelPreview">'+preview()+'</div></div>';
  html+='<div class="card"><h2>Historial de importación de posiciones fijas</h2>';
@@ -126,13 +155,13 @@ function panel(imports){
 }
 async function analyse(){
  if(busy)return;
- var input=document.getElementById('fixedExcelFile'),file=input&&input.files&&input.files[0];
- if(!file){status('Selecciona primero el Excel de ubicaciones. ',true);return;}
+ var input=document.getElementById('fixedExcelFile'),file=input&&input.files&&input.files[0]||currentFile;
+ if(!file){status('No se ha seleccionado ningún archivo. Pulsa primero «Elegir archivo Excel (.xlsx)» y después vuelve a analizar.',true);return;}
  if(!/\.xlsx$/i.test(file.name)){status('Se necesita un Excel .xlsx de Business Central.',true);return;}
  if(file.size>20*1024*1024){status('El archivo supera 20 MB.',true);return;}
  busy=true;selected=null;
  try{
-  status('Leyendo el archivo y comprobando Fijo = 1…');
+  status('Leyendo «'+file.name+'» y comprobando las filas Fijo = 1…');
   var Excel=await loadExcel(),workbook=new Excel.Workbook();
   await workbook.xlsx.load(await file.arrayBuffer());
   var sheet=workbook.worksheets[0];if(!sheet)throw Error('Excel sin hojas.');
@@ -142,7 +171,8 @@ async function analyse(){
    matrix.push(cols);
   });
   selected=parseRows(matrix,file.name);
-  document.getElementById('fixedExcelPreview').innerHTML=preview();
+  var area=document.getElementById('fixedExcelPreview');
+  if(area)area.innerHTML=preview();
   status(selected.errors.length?'Hay errores que impiden esta importación.':'Archivo analizado; revisa la vista previa antes de publicar.',!!selected.errors.length);
  }catch(e){status('No se pudo leer el Excel: '+e.message,true);}
  finally{busy=false;}
@@ -173,6 +203,6 @@ async function commit(){
  }catch(e){status('NO se publicó la importación: '+e.message,true);}
  finally{busy=false;}
 }
-root.INVENTA_FIXED_IMPORT={parseRows:parseRows,columns:columns,panel:panel,analyse:analyse,commit:commit};
+root.INVENTA_FIXED_IMPORT={parseRows:parseRows,columns:columns,panel:panel,fileSelected:fileSelected,analyse:analyse,commit:commit};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.INVENTA_FIXED_IMPORT;
 })(typeof window!=='undefined'?window:globalThis);
