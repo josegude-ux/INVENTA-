@@ -100,15 +100,52 @@ const TEST={
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
 const APP_VERSION='0.19.0';
 const KEY='inventa-demo-operario-v015';
+const DRAFT_KEY='inventa-demo-draft-v020:';
 const blank=()=>({version:1,worker:'',locations:{},events:[]});
 function load(){try{const p=JSON.parse(localStorage.getItem(KEY));if(p?.version===1&&p.locations)return p;}catch(e){}return blank();}
-let data=load(),screen=data.worker?'aisles':'login',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all';
+let data=load(),screen=data.worker?'aisles':'login',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all',lastPallet=null,repeatMode=false,overwriteInput=false,resumedDraft=false;
 const fmt=n=>Number(n).toLocaleString('es-ES');
 const esc=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const valid=s=>/^\d{1,8}$/.test(String(s))&&Number(s)>0&&Number.isSafeInteger(Number(s));
 function save(){localStorage.setItem(KEY,JSON.stringify(data));}
 function items(loc){let base=(TEST[loc]||[]).map(p=>({...p}));let unexpected=Object.entries(data.locations[loc]?.extras||{}).map(([id,v])=>({id,name:v.name||'Artículo encontrado no previsto',theoretical:0,extra:true}));return [...base,...unexpected];}
 function getLoc(loc){return data.locations[loc]||(data.locations[loc]={verified:false,counts:{},extras:{},closed:false});}
+function draftKey(worker){return DRAFT_KEY+encodeURIComponent(worker);}
+function readDraft(worker){
+ if(!worker)return null;
+ try{
+  const d=JSON.parse(localStorage.getItem(draftKey(worker)));
+  if(!d||d.version!==2||d.worker!==worker||!(AISLES[worker]||[]).includes(d.loc.slice(0,1)))return null;
+  if(!items(d.loc).some(p=>p.id===d.article)||getLoc(d.loc).closed)return null;
+  if(!['count','review','discrepancy'].includes(d.screen))return null;
+  if(!Array.isArray(d.entries)||d.entries.some(e=>!Number.isSafeInteger(e.amount)||e.amount<=0))return null;
+  return d;
+ }catch(e){return null;}
+}
+function clearDraft(worker=data.worker){try{localStorage.removeItem(draftKey(worker));}catch(e){}}
+function saveDraft(){
+ if(!data.worker||!activeLoc||!activeArticle||!['count','review','discrepancy'].includes(screen))return;
+ const d={version:2,worker:data.worker,loc:activeLoc,article:activeArticle,screen,
+  entries:pendingEntries.map(e=>({...e})),mode:cMode,step:cStep,input:cInput,
+  parts:[...cParts],lastPallet:lastPallet?[...lastPallet]:null,
+  repeatMode,overwriteInput,feedback:countFeedback,at:new Date().toISOString()};
+ try{localStorage.setItem(draftKey(data.worker),JSON.stringify(d));}catch(e){}
+}
+function restoreDraft(d){
+ activeLoc=d.loc;activeAisle=aisleFor(d.loc);activeArticle=d.article;
+ pendingEntries=d.entries.map(e=>({...e}));cMode=d.mode==='pallet'?'pallet':'direct';
+ cStep=Math.min(3,Math.max(0,Number(d.step)||0));
+ cInput=/^\d{0,8}$/.test(String(d.input||''))?String(d.input||''):'';
+ cParts=Array.isArray(d.parts)&&d.parts.length===4?d.parts.map(n=>Number(n)||0):[0,0,0,0];
+ lastPallet=Array.isArray(d.lastPallet)&&d.lastPallet.length===4?d.lastPallet.map(Number):null;
+ repeatMode=!!d.repeatMode&&!!lastPallet;overwriteInput=!!d.overwriteInput;
+ countFeedback=d.feedback||'Recuento recuperado automáticamente. Todavía sin guardar.';
+ screen=d.screen;resumedDraft=true;
+}
+function bestPreviousPallet(entries){
+ const e=[...entries].reverse().find(x=>Array.isArray(x.factors)&&x.factors.length===4&&x.factors.every(n=>Number.isSafeInteger(n)&&n>0));
+ return e?e.factors.slice():null;
+}
 function progress(loc){
  const a=items(loc), d=getLoc(loc),c=d.counts;
  const done=a.filter(x=>c[x.id]).length;
@@ -161,12 +198,12 @@ function initInventaUpdates(){
  }).catch(()=>{});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
-function go(s){screen=s;render();showPendingUpdate();}
+function go(s){screen=s;render();if(s==='review'||s==='discrepancy')saveDraft();showPendingUpdate();}
 function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo operario · v0.19</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
 function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='login')renderLogin();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='closed')renderClosed();else renderLocations();}
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
 function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
-function login(){if($('pin').value!=='1234'){$('loginError').textContent='PIN incorrecto. Usa el PIN de demostración.';return;}data.worker=$('worker').value;activeAisle='';save();go('aisles');}
+function login(){if($('pin').value!=='1234'){$('loginError').textContent='PIN incorrecto. Usa el PIN de demostración.';return;}data.worker=$('worker').value;activeAisle='';save();const d=readDraft(data.worker);if(d){restoreDraft(d);render();}else go('aisles');}
 function renderAisles(){
  const aisles=assignedAisles();
  const tiles=aisles.map(a=>{
@@ -223,7 +260,7 @@ function filterArticles(query){
  }).join(''):'<div class="alert">No se han encontrado artículos con ese texto.</div>';
 }
 
-function openArticle(id){activeArticle=id;pendingResult=null;savedFeedback='';countFeedback='';const rec=getLoc(activeLoc).counts[id];pendingEntries=rec&&!rec.notFound?rec.entries.map(x=>({...x})):[];cMode='direct';cStep=0;cInput='';cParts=[0,0,0,0];go('count');}
+function openArticle(id){activeArticle=id;pendingResult=null;savedFeedback='';countFeedback='';const d=readDraft(data.worker);if(d&&d.loc===activeLoc&&d.article===id){restoreDraft(d);render();return;}const rec=getLoc(activeLoc).counts[id];pendingEntries=rec&&!rec.notFound?rec.entries.map(x=>({...x})):[];cMode='direct';cStep=0;cInput='';cParts=[0,0,0,0];lastPallet=bestPreviousPallet(pendingEntries);repeatMode=false;overwriteInput=false;go('count');}
 function getProduct(){return items(activeLoc).find(p=>p.id===activeArticle)}
 function countedUnit(){return 'unidades';}
 function countedUnitUpper(){return 'UNIDADES';}
@@ -286,13 +323,13 @@ function actionDigit(){
  drawCount();
 }
 function undoEntry(){if(pendingEntries.length){const n=pendingEntries.pop().amount;countFeedback=`↶ Se han quitado ${fmt(n)} unidades · total ${fmt(countTotal())}. Aún sin guardar.`;}drawCount();}
-function cancelCount(){if(pendingEntries.length&&!confirm('Hay cantidades sin guardar. ¿Quieres salir y descartar los cambios?'))return;go('articles');}
+function cancelCount(){if((pendingEntries.length||cInput||cParts.some(Boolean)||repeatMode)&&!confirm('Hay un recuento en curso. ¿Quieres descartarlo y volver al listado?'))return;clearDraft();go('articles');}
 function prepareReview(){if(countTotal()===0){showModal('emptycount');return;}pendingResult='counted';go('review');}
 function renderReview(){const p=getProduct();place(`<div class="title"><div class="overline">PASO 4 · REVISIÓN</div><h1>Confirmar recuento</h1><p class="muted">${esc(activeLoc)} · ${esc(p.name)}</p></div><div class="card" style="text-align:center"><div class="overline">TOTAL CONTADO</div><div style="font-size:48px;font-weight:950;color:#142f4f">${fmt(countTotal())}</div><div class="muted">${countedUnit(p)} · ${pendingEntries.length} apuntes</div></div><div class="card"><h2>Detalle</h2>${pendingEntries.map(e=>`<div class="between" style="border-bottom:1px solid #edf0f5;padding:8px 0"><span class="muted">${esc(e.kind)}: ${esc(e.detail)}</span><b>+${fmt(e.amount)}</b></div>`).join('')}</div><div class="alert">Al guardar, INVENTA comprobará si la desviación supera la tolerancia de aviso. El operario no verá la cantidad teórica.</div>`,`<div class="stack"><button class="btn" onclick="validateCount()">CONFIRMAR Y GUARDAR ARTÍCULO →</button><button class="back" onclick="go('count')">← Modificar cantidades</button></div>`);}
 const tolerance=expected=>Math.max(2,Math.floor(expected*.05));
 function validateCount(){const p=getProduct(),amount=countTotal(),diff=Math.abs(amount-p.theoretical);pendingResult='counted';if(diff>tolerance(p.theoretical)){go('discrepancy');}else{commitCount(false);}}
 function renderWarning(){const p=getProduct();place(`<div class="title"><div class="overline">COMPROBACIÓN AUTOMÁTICA</div><h1>⚠️ Revisa tu recuento</h1><p class="muted">${esc(p.name)}</p></div><div class="alert red"><b>Atención:</b> la cantidad introducida presenta una diferencia superior a la tolerancia configurada. Puede haber un error de conteo.</div><div class="card" style="text-align:center"><div class="overline">HAS CONTADO</div><div style="font-size:48px;font-weight:950">${fmt(countTotal())}</div><span class="muted">${countedUnit(p)}</span></div><p class="muted">Vuelve a comprobar la mercancía. Si estás seguro del recuento, puedes confirmarlo. El responsable revisará la diferencia.</p>`,`<div class="stack"><button class="btn" onclick="go('count')">Volver a contar</button><button class="btn-outline" onclick="commitCount(true)">Confirmar esta cantidad</button></div>`);}
-function commitCount(warning,notFound=false){const rec={entries:pendingEntries.map(x=>({...x})),amount:notFound?0:countTotal(),notFound:!!notFound,warning:!!warning,at:new Date().toISOString()};const p=getProduct();getLoc(activeLoc).counts[activeArticle]=rec;data.events.push({what:notFound?'No encontrado':'Artículo contado',loc:activeLoc,article:activeArticle,amount:rec.amount,warning:rec.warning,at:rec.at});save();savedFeedback=`✓ GUARDADO: ${esc(p.name)} · ${fmt(rec.amount)} unidades. Puedes pasar al siguiente artículo.`;pendingEntries=[];go('articles');}
+function commitCount(warning,notFound=false){const rec={entries:pendingEntries.map(x=>({...x})),amount:notFound?0:countTotal(),notFound:!!notFound,warning:!!warning,at:new Date().toISOString()};const p=getProduct();getLoc(activeLoc).counts[activeArticle]=rec;data.events.push({what:notFound?'No encontrado':'Artículo contado',loc:activeLoc,article:activeArticle,amount:rec.amount,warning:rec.warning,at:rec.at});save();clearDraft();savedFeedback=`✓ GUARDADO: ${esc(p.name)} · ${fmt(rec.amount)} unidades. Puedes pasar al siguiente artículo.`;pendingEntries=[];go('articles');}
 function markNotFound(){pendingEntries=[];cInput='';const p=getProduct();if(!confirm(`Confirmar que no se ha encontrado ${p.name} en ${activeLoc}?`))return;const warn=p.theoretical>tolerance(p.theoretical);commitCount(warn,true);}
 function closeLocation(){const p=progress(activeLoc);if(p.done!==p.total){showModal('missing');return;}const d=getLoc(activeLoc);d.closed=true;data.events.push({what:'Ubicación cerrada',loc:activeLoc,at:new Date().toISOString()});save();go('closed');}
 function renderClosed(){const p=progress(activeLoc);place(`<div class="card" style="text-align:center;padding:25px 15px"><div class="bigcheck">✅</div><h1 style="margin:9px 0">Ubicación finalizada</h1><h2>${activeLoc}</h2><p class="muted" style="margin-top:7px">${p.done} artículos revisados. La información permanece en esta demo local y NO se ha sincronizado.</p></div><div class="alert">En la app real el responsable tendrá que autorizar cualquier reapertura y revisar todas las diferencias, incluso las inferiores a la tolerancia.</div>`,`<button class="btn" onclick="go('locations')">Ir a otra ubicación →</button>`);}
@@ -303,8 +340,9 @@ function removeEntry(i){pendingEntries.splice(i,1);hideModal();renderCount();sho
 function addUnexpected(){const code=$('unknownCode').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,28);if(!code){$('modalError').textContent='Introduce un código.';return;}if(items(activeLoc).some(p=>p.id===code)){$('modalError').textContent='Ese artículo ya existe en la ubicación.';return;}const name=$('unknownName').value.trim().slice(0,90);getLoc(activeLoc).extras[code]={name:name||'Artículo encontrado no previsto'};data.events.push({what:'Artículo provisional',loc:activeLoc,article:code,at:new Date().toISOString()});save();hideModal();go('articles');}
 function installHelp(){hideModal();showModal('help')}
 function logout(){data.worker='';activeAisle='';save();hideModal();go('login')}
-function resetDemo(){if(!confirm('¿Borrar todos los recuentos de esta DEMO en este dispositivo?'))return;data=blank();save();hideModal();go('login')}
+function resetDemo(){if(!confirm('¿Borrar todos los recuentos de esta DEMO en este dispositivo?'))return;clearDraft('Operario 1');clearDraft('Operario 2');data=blank();save();hideModal();go('login')}
 window.addEventListener('online',()=>{if(screen==='locations')render()});window.addEventListener('offline',()=>{if(screen==='locations')render()});
 window.addEventListener('load',initInventaUpdates);
+if(data.worker){const d=readDraft(data.worker);if(d)restoreDraft(d);}
 render();
 </script></body></html>
