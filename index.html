@@ -86,6 +86,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 #updateBanner button{font-size:13px;background:#146a4c;color:#fff;border:0;border-radius:10px;padding:11px;font-weight:900}
 #app.counter~#updateBanner{bottom:auto;top:calc(70px + env(safe-area-inset-top))}
 
+.reuse-row[hidden]{display:none!important}.reuse-row{margin:-3px 0 8px}.reuse-row button{width:100%;padding:10px 8px;border:1px solid #76d9a8;border-radius:10px;background:#244838;color:#e0ffe8;font-size:14px;font-weight:850}
 </style></head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
 <script>
 'use strict';
@@ -265,10 +266,17 @@ function getProduct(){return items(activeLoc).find(p=>p.id===activeArticle)}
 function countedUnit(){return 'unidades';}
 function countedUnitUpper(){return 'UNIDADES';}
 function countTotal(){return pendingEntries.reduce((sum,e)=>sum+e.amount,0)}
-function renderCount(){const p=getProduct();const rec=getLoc(activeLoc).counts[p.id];place(`<div class="cproduct"><span>${esc(activeLoc)} · ${esc(p.id)}</span><b>${esc(p.name)}</b><small>Unidad de recuento: <strong>UNIDADES</strong></small></div><div class="modebar"><button id="modeDirect" onclick="setMode('direct')">+ CANTIDAD</button><button id="modePallet" onclick="setMode('pallet')">▦ CÁLCULO DE PALÉS</button></div><div class="between" style="margin-bottom:7px"><span class="muted" id="cStep" style="color:#b9cadd"></span><span id="cProgress" class="tag"></span></div><div class="display"><div class="caption"><span id="cCaption">Cantidad directa</span><span id="cUnit">${countedUnitUpper(p)}</span></div><div class="digits" id="cDigits">0</div><div class="desc" id="cDesc"></div></div><div class="keypad"><button onclick="digit('1')">1</button><button onclick="digit('2')">2</button><button onclick="digit('3')">3</button><button onclick="digit('4')">4</button><button onclick="digit('5')">5</button><button onclick="digit('6')">6</button><button onclick="digit('7')">7</button><button onclick="digit('8')">8</button><button onclick="digit('9')">9</button><button class="ctl" onclick="clearDigit()">BORRAR</button><button onclick="digit('0')">0</button><button class="ctl" onclick="backDigit()">⌫</button></div><button id="cAction" class="addbtn" onclick="actionDigit()">+ AÑADIR AL TOTAL</button><div class="count-feedback" id="countFeedback" role="status" aria-live="polite">Aún no has sumado cantidades.</div><div class="c-tools"><span id="cEntries">0 apuntes</span><button onclick="showModal('history')">VER / CORREGIR ›</button></div>`,`<div class="counter-total"><div class="total-heading">TOTAL ACUMULADO</div><div class="total-reading"><strong id="liveTotal">${fmt(countTotal())}</strong><span class="total-unit">${countedUnitUpper(p)}</span></div><div class="total-staged">● PROVISIONAL · SIN GUARDAR</div></div><div class="counter-footer"><button onclick="cancelCount()">← Artículos</button><button onclick="undoEntry()">↶ Deshacer</button><button onclick="prepareReview()">IR A CONFIRMAR →</button></div>`);drawCount();}
-function setMode(v){cMode=v;cStep=0;cInput='';cParts=[0,0,0,0];countFeedback='';drawCount();}
-function digit(n){if(cInput.length>=8)return;cInput=(cInput+n).replace(/^0+(?=\d)/,'');if(cInput==='0')cInput='';drawCount();}
-function clearDigit(){cInput='';drawCount()};function backDigit(){cInput=cInput.slice(0,-1);drawCount()};
+function renderCount(){const p=getProduct();const rec=getLoc(activeLoc).counts[p.id];place(`<div class="cproduct"><span>${esc(activeLoc)} · ${esc(p.id)}</span><b>${esc(p.name)}</b><small>Unidad de recuento: <strong>UNIDADES</strong></small></div><div class="modebar"><button id="modeDirect" onclick="setMode('direct')">+ CANTIDAD</button><button id="modePallet" onclick="setMode('pallet')">▦ CÁLCULO DE PALÉS</button></div><div class="reuse-row" id="reusePalletRow" hidden><button onclick="repeatLastPallet()">↻ Repetir el último palé</button></div><div class="between" style="margin-bottom:7px"><span class="muted" id="cStep" style="color:#b9cadd"></span><span id="cProgress" class="tag"></span></div><div class="display"><div class="caption"><span id="cCaption">Cantidad directa</span><span id="cUnit">${countedUnitUpper(p)}</span></div><div class="digits" id="cDigits">0</div><div class="desc" id="cDesc"></div></div><div class="keypad"><button onclick="digit('1')">1</button><button onclick="digit('2')">2</button><button onclick="digit('3')">3</button><button onclick="digit('4')">4</button><button onclick="digit('5')">5</button><button onclick="digit('6')">6</button><button onclick="digit('7')">7</button><button onclick="digit('8')">8</button><button onclick="digit('9')">9</button><button class="ctl" onclick="clearDigit()">BORRAR</button><button onclick="digit('0')">0</button><button class="ctl" onclick="backDigit()">⌫</button></div><button id="cAction" class="addbtn" onclick="actionDigit()">+ AÑADIR AL TOTAL</button><div class="count-feedback" id="countFeedback" role="status" aria-live="polite">Aún no has sumado cantidades.</div><div class="c-tools"><span id="cEntries">0 apuntes</span><button onclick="showModal('history')">VER / CORREGIR ›</button></div>`,`<div class="counter-total"><div class="total-heading">TOTAL ACUMULADO</div><div class="total-reading"><strong id="liveTotal">${fmt(countTotal())}</strong><span class="total-unit">${countedUnitUpper(p)}</span></div><div class="total-staged">● PROVISIONAL · SIN GUARDAR</div></div><div class="counter-footer"><button onclick="cancelCount()">← Artículos</button><button onclick="undoEntry()">↶ Deshacer</button><button onclick="prepareReview()">IR A CONFIRMAR →</button></div>`);drawCount();}
+function setMode(v){cMode=v;cStep=0;cInput='';cParts=[0,0,0,0];repeatMode=false;overwriteInput=false;countFeedback='';drawCount();}
+function digit(n){if(overwriteInput){cInput='';overwriteInput=false;}if(cInput.length>=8)return;cInput=(cInput+n).replace(/^0+(?=\d)/,'');if(cInput==='0')cInput='';drawCount();}
+function clearDigit(){cInput='';overwriteInput=false;drawCount()};function backDigit(){cInput=cInput.slice(0,-1);overwriteInput=false;drawCount()};
+function repeatLastPallet(){
+ if(!Array.isArray(lastPallet)||lastPallet.length!==4)return;
+ cMode='pallet';repeatMode=true;cStep=0;cParts=lastPallet.slice();
+ cInput=String(lastPallet[0]);overwriteInput=true;
+ countFeedback='Composición reutilizada. Cambia solo el número de palés o pulsa sumar.';
+ drawCount();
+}
 function drawCount(){
  if(screen!=='count')return;
  const n=valid(cInput)?Number(cInput):0;
@@ -279,11 +287,14 @@ function drawCount(){
  $('cDigits').textContent=cInput||'0';
  $('cCaption').textContent=cMode==='direct'?'Unidades contadas':labels[cStep];
  $('cUnit').textContent=cMode==='direct'?'UNIDADES':units[cStep];
- $('cStep').textContent=cMode==='direct'?'Introduce una cantidad suelta':'Palés · paso '+(cStep+1)+' de 4';
- $('cProgress').textContent=cMode==='direct'?'DIRECTO':(cStep+1)+'/4';
+ $('cStep').textContent=cMode==='direct'?'Introduce una cantidad suelta':repeatMode?'Repetir palés · cambia la cantidad':'Palés · paso '+(cStep+1)+' de 4';
+ $('cProgress').textContent=cMode==='direct'?'DIRECTO':repeatMode?'REPETIR':(cStep+1)+'/4';
+ const row=$('reusePalletRow');if(row)row.hidden=!(lastPallet&&lastPallet.length===4&&!repeatMode);
  let product=0;
- if(cMode==='direct'){
-  $('cDesc').textContent='Cada añadido se suma al total provisional.';
+ if(cMode==='direct'){$('cDesc').textContent='Cada añadido se suma al total provisional.';}
+ else if(repeatMode){
+  const factors=[n,...lastPallet.slice(1)];product=factors.reduce((a,b)=>a*b,1);
+  $('cDesc').textContent=factors.join(' × ')+' = '+fmt(product)+' unidades';
  }else{
   const guide=[
    '¿Cuántos palés iguales quieres contar?',
@@ -296,27 +307,36 @@ function drawCount(){
    $('cDesc').textContent=[...cParts.slice(0,3),n].join(' × ')+' = '+fmt(product)+' unidades';
   }else{$('cDesc').textContent=guide[cStep];}
  }
- $('cAction').textContent=cMode==='direct'?'+ AÑADIR CANTIDAD':cStep<3?'SIGUIENTE ›':'+ SUMAR PALÉS AL TOTAL';
- const tooLarge=cMode==='pallet'&&cStep===3&&n&&(!Number.isSafeInteger(product)||product>99999999);
+ $('cAction').textContent=cMode==='direct'?'+ AÑADIR CANTIDAD':repeatMode?'+ SUMAR PALÉS REPETIDOS':cStep<3?'SIGUIENTE ›':'+ SUMAR PALÉS AL TOTAL';
+ const finalProduct=cMode==='pallet'&&(repeatMode||cStep===3);
+ const tooLarge=finalProduct&&n&&(!Number.isSafeInteger(product)||product>99999999);
  $('cAction').disabled=!n||!!tooLarge;
  if(tooLarge)$('cDesc').textContent='Resultado demasiado grande. Revisa los factores.';
  $('cEntries').textContent=pendingEntries.length+' '+(pendingEntries.length===1?'apunte':'apuntes')+' realizados';
  $('liveTotal').textContent=fmt(countTotal());
  $('countFeedback').textContent=countFeedback||'Cantidad aún no guardada. Pulsa AÑADIR para incorporarla al total.';
+ saveDraft();
 }
 function actionDigit(){
  if(!valid(cInput))return;
  const n=Number(cInput);let added=0;
  if(cMode==='direct'){
   pendingEntries.push({kind:'directa',detail:n+' unidades',amount:n});added=n;cInput='';
+ }else if(repeatMode){
+  const factors=[n,...lastPallet.slice(1)];
+  const amount=factors.reduce((a,b)=>a*b,1);
+  if(!Number.isSafeInteger(amount)||amount>99999999)return;
+  pendingEntries.push({kind:'palés',detail:factors[0]+' palés × '+factors[1]+' cajas/base × '+factors[2]+' alturas × '+factors[3]+' unidades/caja',factors,amount});
+  lastPallet=factors.slice();added=amount;cStep=0;cInput='';cParts=[0,0,0,0];repeatMode=false;overwriteInput=false;
  }else{
   cParts[cStep]=n;
   if(cStep<3){cStep++;cInput='';countFeedback='Cálculo de palés en preparación. Falta completar los factores.';}
   else{
-   const amount=cParts.reduce((acc,val)=>acc*val,1);
+   const amount=cParts.reduce((a,b)=>a*b,1);
    if(!Number.isSafeInteger(amount)||amount>99999999)return;
-   pendingEntries.push({kind:'palés',detail:cParts[0]+' palés × '+cParts[1]+' cajas/base × '+cParts[2]+' alturas × '+cParts[3]+' unidades/caja',amount});
-   added=amount;cStep=0;cInput='';cParts=[0,0,0,0];
+   const factors=cParts.slice();
+   pendingEntries.push({kind:'palés',detail:factors[0]+' palés × '+factors[1]+' cajas/base × '+factors[2]+' alturas × '+factors[3]+' unidades/caja',factors,amount});
+   lastPallet=factors;added=amount;cStep=0;cInput='';cParts=[0,0,0,0];
   }
  }
  if(added)countFeedback='✓ +'+fmt(added)+' UNIDADES AÑADIDAS · TOTAL '+fmt(countTotal())+' · TODAVÍA SIN GUARDAR';
@@ -336,7 +356,7 @@ function renderClosed(){const p=progress(activeLoc);place(`<div class="card" sty
 function showModal(m){modal=m;let body='';if(m==='history'){body=`<h2>Detalle del recuento</h2>${pendingEntries.length?pendingEntries.map((e,i)=>`<div class="line"><span>${esc(e.detail)}<br><b>+${fmt(e.amount)}</b></span><button onclick="removeEntry(${i})">Eliminar</button></div>`).join(''):'<p class="muted">Sin cantidades añadidas.</p>'}<div class="modal-actions"><button class="btn-outline" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='menu'){body=`<h2>Opciones de prueba</h2><p class="muted">Versión instalada: v${APP_VERSION}. Usuario: ${esc(data.worker)}. Los recuentos se guardan en este dispositivo.</p><div class="stack" style="margin-top:12px"><button class="btn-outline" onclick="hideModal();checkForUpdates(true)">↻ Buscar actualizaciones</button><button class="btn-outline" onclick="installHelp()">Cómo instalar INVENTA</button><button class="btn-outline" onclick="resetDemo()">Restablecer datos de prueba</button><button class="btn-outline" onclick="logout()">Cambiar operario</button><button class="btn" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='help'){body=`<h2>Instalar INVENTA</h2><p class="muted">En iPhone: abre esta dirección desde Safari, pulsa Compartir y elige <b>Añadir a pantalla de inicio</b>. Después abre el icono INVENTA. En Android: menú de Chrome → Instalar aplicación.</p><p class="muted" style="margin-top:10px">Los archivos básicos se guardan tras la primera carga. Los datos de prueba son solo locales.</p><button class="btn" style="margin-top:12px" onclick="hideModal()">Entendido</button>`;}else if(m==='unexpected'){body=`<h2>Artículo no listado</h2><p class="muted">Registra provisionalmente un artículo encontrado en ${activeLoc}. En la aplicación definitiva se comunicará una incidencia al responsable.</p><div class="field" style="margin-top:11px"><label for="unknownCode">Código de artículo</label><input class="input" id="unknownCode" placeholder="Ej. PRD0009999"></div><div class="field"><label for="unknownName">Descripción (opcional)</label><input class="input" id="unknownName" placeholder="Artículo encontrado"></div><button class="btn" onclick="addUnexpected()">Añadir a esta ubicación</button><button class="back" onclick="hideModal()">Cancelar</button><p id="modalError" class="muted"></p>`;}else if(m==='missing'){const rem=items(activeLoc).filter(p=>!getLoc(activeLoc).counts[p.id]).length;body=`<h2>Quedan artículos sin revisar</h2><p class="muted">Debes contar o marcar «No encontrado» en ${rem} artículo(s) antes de cerrar ${activeLoc}.</p><button class="btn" style="margin-top:11px" onclick="hideModal()">Seguir contando</button>`;}else if(m==='emptycount'){body=`<h2>Sin cantidades</h2><p class="muted">Todavía no hay unidades apuntadas. Si el producto no está en esta ubicación, utiliza «No encontrado».</p><button class="btn" style="margin-top:10px" onclick="markNotFound()">No encontrado</button><button class="btn-outline" style="width:100%;margin-top:8px" onclick="hideModal()">Seguir contando</button>`;}
 $('overlay').innerHTML=`<div class="modalback" onclick="if(event.target===this)hideModal()"><div class="modal">${body}</div></div>`;}
 function hideModal(){$('overlay').innerHTML='';modal='';}
-function removeEntry(i){pendingEntries.splice(i,1);hideModal();renderCount();showModal('history');}
+function removeEntry(i){pendingEntries.splice(i,1);saveDraft();hideModal();renderCount();showModal('history');}
 function addUnexpected(){const code=$('unknownCode').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,28);if(!code){$('modalError').textContent='Introduce un código.';return;}if(items(activeLoc).some(p=>p.id===code)){$('modalError').textContent='Ese artículo ya existe en la ubicación.';return;}const name=$('unknownName').value.trim().slice(0,90);getLoc(activeLoc).extras[code]={name:name||'Artículo encontrado no previsto'};data.events.push({what:'Artículo provisional',loc:activeLoc,article:code,at:new Date().toISOString()});save();hideModal();go('articles');}
 function installHelp(){hideModal();showModal('help')}
 function logout(){data.worker='';activeAisle='';save();hideModal();go('login')}
