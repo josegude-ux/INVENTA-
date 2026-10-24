@@ -1,7 +1,7 @@
 /* INVENTA · Consulta por artículo y por ubicación, incluidas posiciones fijas a cero. */
 (function(root){
  'use strict';
- var model=null,mode='article',loadId=0;
+ var model=null,mode='location',loadId=0,selectedAisle='',selectedLocation='',selectedProduct='';
  function demoData(){
   var products=new Map(),stock=[];
   for(var pair of Object.entries(TEST)){
@@ -45,6 +45,7 @@
    +(cards.length?cards.join(''):'<div class="consult-empty">Sin stock ni artículos asignados como fijos.</div>')+'</div>';
  }
  function render(){
+  selectedAisle='';selectedLocation='';selectedProduct='';
   if(!consultUser){go('consult-login');return;}
   if(consultBlocked()){consultUser='';go('consult-login');return;}
   var real=isManager(),token=++loadId;
@@ -81,7 +82,7 @@
  }
  function setMode(next){
   if(next!=='article'&&next!=='location')return;
-  mode=next;
+  mode=next;selectedAisle='';selectedLocation='';selectedProduct='';
   var a=$('consultModeArticle'),l=$('consultModeLocation'),input=$('consultSearch');
   if(!a||!l||!input)return;
   a.classList.toggle('active',mode==='article');l.classList.toggle('active',mode==='location');
@@ -90,25 +91,46 @@
   input.value='';
   filter('');
  }
+ function aisle(code){return String(code||'').trim().toUpperCase().charAt(0);}
+ function navigate(level,value){
+  if(level==='aisle'){selectedAisle=value;selectedLocation='';selectedProduct='';}
+  if(level==='location'){selectedLocation=value;selectedProduct='';}
+  if(level==='product')selectedProduct=value;
+  filter('');
+ }
  function filter(q){
-  var box=$('consultResults');
-  if(!box)return;
+  var box=$('consultResults');if(!box)return;
   if(!model){box.innerHTML='<div class="card"><p class="muted">Preparando consulta…</p></div>';return;}
   var term=String(q||'').trim().toLocaleLowerCase('es');
   var byProduct=new Map(model.articles.map(function(a){return [a.id,a];}));
-  var found=(mode==='article'?model.articles:model.locations).filter(function(row){
-   if(!term)return true;
-   if(mode==='article')return [row.id,row.name].concat(row.locations.map(function(p){return p.locationCode;})).some(function(s){return String(s).toLocaleLowerCase('es').includes(term);});
-   return row.code.toLocaleLowerCase('es').includes(term)||row.articles.some(function(p){
-    var a=byProduct.get(p.productCode);
-    return [p.productCode,a&&a.name].some(function(s){return String(s||'').toLocaleLowerCase('es').includes(term);});
-   });
-  });
-  var count=found.length,limit=100;
-  found=found.slice(0,limit);
-  box.innerHTML='<p class="muted" style="margin-bottom:9px">'+count+' resultado(s)'
-   +(count>limit?' · Primeros '+limit+'; escribe para filtrar':'')+'</p>'
-   +(found.length?found.map(function(row){return mode==='article'?articleCard(row):locationCard(row,byProduct);}).join(''):'<div class="alert">Sin coincidencias.</div>');
+  if(mode==='article'){
+   var matches=model.articles.filter(function(a){return [a.id,a.name].concat(a.locations.map(function(p){return p.locationCode;})).some(function(v){return String(v).toLocaleLowerCase('es').includes(term);});});
+   box.innerHTML=matches.slice(0,100).map(articleCard).join('')||'<div class="alert">Sin coincidencias.</div>';return;
+  }
+  var all=model.locations;
+  if(selectedProduct){
+   var product=byProduct.get(selectedProduct),loc=all.find(function(l){return l.code===selectedLocation;});
+   var pos=loc&&loc.articles.find(function(p){return p.productCode===selectedProduct;});
+   box.innerHTML='<button class="back" onclick="INVENTA_CONSULT_UI.navigate(\'location\',\''+esc(selectedLocation)+'\')">← Artículos de '+esc(selectedLocation)+'</button>'
+    +'<div class="card"><h2>'+esc(product?product.name:selectedProduct)+'</h2><p class="muted">'+esc(selectedProduct)+'</p>'
+    +'<p style="margin:12px 0">Cantidad total: <b>'+number(pos?pos.amount:0)+' '+esc(product?product.unit:'UD')+'</b> '+(pos?tags(pos):'')+'</p>'
+    +'<h3>Cantidades por lote</h3>'
+    +(pos&&pos.lots.length?pos.lots.map(function(l){return '<div class="consult-line"><b>'+esc(l.code||'SIN LOTE')+'</b><strong>'+number(l.amount)+' '+esc(product?product.unit:'UD')+'</strong></div>';}).join(''):'<p class="muted">Sin lotes con existencias.</p>')+'</div>';return;
+  }
+  if(selectedLocation){
+   var loc=all.find(function(l){return l.code===selectedLocation;});
+   box.innerHTML='<button class="back" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\''+esc(selectedAisle)+'\')">← Ubicaciones del pasillo '+esc(selectedAisle)+'</button>'
+    +'<div class="card"><h2>📍 '+esc(selectedLocation)+'</h2><p class="muted">Artículos con stock o posición fija asignada</p></div>'
+    +(loc&&loc.articles.length?loc.articles.filter(function(p){var a=byProduct.get(p.productCode);return !term||[p.productCode,a&&a.name].some(function(v){return String(v||'').toLocaleLowerCase('es').includes(term);});}).map(function(p){var a=byProduct.get(p.productCode);return '<button class="item" style="width:100%;text-align:left" onclick="INVENTA_CONSULT_UI.navigate(\'product\',\''+esc(p.productCode)+'\')"><span><strong>'+esc(a?a.name:p.productCode)+'</strong><small>'+esc(p.productCode)+' · '+number(p.amount)+' '+esc(a?a.unit:'UD')+'</small>'+tags(p)+'</span><span class="chev">›</span></button>';}).join(''):'<div class="alert">Ubicación vacía.</div>');return;
+  }
+  if(selectedAisle){
+   var locs=all.filter(function(l){return aisle(l.code)===selectedAisle&&(!term||l.code.toLocaleLowerCase('es').includes(term));});
+   box.innerHTML='<button class="back" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\'\')">← Todos los pasillos</button><h2 style="margin:12px 0">Pasillo '+esc(selectedAisle)+'</h2>'
+    +(locs.map(function(l){return '<button class="item" style="width:100%;text-align:left" onclick="INVENTA_CONSULT_UI.navigate(\'location\',\''+esc(l.code)+'\')"><span><strong>'+esc(l.code)+'</strong><small>'+l.articles.length+' artículos con stock o fija · '+(l.articles.some(function(p){return p.amount>0;})?'Con existencias':'Sin existencias')+'</small></span><span class="chev">›</span></button>';}).join('')||'<div class="alert">No hay ubicaciones registradas en este pasillo.</div>');return;
+  }
+  var letters='ABCDEFGHIJKLMNOPQRST'.split('');
+  box.innerHTML='<p class="muted" style="margin-bottom:12px">Selecciona un pasillo para consultar sus ubicaciones, incluso vacías.</p>'
+   +letters.map(function(a){var locs=all.filter(function(l){return aisle(l.code)===a;});return '<button class="item" style="width:100%;text-align:left" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\''+a+'\')"><span><strong>Pasillo '+a+'</strong><small>'+locs.length+' ubicaciones</small></span><span class="chev">›</span></button>';}).join('');
  }
  function lookup(code){
   if(!model)return null;
@@ -120,5 +142,5 @@
   return null;
  }
  function applyScan(match){if(match&&['article','location'].includes(match.mode))mode=match.mode;}
- root.INVENTA_CONSULT_UI={render:render,filter:filter,setMode:setMode,lookup:lookup,applyScan:applyScan};
+ root.INVENTA_CONSULT_UI={render:render,filter:filter,setMode:setMode,navigate:navigate,lookup:lookup,applyScan:applyScan};
 })(window);
