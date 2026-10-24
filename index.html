@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>INVENTA · Demo del operario</title>
+<title>INVENTA · Inventario y consulta</title>
 <meta name="theme-color" content="#c61921"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="INVENTA">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="favicon.png" type="image/png">
@@ -137,6 +137,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 .scan-open{display:block;width:100%;min-height:52px;background:#193b59;color:white;font-size:16px;font-weight:900;border:0;border-radius:12px;margin:10px 0}
 #scanOverlay[hidden],#scanUnknown[hidden]{display:none!important}
 #scanOverlay{position:fixed;z-index:90;inset:0;background:#071827ef;display:flex;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom))}
+.home-choice{min-height:120px}.home-choice strong{font-size:19px}.home-choice small{font-size:13px;line-height:1.5;margin-top:8px}
 .scan-card{width:min(560px,100%);max-height:100%;overflow-y:auto;padding:14px;background:#fff;color:#1c3549;border-radius:17px;box-shadow:0 12px 40px #0007}
 .scan-card h2{font-size:21px;margin:4px 0 8px}
 .scan-card p{font-size:13px;line-height:1.45;color:#576f82;margin:0 0 9px}
@@ -190,13 +191,14 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.24.3';
+const APP_VERSION='0.24.4';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
 const blank=()=>({version:1,worker:'',countSession:null,locations:{},events:[]});
-function load(){try{const p=JSON.parse(localStorage.getItem(KEY));if(p?.version===1&&p.locations)return p;}catch(e){}return blank();}
-let data=load(),screen=data.worker?(data.countSession?'aisles':'session'):'login',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all',lastPallet=null,repeatMode=false,overwriteInput=false,resumedDraft=false,editReason='',editOriginal=null,editReasonChoice='',editReasonNote='',editingIndex=-1,entryEdits=[];
+function load(){try{const p=JSON.parse(localStorage.getItem(KEY));if(p?.version===1&&p.locations){if(p.demoInventoryOpen===undefined)p.demoInventoryOpen=!!p.countSession;return p;}}catch(e){}return blank();}
+let data=load(),screen='home',activeAisle='',activeLoc='',activeArticle='',cMode='direct',cStep=0,cInput='',cParts=[0,0,0,0],pendingEntries=[],pendingResult=null,modal='',verifyValue='',countFeedback='',savedFeedback='',locationFilter='all',lastPallet=null,repeatMode=false,overwriteInput=false,resumedDraft=false,editReason='',editOriginal=null,editReasonChoice='',editReasonNote='',editingIndex=-1,entryEdits=[];
+let consultUser='';
 const fmt=n=>Number(n).toLocaleString('es-ES');
 const esc=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const valid=s=>/^\d{1,8}$/.test(String(s))&&Number(s)>0&&Number.isSafeInteger(Number(s));
@@ -230,7 +232,7 @@ function startSession(mode){
   workers.push(partner);
  }
  const previous=data.countSession;
- data.countSession={mode,workers,startedAt:new Date().toISOString()};
+ data.countSession={mode,workers,startedAt:new Date().toISOString()};data.demoInventoryOpen=true;
  data.events.push({what:previous?'Cambio de equipo de recuento':'Inicio de equipo de recuento',oldWorkers:previous?.workers||[],...sessionAudit(),worker:data.worker,at:data.countSession.startedAt});
  save();go('aisles');
 }
@@ -335,10 +337,69 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();if(s==='review'||s==='discrepancy'||s==='edit-detail')saveDraft();showPendingUpdate();}
-function header(){return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo · v${APP_VERSION}${data.worker&&data.countSession?' · '+esc(sessionLabel()):''}</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`}
-function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='login')renderLogin();else if(screen==='session')renderSession();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderLocations();}
+function header(){const counting=!['home','consult-login','consult'].includes(screen);return `<div class="hrow"><div class="brand"><img src="icon-192.png" alt=""><div><b>INVENTA</b><small>Demo · v${APP_VERSION}${counting&&data.worker&&data.countSession?' · '+esc(sessionLabel()):screen==='consult'?' · Consulta':''}</small></div></div><div class="topbuttons"><span class="pill">SOLO PRUEBA</span>${counting&&data.worker?'<button class="tinybtn" onclick="showModal(\'menu\')">☰</button>':''}</div></div>`;}
+function render(){let counter=screen==='count';$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='home')renderHome();else if(screen==='consult-login')renderConsultLogin();else if(screen==='consult')renderConsult();else if(screen==='login')renderLogin();else if(screen==='session')renderSession();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderHome();}
 function place(html,foot=''){$('content').innerHTML=html;$('foot').innerHTML=foot;}
-function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
+
+function renderHome(){
+ place(`<div class="title"><div class="overline">MENÚ PRINCIPAL</div><h1>¿Qué quieres hacer?</h1><p class="muted">Selecciona el tipo de operación antes de identificarte.</p></div>
+ <button class="item home-choice" onclick="go('login')"><span><strong>📦 Hacer inventario</strong><small>Recuento ciego. Después elegirás individual o en pareja.</small></span><span class="chev">›</span></button>
+ <button class="item home-choice" onclick="go('consult-login')"><span><strong>🔎 Realizar consulta</strong><small>Búsqueda individual de artículos, existencias y ubicaciones.</small></span><span class="chev">›</span></button>
+ <div class="alert">Esta demo usa datos de ejemplo y no dispone todavía de permisos centralizados.</div>`);
+}
+function consultRole(){return consultUser==='Supervisor (demo)'?'supervisor':consultUser==='Administrador (demo)'?'admin':'operator';}
+function consultBlocked(){return !!data.demoInventoryOpen&&consultRole()==='operator';}
+function renderConsultLogin(){
+ place(`<div class="title"><div class="overline">CONSULTA INDIVIDUAL</div><h1>Identificar usuario</h1><p class="muted">La consulta no pide elegir entre individual y pareja.</p></div>
+ <div class="card"><div class="field"><label for="consultAccount">Usuario de demostración</label><select id="consultAccount" class="input"><option>Operario 1</option><option>Operario 2</option><option>Supervisor (demo)</option><option>Administrador (demo)</option></select></div>
+ <div class="field"><label for="consultPin">PIN de prueba</label><input id="consultPin" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="4 cifras"></div>
+ <button class="btn" onclick="loginConsult()">Acceder a Consulta →</button><p class="muted" id="consultError" role="alert" style="margin-top:10px"></p></div>
+ <div class="alert">PIN de demo: 1234. Con inventario abierto, Consulta se bloquea para operarios, no para supervisores y administradores. Los permisos reales requieren autenticación central.</div>`,
+ '<button class="back" onclick="go(\'home\')">← Menú principal</button>');
+}
+function loginConsult(){
+ if($('consultPin')?.value!=='1234'){$('consultError').textContent='PIN incorrecto. Usa 1234 en la demo.';return;}
+ consultUser=$('consultAccount').value;
+ if(consultBlocked()){$('consultError').textContent='Consulta bloqueada para operarios durante un inventario abierto.';consultUser='';return;}
+ go('consult');
+}
+function consultStock(){
+ const map=new Map();
+ for(const [loc,articles] of Object.entries(TEST))for(const p of articles){
+  if(!map.has(p.id))map.set(p.id,{id:p.id,name:p.name,locations:[],total:0});
+  const row=map.get(p.id);row.locations.push({loc,amount:p.theoretical});row.total+=p.theoretical;
+ }
+ return [...map.values()];
+}
+function renderConsult(){
+ if(!consultUser){go('consult-login');return;}
+ if(consultBlocked()){consultUser='';go('consult-login');return;}
+ place(`<div class="title"><div class="overline">CONSULTA DE ALMACÉN</div><h1>Buscar artículos y ubicaciones</h1><p class="muted">${esc(consultUser)} · Solo lectura · Existencias de prueba</p></div>
+ ${data.demoInventoryOpen?'<div class="alert">Inventario de prueba en curso. Consulta reservada para supervisión y administración.</div>':''}
+ <button class="scan-open" onclick="openScanner('consult')">▣ Escanear para consultar</button>
+ <div class="field"><label for="consultSearch">Artículo o ubicación</label><input id="consultSearch" class="input" autocomplete="off" placeholder="Nombre, código o ubicación" oninput="filterConsult(this.value)"></div>
+ <div id="consultResults"></div>
+ <p class="muted">Ubicación fija: pendiente de incorporar el campo Fijo = 1 desde la base real de almacén.</p>
+ ${consultRole()==='admin'&&data.demoInventoryOpen?'<button class="btn-outline" style="width:100%;margin-top:12px" onclick="closeDemoCampaign()">Finalizar campaña de prueba</button>':''}`,
+ '<button class="back" onclick="consultUser=\'\';go(\'home\')">← Menú principal</button>');
+ filterConsult('');
+}
+function filterConsult(q){
+ const box=$('consultResults');if(!box)return;
+ const term=String(q||'').trim().toLowerCase();
+ const records=consultStock().filter(p=>!term||[p.id,p.name,...p.locations.map(x=>x.loc)].join(' ').toLowerCase().includes(term));
+ box.innerHTML=records.length?records.map(p=>`<div class="card"><h2>${esc(p.name)}</h2><p class="muted">${esc(p.id)}</p><div class="between" style="margin:12px 0"><span>Stock BC de prueba</span><strong>${fmt(p.total)} uds.</strong></div>
+ ${p.locations.map(x=>`<div class="between" style="padding:8px 0;border-top:1px solid #e5eaf0"><b>${esc(x.loc)}</b><span>${fmt(x.amount)} uds.</span></div>`).join('')}
+ <p class="muted" style="margin-top:10px">Posición fija: sin cargar en demo</p></div>`).join(''):'<div class="alert">Sin coincidencias.</div>';
+}
+function closeDemoCampaign(){
+ if(consultRole()!=='admin'||!data.demoInventoryOpen)return;
+ if(!confirm('¿Cerrar únicamente la campaña de prueba? No valida recuentos ni cambia Business Central.'))return;
+ data.demoInventoryOpen=false;data.countSession=null;
+ data.events.push({what:'Cierre de campaña de prueba',actor:consultUser,at:new Date().toISOString()});
+ save();renderConsult();
+}
+function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN · INVENTARIO</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p><button class="back" onclick="go('home')">← Menú principal</button>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
 function login(){if($('pin').value!=='1234'){$('loginError').textContent='PIN incorrecto. Usa el PIN de demostración.';return;}data.worker=$('worker').value;activeAisle='';if(data.countSession?.workers?.[0]!==data.worker)data.countSession=null;save();const d=readDraft(data.worker);if(d){restoreDraft(d);render();}else go(data.countSession?'aisles':'session');}
 
 /* Escáner móvil. La cámara se abre al pulsar; solo el sistema operativo gestiona permisos. */
@@ -396,11 +457,12 @@ function stopScanner(){
  if(reader){try{if(reader.isScanning)reader.stop().then(()=>reader.clear()).catch(()=>{});else reader.clear();}catch(e){}}
 }
 function openScanner(mode){
- if(!['location','verify','article'].includes(mode))return;
+ if(!['location','verify','article','consult'].includes(mode))return;
+ if(mode==='consult'&&(!consultUser||consultBlocked()))return;
  // No custom permission screen. The button triggers the camera operation.
  stopScanner();scanMode=mode;scanBusy=false;scanUnknownCode='';
  $('scanOverlay').hidden=false;$('scanUnknown').hidden=true;
- $('scanTitle').textContent=mode==='location'?'Escanear ubicación':mode==='verify'?'Verificar ubicación':'Escanear artículo';
+ $('scanTitle').textContent=mode==='location'?'Escanear ubicación':mode==='verify'?'Verificar ubicación':mode==='consult'?'Escanear para consultar':'Escanear artículo';
  $('scanManual').value='';$('scanReader').innerHTML='';
  updateScanStatus('Abriendo cámara tras pulsar Escanear…');
  startScanner(scanActive);
@@ -435,6 +497,11 @@ function handleScanned(raw){
  if(scanBusy)return;
  scanBusy=true;
  const mode=scanMode;
+ if(mode==='consult'){
+  const found=codeForArticle(code)||Object.keys(TEST).find(loc=>normCode(loc)===normCode(code));
+  if(!found){updateScanStatus('Código no encontrado en el catálogo de prueba.');scanBusy=false;return;}
+  stopScanner();go('consult');$('consultSearch').value=found;filterConsult(found);return;
+ }
  if(mode==='location'){
   const loc=Object.keys(TEST).find(k=>normCode(k)===code);
   if(!loc){updateScanStatus('La ubicación '+code+' no existe en los datos cargados.');scanBusy=false;return;}
@@ -945,10 +1012,10 @@ function hideModal(){$('overlay').innerHTML='';modal='';if(pendingUnknownArticle
 function removeEntry(i){hideModal();openBreakdown();if(i>=0&&i<pendingEntries.length)openEntryEdit(i);}
 function addUnexpected(){const code=$('unknownCode').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,28);if(!code){$('modalError').textContent='Introduce un código.';return;}if(items(activeLoc).some(p=>p.id===code)){$('modalError').textContent='Ese artículo ya existe en la ubicación.';return;}const pending=pendingUnknownArticleCode;const associated=pending?codeForArticle(pending):null;if(associated&&associated!==code){$('modalError').textContent='El código escaneado ya está vinculado a '+associated+'. Requiere revisión.';return;}const name=$('unknownName').value.trim().slice(0,90);getLoc(activeLoc).extras[code]={name:name||'Artículo encontrado no previsto'};const at=new Date().toISOString();if(pending){catalog()[barcodeKey(pending)]={articleId:code,code:pending,source:'INVENTA',createdAt:at,createdBy:data.worker,updatedAt:at};}data.events.push({what:'Artículo provisional',loc:activeLoc,article:code,barcode:pending||null,at});pendingUnknownArticleCode='';save();hideModal();go('articles');}
 function installHelp(){hideModal();showModal('help')}
-function logout(){data.worker='';data.countSession=null;activeAisle='';save();hideModal();go('login')}
-function resetDemo(){if(!confirm('¿Borrar todos los recuentos de esta DEMO? La base de códigos aprendidos se conservará.'))return;const codes={...catalog()};clearDraft('Operario 1');clearDraft('Operario 2');data=blank();data.barcodeCatalog=codes;save();hideModal();go('login')}
+function logout(){data.worker='';data.countSession=null;activeAisle='';save();hideModal();go('home')}
+function resetDemo(){if(!confirm('¿Borrar todos los recuentos de esta DEMO? La base de códigos aprendidos se conservará.'))return;const codes={...catalog()};clearDraft('Operario 1');clearDraft('Operario 2');data=blank();data.barcodeCatalog=codes;save();hideModal();go('home')}
 window.addEventListener('online',()=>{if(screen==='locations')render()});window.addEventListener('offline',()=>{if(screen==='locations')render()});
 window.addEventListener('load',initInventaUpdates);
-if(data.worker){const d=readDraft(data.worker);if(d)restoreDraft(d);}
+// El borrador se recupera tras acceder a Inventario con el usuario correcto.
 render();
 </script></body></html>
