@@ -1,7 +1,7 @@
 /* INVENTA · Consulta por artículo y por ubicación, incluidas posiciones fijas a cero. */
 (function(root){
  'use strict';
- var model=null,mode='location',loadError='',loadId=0,selectedAisle='',selectedLocation='',selectedProduct='';
+ var model=null,mode='location',loadError='',loadId=0,selectedAisle='',selectedLocation='',selectedProduct='',history=[];
  function demoData(){
   var products=new Map(),stock=[];
   for(var pair of Object.entries(TEST)){
@@ -23,8 +23,7 @@
  }
  function number(n){return Number(n).toLocaleString('es-ES',{maximumFractionDigits:3});}
  function tags(pos){
-  return (pos.fixed?'<span class="tag ok">FIJA'+(pos.priority>1?' · prioridad '+pos.priority:'')+'</span>':'')
-   +(pos.amount===0?'<span class="tag warn">SIN STOCK</span>':'')
+  return (pos.amount===0?'<span class="tag warn">SIN STOCK</span>':'')
    +(pos.amount<0?'<span class="tag warn">STOCK NEGATIVO BC</span>':'');
  }
  function lots(pos){
@@ -33,20 +32,20 @@
  function articleCard(a){
   return '<div class="card"><h2>'+esc(a.name)+'</h2><p class="muted">'+esc(a.id)+'</p>'
    +'<div class="between" style="margin:12px 0"><span>Total de existencias</span><strong>'+number(a.total)+' '+esc(a.unit)+'</strong></div>'
-   +a.locations.map(function(pos){return '<div class="consult-line"><div><b>'+esc(pos.locationCode)+'</b>'+lots(pos)+'</div><div><span class="consult-qty">'+number(pos.amount)+' '+esc(a.unit)+'</span><div class="consult-tags">'+tags(pos)+'</div></div></div>';}).join('')
+   +a.locations.map(function(pos){return '<div class="consult-line'+(pos.fixed?' consult-fixed':'')+'"><div><b>'+esc(pos.locationCode)+'</b>'+lots(pos)+'</div><div><span class="consult-qty">'+number(pos.amount)+' '+esc(a.unit)+'</span><div class="consult-tags">'+tags(pos)+'</div></div></div>';}).join('')
    +'</div>';
  }
  function locationCard(l,byProduct){
   var cards=l.articles.map(function(pos){
    var a=byProduct.get(pos.productCode),name=a?a.name:pos.productCode,unit=a?a.unit:'UD';
-   return '<div class="consult-line"><div><b>'+esc(pos.productCode)+'</b><small>'+esc(name)+'</small>'+lots(pos)+'</div>'
+   return '<div class="consult-line'+(pos.fixed?' consult-fixed':'')+'"><div><b>'+esc(pos.productCode)+'</b><small>'+esc(name)+'</small>'+lots(pos)+'</div>'
    +'<div><span class="consult-qty">'+number(pos.amount)+' '+esc(unit)+'</span><div class="consult-tags">'+tags(pos)+'</div></div></div>';
   });
   return '<div class="card"><h2>📍 '+esc(l.code)+'</h2><p class="muted">'+l.articles.length+' artículos con stock o posición fija</p>'
    +(cards.length?cards.join(''):'<div class="consult-empty">Sin stock ni artículos asignados como fijos.</div>')+'</div>';
  }
  function render(){
-  selectedAisle='';selectedLocation='';selectedProduct='';
+  selectedAisle='';selectedLocation='';selectedProduct='';history=[];
   if(!consultUser){go('consult-login');return;}
   if(consultBlocked()){consultUser='';go('consult-login');return;}
   var real=isManager()&&!root.INVENTA_CONSULT_DEMO,token=++loadId;
@@ -59,7 +58,7 @@
    +'<div class="field"><label id="consultSearchLabel" for="consultSearch">Buscar</label><input id="consultSearch" class="input" autocomplete="off" oninput="filterConsult(this.value)"></div>'
    +'<p id="consultSource" class="muted" style="margin-bottom:10px" role="status"></p><div id="consultResults" aria-live="polite"></div>'
    +(consultRole()==='admin'&&data.demoInventoryOpen?'<button class="btn-outline" style="width:100%;margin-top:12px" onclick="closeDemoCampaign()">Finalizar campaña de prueba</button>':''),
-   '<button class="back" onclick="consultUser=\'\';go(\'home\')">← Menú principal</button>');
+   '<button class="back" onclick="INVENTA_CONSULT_UI.back()">← Volver</button>');
   setMode(mode);
   if(!real){
    model=root.INVENTA_CONSULT.aggregate(demoData());
@@ -82,9 +81,19 @@
    $('consultResults').innerHTML='<div class="alert red">'+esc(e.message)+'</div><button class="btn-outline" onclick="renderConsult()">Reintentar</button>';
   });
  }
+ function updateBackButton(){
+  // El logotipo vuelve al inicio; el botón superior vuelve solo dentro de Consulta.
+  // En la raíz de Consulta no existe una pantalla interior anterior.
+  var nav=typeof document==='undefined'?null:document.getElementById('topNavigation');
+  if(nav)nav.hidden=history.length===0;
+ }
+ function currentView(){
+  var input=$('consultSearch');
+  return {aisle:selectedAisle,location:selectedLocation,product:selectedProduct,term:input?input.value:''};
+ }
  function setMode(next){
   if(next!=='article'&&next!=='location')return;
-  mode=next;selectedAisle='';selectedLocation='';selectedProduct='';
+  mode=next;selectedAisle='';selectedLocation='';selectedProduct='';history=[];
   var a=$('consultModeArticle'),l=$('consultModeLocation'),input=$('consultSearch');
   if(!a||!l||!input)return;
   a.classList.toggle('active',mode==='article');l.classList.toggle('active',mode==='location');
@@ -92,14 +101,33 @@
   $('consultSearchLabel').textContent=mode==='article'?'Buscar artículo':'Buscar ubicación';
   input.placeholder=mode==='article'?'Código, descripción o ubicación':'Código de ubicación o artículo';
   input.value='';
+  updateBackButton();
   filter('');
  }
  function aisle(code){return String(code||'').trim().toUpperCase().charAt(0);}
  function navigate(level,value){
+  if(!['aisle','location','product'].includes(level))return;
+  if(level==='product'&&!selectedLocation)return;
+  history.push(currentView());
   if(level==='aisle'){selectedAisle=value;selectedLocation='';selectedProduct='';}
-  if(level==='location'){selectedLocation=value;selectedAisle=aisle(value);selectedProduct='';}
+  if(level==='location'){
+   selectedLocation=value;
+   var letter=aisle(value);
+   selectedAisle='ABCDEFGHIJKLMNOPQRST'.includes(letter)?letter:'OTROS';
+   selectedProduct='';
+  }
   if(level==='product')selectedProduct=value;
+  var input=$('consultSearch');if(input)input.value='';
+  updateBackButton();
   filter('');
+ }
+ function back(){
+  if(!history.length){updateBackButton();return;}
+  var prev=history.pop();
+  selectedAisle=prev.aisle;selectedLocation=prev.location;selectedProduct=prev.product;
+  var input=$('consultSearch');if(input)input.value=prev.term||'';
+  updateBackButton();
+  filter(prev.term||'');
  }
  function filter(q){
   var box=$('consultResults');if(!box)return;
@@ -114,21 +142,21 @@
   if(selectedProduct){
    var product=byProduct.get(selectedProduct),loc=all.find(function(l){return l.code===selectedLocation;});
    var pos=loc&&loc.articles.find(function(p){return p.productCode===selectedProduct;});
-   box.innerHTML='<button class="back" onclick="INVENTA_CONSULT_UI.navigate(\'location\',\''+esc(selectedLocation)+'\')">← Artículos de '+esc(selectedLocation)+'</button>'
-    +'<div class="card"><h2>'+esc(product?product.name:selectedProduct)+'</h2><p class="muted">'+esc(selectedProduct)+'</p>'
+   box.innerHTML='<button class="back" onclick="INVENTA_CONSULT_UI.back()">← Artículos de '+esc(selectedLocation)+'</button>'
+    +'<div class="card'+(pos&&pos.fixed?' consult-fixed':'')+'"><h2>'+esc(product?product.name:selectedProduct)+'</h2><p class="muted">'+esc(selectedProduct)+'</p>'
     +'<p style="margin:12px 0">Cantidad total: <b>'+number(pos?pos.amount:0)+' '+esc(product?product.unit:'UD')+'</b> '+(pos?tags(pos):'')+'</p>'
     +'<h3>Cantidades por lote</h3>'
     +(pos&&pos.lots.length?pos.lots.map(function(l){return '<div class="consult-line"><span><b>'+esc(l.code||'SIN LOTE')+'</b>'+(l.expiryDate?'<small>Cad. '+esc(l.expiryDate.split('-').reverse().join('/'))+'</small>':'')+'</span><strong>'+number(l.amount)+' '+esc(product?product.unit:'UD')+'</strong></div>';}).join(''):'<p class="muted">Sin lotes con existencias.</p>')+'</div>';return;
   }
   if(selectedLocation){
    var loc=all.find(function(l){return l.code===selectedLocation;});
-   box.innerHTML='<button class="back" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\''+esc(selectedAisle)+'\')">← Ubicaciones del pasillo '+esc(selectedAisle)+'</button>'
+   box.innerHTML='<button class="back" onclick="INVENTA_CONSULT_UI.back()">← Volver a las ubicaciones</button>'
     +'<div class="card"><h2>📍 '+esc(selectedLocation)+'</h2><p class="muted">Artículos con stock o posición fija asignada</p></div>'
-    +(loc&&loc.articles.length?loc.articles.filter(function(p){var a=byProduct.get(p.productCode);return !term||[p.productCode,a&&a.name].some(function(v){return String(v||'').toLocaleLowerCase('es').includes(term);});}).map(function(p){var a=byProduct.get(p.productCode);return '<button class="item" style="width:100%;text-align:left" onclick="INVENTA_CONSULT_UI.navigate(\'product\',\''+esc(p.productCode)+'\')"><span><strong>'+esc(a?a.name:p.productCode)+'</strong><small>'+esc(p.productCode)+' · '+number(p.amount)+' '+esc(a?a.unit:'UD')+'</small>'+tags(p)+'</span><span class="chev">›</span></button>';}).join(''):'<div class="alert">Ubicación vacía.</div>');return;
+    +(loc&&loc.articles.length?loc.articles.filter(function(p){var a=byProduct.get(p.productCode);return !term||[p.productCode,a&&a.name].some(function(v){return String(v||'').toLocaleLowerCase('es').includes(term);});}).map(function(p){var a=byProduct.get(p.productCode);return '<button class="item'+(p.fixed?' consult-fixed':'')+'" style="width:100%;text-align:left" onclick="INVENTA_CONSULT_UI.navigate(\'product\',\''+esc(p.productCode)+'\')"><span><strong>'+esc(a?a.name:p.productCode)+'</strong><small>'+esc(p.productCode)+' · '+number(p.amount)+' '+esc(a?a.unit:'UD')+'</small>'+tags(p)+'</span><span class="chev">›</span></button>';}).join(''):'<div class="alert">Ubicación vacía.</div>');return;
   }
   if(selectedAisle){
    var locs=all.filter(function(l){return (selectedAisle==='OTROS'?!'ABCDEFGHIJKLMNOPQRST'.includes(aisle(l.code)):aisle(l.code)===selectedAisle)&&(!term||l.code.toLocaleLowerCase('es').includes(term));});
-   box.innerHTML='<button class="back" onclick="INVENTA_CONSULT_UI.navigate(\'aisle\',\'\')">← Todos los pasillos</button><h2 style="margin:12px 0">Pasillo '+esc(selectedAisle)+'</h2>'
+   box.innerHTML='<button class="back" onclick="INVENTA_CONSULT_UI.back()">← Todos los pasillos</button><h2 style="margin:12px 0">Pasillo '+esc(selectedAisle)+'</h2>'
     +(locs.map(function(l){return '<button class="item" style="width:100%;text-align:left" onclick="INVENTA_CONSULT_UI.navigate(\'location\',\''+esc(l.code)+'\')"><span><strong>'+esc(l.code)+'</strong><small>'+l.articles.length+' artículos con stock o fija · '+(l.articles.some(function(p){return p.amount>0;})?'Con existencias':'Sin existencias')+'</small></span><span class="chev">›</span></button>';}).join('')||'<div class="alert">No hay ubicaciones registradas en este pasillo.</div>');return;
   }
   if(term){
@@ -159,5 +187,5 @@
   return null;
  }
  function applyScan(match){if(match&&['article','location'].includes(match.mode))mode=match.mode;}
- root.INVENTA_CONSULT_UI={render:render,filter:filter,setMode:setMode,navigate:navigate,lookup:lookup,applyScan:applyScan};
+ root.INVENTA_CONSULT_UI={render:render,filter:filter,setMode:setMode,navigate:navigate,back:back,lookup:lookup,applyScan:applyScan};
 })(window);
