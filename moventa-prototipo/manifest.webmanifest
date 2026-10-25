@@ -7,5 +7,13 @@
   "display": "standalone",
   "background_color": "#f2f6fb",
   "theme_color": "#102a43",
-  "description": "Acceso a INVENTA y KONTROLA"
+  "description": "Acceso a INVENTA y KONTROLA",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
