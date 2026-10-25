@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "INVENTA · Inventario y almacén",
-  "short_name": "INVENTA",
-  "description": "Inventario, consulta y gestión de almacén con acceso por roles.",
+  "name": "VISURA INVENTA · Inventario y almacén",
+  "short_name": "VISURA INVENTA",
+  "description": "Inventario, consulta y gestión de almacén · Plataforma VISURA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -11,16 +11,22 @@
   "theme_color": "#0b2647",
   "icons": [
     {
-      "src": "assets/brand/app-icon-192.png",
-      "type": "image/png",
+      "src": "assets/brand/visura-inventa-192.png",
       "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/brand/app-icon-512.png",
-      "type": "image/png",
+      "src": "assets/brand/visura-inventa-512.png",
       "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "assets/brand/visura-inventa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }

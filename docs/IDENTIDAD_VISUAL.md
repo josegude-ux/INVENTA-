@@ -1,3 +1,11 @@
+# Actualización de identidad VISURA — 26/10/2026
+
+La marca matriz es **VISURA** y el nombre comercial del módulo de inventarios es **VISURA INVENTA**. La aplicación de preparación de pedidos es **VISURA PREPARA** (antes KONTROLA). Las pantallas y lógica de inventario existentes se conservan.
+
+Esta rama introduce un identificador vectorial provisional y textos comerciales. El usuario entregó imágenes definitivas tridimensionales exclusivas para VISURA MATRIZ, VISURA INVENTA y VISURA PREPARA en `VISURA_Identidad_3D(1).zip`. Los archivos PNG/WebP aprobados están ya incorporados en esta rama de propuesta; **pendiente validación visual, de PWA e iPhone antes de fusionar o desplegar**. El recurso SVG de palabra sigue como wordmark auxiliar; la portada principal utiliza ya la imagen oficial VISURA INVENTA 3D.
+
+---
+
 # Identidad de INVENTA
 
 Identidad aprobada por el usuario el 24 de octubre de 2026 a partir de la primera propuesta de portada. Aplicable a la aplicación, escritorio, documentos y PDF que se emitan bajo el nombre INVENTA.

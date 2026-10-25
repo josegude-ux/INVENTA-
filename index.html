@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>INVENTA · Inventario y consulta</title>
-<meta name="theme-color" content="#c61921"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="INVENTA">
+<title>VISURA INVENTA · Inventario y consulta</title>
+<meta name="theme-color" content="#c61921"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="VISURA INVENTA">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/brand/app-icon-192.png"><link rel="icon" href="assets/brand/app-icon-192.png" type="image/png">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/brand/visura-inventa-192.png"><link rel="icon" href="assets/brand/visura-inventa-192.png" type="image/png">
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1d2e43;background:#f0f3f7;font-synthesis:none}
 *{box-sizing:border-box}button,input,select{font:inherit}button{touch-action:manipulation;cursor:pointer}body{margin:0}body,input,button{ -webkit-tap-highlight-color:transparent}
@@ -426,12 +426,12 @@ async function checkForUpdates(manual=false){
  if(updating)return;updating=true;
  try{
   const reg=await navigator.serviceWorker.getRegistration();
-  if(!reg){if(manual)alert('El servicio de actualización aún no está instalado. Cierra y abre INVENTA.');return;}
+  if(!reg){if(manual)alert('El servicio de actualización aún no está instalado. Cierra y abre VISURA INVENTA.');return;}
   await reg.update();lastCheck=Date.now();
   if(reg.waiting&&navigator.serviceWorker.controller){informUpdate();}
   else if(manual&&reg.installing){alert('Se ha detectado una actualización. Se está descargando; aparecerá un aviso cuando esté lista.');}
   else if(manual&&updateReady){showPendingUpdate();}
-  else if(manual){alert('INVENTA v'+APP_VERSION+' está actualizada.');}
+  else if(manual){alert('VISURA INVENTA v'+APP_VERSION+' está actualizada.');}
  }catch(e){if(manual)alert('No se ha podido comprobar la actualización. Revisa la conexión a Internet.');}
  finally{updating=false;}
 }
@@ -455,7 +455,7 @@ function openSettings(){
  $('overlay').innerHTML='<div class="modalback"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Ajustes</h2><p class="muted">INVENTA · v'+APP_VERSION+'</p>'+(authenticated?'<p>'+esc(profile.display_name)+' · '+esc({admin:'Administrador',supervisor:'Supervisor',operator:'Operario'}[profile.role]||'')+'</p>':'<p>Accede con tu cuenta para ver tus funciones.</p>')+'<div class="stack" style="margin-top:16px"><button class="btn-outline" onclick="hideModal();installInventa()">Instalar aplicación</button><button class="btn-outline" onclick="hideModal();safeNavigation(()=>checkForUpdates(true))">Buscar actualizaciones</button>'+(authenticated?'<button class="btn-outline" onclick="safeNavigation(()=>{hideModal();logoutManager();})">Cerrar sesión</button>':'')+((data.worker&&!authenticated)?'<button class="btn-outline" onclick="showModal(\'menu\')">Opciones de demostración</button>':'')+'<button class="btn" onclick="hideModal()">Cerrar ajustes</button></div></section></div>';
  $('settingsTitle').setAttribute('tabindex','-1');$('settingsTitle').focus();
 }
-function header(){const counting=!['home','manager-login','management','consult-login','consult'].includes(screen);return `<div class="hrow"><div class="brand"><div><button class="brand-home" type="button" onclick="navigateHome()" aria-label="INVENTA: ir al menú principal"><img class="brand-wordmark" src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></button><small>${window.INVENTA_MGMT?.isAuthenticated()&&!window.INVENTA_CONSULT_DEMO?'INVENTA':'Demo'} · v${APP_VERSION}${counting&&data.worker&&data.countSession?' · '+esc(sessionLabel()):screen==='consult'?' · Consulta':screen==='management'?' · Gestión almacén':''}</small></div></div><div class="topbuttons">${settingsButton()}</div></div>`;}
+function header(){const counting=!['home','manager-login','management','consult-login','consult'].includes(screen);return `<div class="hrow"><div class="brand"><div><button class="brand-home" type="button" onclick="navigateHome()" aria-label="INVENTA: ir al menú principal"><img class="brand-wordmark" src="assets/brand/visura-inventa.svg" alt="VISURA INVENTA" width="496" height="80"></button><small>${window.INVENTA_MGMT?.isAuthenticated()&&!window.INVENTA_CONSULT_DEMO?'INVENTA':'Demo'} · v${APP_VERSION}${counting&&data.worker&&data.countSession?' · '+esc(sessionLabel()):screen==='consult'?' · Consulta':screen==='management'?' · Gestión almacén':''}</small></div></div><div class="topbuttons">${settingsButton()}</div></div>`;}
 function render(){let counter=screen==='count';$('app').classList.toggle('landing',screen==='home');$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='home')renderHome();else if(screen==='demo-home')renderDemoHome();else if(screen==='manager-login')renderManagerLogin();else if(screen==='management')renderManagement();else if(screen==='consult-login')renderConsultLogin();else if(screen==='consult')renderConsult();else if(screen==='login')renderLogin();else if(screen==='session')renderSession();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderHome();}
 let navigationBaseline=[];
 function navigationFields(){return Array.from(document.querySelectorAll('#content input,#content select,#content textarea')).filter(el=>!['consultSearch','catalogSearch'].includes(el.id));}
@@ -505,7 +505,7 @@ let inventaInstallPrompt=null;
 function inventaInstalled(){return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}
 function installMarkup(){return inventaInstalled()?'<span>Aplicación instalada</span>':'<button type="button" id="installInventa" class="landing-account" onclick="installInventa()">Instalar aplicación</button>';}
 function installInstructions(){
- $('overlay').innerHTML='<div class="modalback"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="installTitle"><h2 id="installTitle">INVENTA en tu escritorio</h2><p class="muted" style="margin:14px 0">Abre INVENTA en Microsoft Edge o Google Chrome. Pulsa el icono de instalación de la barra de direcciones y confirma Instalar.</p><p class="muted">También puedes buscar la opción de instalar esta página como aplicación en el menú del navegador. En iPhone: Compartir → Añadir a pantalla de inicio.</p><p class="muted" style="margin-top:14px">Se abrirá en su propia ventana con tu cuenta y las funciones permitidas por tu rol. La sincronización necesita conexión; los envíos pendientes se conservan en este dispositivo.</p><button class="btn" style="margin-top:18px" onclick="hideModal()">Entendido</button></section></div>';
+ $('overlay').innerHTML='<div class="modalback"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="installTitle"><h2 id="installTitle">VISURA INVENTA en tu escritorio</h2><p class="muted" style="margin:14px 0">Abre VISURA INVENTA en Microsoft Edge o Google Chrome. Pulsa el icono de instalación de la barra de direcciones y confirma Instalar.</p><p class="muted">También puedes buscar la opción de instalar esta página como aplicación en el menú del navegador. En iPhone: Compartir → Añadir a pantalla de inicio.</p><p class="muted" style="margin-top:14px">Se abrirá en su propia ventana con tu cuenta y las funciones permitidas por tu rol. La sincronización necesita conexión; los envíos pendientes se conservan en este dispositivo.</p><button class="btn" style="margin-top:18px" onclick="hideModal()">Entendido</button></section></div>';
 }
 async function installInventa(){
  if(inventaInstalled())return;
@@ -524,10 +524,10 @@ function renderHome(){
  const allowed=homePermissions(),profile=window.INVENTA_MGMT?.profile;
  const name=profile?.display_name||'Usuario',roleLabel={operator:'Operario',supervisor:'Supervisor',admin:'Administrador'}[allowed.role]||'';
  const person=allowed.authenticated?'<div class="landing-person"><span class="initial" aria-hidden="true">'+esc(name.charAt(0).toUpperCase())+'</span><div><small>Hola,</small><b>'+esc(name)+'</b><small>'+roleLabel+'</small></div></div>':'';
- const top='<div class="landing-top"><img class="landing-logo" src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80">'+settingsButton()+'</div>'+person+'<p class="landing-tagline">Tu almacén, bajo control</p>';
+ const top='<div class="landing-top"><img class="landing-logo" src="assets/brand/visura-inventa.svg" alt="VISURA INVENTA" width="496" height="80">'+settingsButton()+'</div>'+person+'<p class="landing-tagline">Tu almacén, bajo control</p>';
  function tile(kind,title,subtitle,image,action){return '<button type="button" class="landing-card '+kind+'" onclick="'+action+'"><span class="copy"><strong>'+title+'</strong><small>'+subtitle+'</small><span class="arrow" aria-hidden="true">→</span></span><img src="assets/menu/'+image+'.webp" alt="" width="640" height="640"></button>';}
  if(!allowed.authenticated){
-  place(top+'<section class="welcome-art" aria-label="Bienvenido a INVENTA"><button type="button" class="welcome-image-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA desde la imagen del almacén"><img src="assets/brand/inventa-warehouse.webp" alt="Almacén con palets, Mahou, Voldis y el logo INVENTA en el portapapeles" width="768" height="768"></button><button type="button" class="welcome-logo-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA"><img src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></button><p class="welcome-hint">Pulsa INVENTA para entrar</p></section><div class="landing-bottom"><span>Entorno piloto · v'+APP_VERSION+'</span>'+installMarkup()+'</div>','');return;
+  place(top+'<section class="welcome-art" aria-label="Bienvenido a VISURA INVENTA"><button type="button" class="welcome-image-access" onclick="go(\'manager-login\')" aria-label="Acceder a VISURA INVENTA desde la imagen del almacén"><img src="assets/brand/visura-inventa-3d.webp" alt="VISURA INVENTA: inventario de almacén, terminal de recuento y mercancías" width="768" height="768"></button><button type="button" class="welcome-logo-access" onclick="go(\'manager-login\')" aria-label="Acceder a VISURA INVENTA"><img src="assets/brand/visura-inventa.svg" alt="VISURA INVENTA" width="496" height="80"></button><p class="welcome-hint">Pulsa VISURA INVENTA para entrar</p></section><div class="landing-bottom"><span>Entorno piloto · v'+APP_VERSION+'</span>'+installMarkup()+'</div>','');return;
  }
  const cards=(allowed.inventory?tile('inventory','Hacer<br>inventario','Cuenta y registra · Individual','inventory-3d','openAuthorizedHome(\'inventory\')'):'')
  +(allowed.consultation?tile('consultation','Realizar<br>consulta','Encuentra lo que buscas','consult-3d','openAuthorizedHome(\'consultation\')'):'')
