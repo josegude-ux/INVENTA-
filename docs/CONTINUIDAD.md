@@ -39,3 +39,11 @@
 Al abrir otro chat: «Continuamos INVENTA. Consulta `docs/CONTINUIDAD.md` y `.cursor/rules/inventa.mdc` en GitHub. Contrasta el estado del código antes de proponer cambios, sin mezclarlo con KONTROLA».
 
 Al finalizar un avance, actualizar esta ficha con **fecha; versión/commit/PR; hecho y probado; decisiones nuevas; pendientes; riesgos; siguiente tarea concreta**. La actualización documental no sustituye los commits del código.
+
+
+## 2026-10-26 — Propuesta VISURA INVENTA (rama aislada, no publicada)
+
+- VISURA es la marca matriz; INVENTA cambia solo su nombre comercial a **VISURA INVENTA** y KONTROLA a **VISURA PREPARA**, sin modificar identificadores técnicos, cuentas, API, claves de almacenamiento local ni esquemas.
+- Se actualizan títulos, manifest, textos visibles, wordmark SVG provisional y precarga PWA. Se mantiene el inventario existente y la gestión de usuarios. No se modifica la versión funcional 0.30.5 ni la rama de importador 0.30.6.
+- La imagen grande de bienvenida usa temporalmente la ilustración 3D local de inventario sin el antiguo texto integrado. **Pendiente** incorporar la imagen 3D específica y los iconos PNG iPhone aprobados por el usuario en `VISURA_Identidad_3D(1).zip`; la marca matriz no debe reutilizar su misma imagen.
+- No se ha fusionado, publicado ni aplicado migración Supabase. Verificación de cadenas previa al commit; pendiente CI, pruebas en móvil y revisión de la portada final con los activos definitivos.
