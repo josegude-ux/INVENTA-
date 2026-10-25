@@ -1,0 +1,11 @@
+{
+  "id": "/INVENTA-/moventa-prototipo/",
+  "name": "MOVENTA · Plataforma de aplicaciones",
+  "short_name": "MOVENTA",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f6fb",
+  "theme_color": "#102a43",
+  "description": "Acceso a INVENTA y KONTROLA"
+}
