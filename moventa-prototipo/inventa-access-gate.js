@@ -15,6 +15,12 @@ export function createInventaAccessGate(supabase, {onAllowed, onDenied, onError}
       return false;
     }
     try {
+      const {data: {user: authenticatedUser} = {}, error: authError} = await supabase.auth.getUser();
+      if (authError) throw authError;
+      if (!authenticatedUser || authenticatedUser.id !== user.id) {
+        if (!disposed && current === revision) await onDenied?.('identity-mismatch');
+        return false;
+      }
       const apps = await aplicacionesPermitidas(supabase);
       if (disposed || current !== revision) return false;
       const allowed = apps.some(row => row.app_id === 'inventa');
