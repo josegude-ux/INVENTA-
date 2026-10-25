@@ -1,26 +1,19 @@
 <!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MOVENTA · Prueba de sesión INVENTA</title><body><h1>Prueba de sesión compartida INVENTA</h1><p id="state" role="status">Comprobando sesión…</p><p id="identity"></p><a href="./index.html">Volver a MOVENTA</a><script type="module">
 import {createClient} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import {createInventaSessionAdapter} from './inventa-session-adapter.js';
-import {aplicacionesPermitidas} from './app-access.js';
+import {createInventaAccessGate} from './inventa-access-gate.js';
 const client=createClient('https://wlejxnpphysogrzcxjfh.supabase.co','sb_publishable_gPeof-fUW3yITvNXqsjHVw_-PjB1Fyd');
 const state=document.querySelector('#state'),identity=document.querySelector('#identity');
-let check=0;
+const gate=createInventaAccessGate(client,{
+ onAllowed(user){state.textContent='Sesión reconocida; acceso MOVENTA a INVENTA autorizado (demostración)';identity.textContent='Usuario: '+user.id;},
+ onDenied(reason){identity.textContent='';state.textContent=reason==='no-permission'?'Sin permiso para INVENTA':'Sin sesión autorizada para INVENTA';},
+ onError(){identity.textContent='';state.textContent='Error verificando permisos; acceso bloqueado';}
+});
 const adapter=createInventaSessionAdapter(client,{
- async onSession({user}) {
-  const version=++check;
-  state.textContent='Verificando permiso INVENTA…';
-  identity.textContent='';
-  try {
-   const apps=await aplicacionesPermitidas(client);
-   if(version!==check)return;
-   if(!apps.some(a=>a.app_id==='inventa')){state.textContent='Sin permiso para INVENTA';return;}
-   state.textContent='Sesión MOVENTA reconocida; permiso INVENTA confirmado (solo demostración)';
-   identity.textContent='Usuario: '+user.id;
-  } catch {if(version===check)state.textContent='Error verificando permisos';}
- },
- onSignedOut(){check++;identity.textContent='';state.textContent='Sin sesión. Inicia sesión en MOVENTA.';},
- onError(){check++;identity.textContent='';state.textContent='No se pudo validar la sesión.';}
+ async onSession({user}){state.textContent='Verificando permiso INVENTA…';identity.textContent='';await gate.verify(user);},
+ async onSignedOut(){await gate.deny('signed-out');},
+ async onError(){await gate.deny('auth-error');state.textContent='No se pudo validar la sesión.';}
 });
 await adapter.ready;
-window.addEventListener('pagehide',()=>adapter.dispose(),{once:true});
+window.addEventListener('pagehide',()=>{adapter.dispose();gate.dispose();},{once:true});
 </script></body></html>
