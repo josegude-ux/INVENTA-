@@ -39,3 +39,7 @@
 Al abrir otro chat: «Continuamos INVENTA. Consulta `docs/CONTINUIDAD.md` y `.cursor/rules/inventa.mdc` en GitHub. Contrasta el estado del código antes de proponer cambios, sin mezclarlo con KONTROLA».
 
 Al finalizar un avance, actualizar esta ficha con **fecha; versión/commit/PR; hecho y probado; decisiones nuevas; pendientes; riesgos; siguiente tarea concreta**. La actualización documental no sustituye los commits del código.
+
+## 2026-10-25 — Preparación integración con KONTROLA
+- Rama aislada `integracion/kontrola-supabase-pruebas` desde main, sin tocar la versión 0.30.5 en uso.
+- Contrato técnico en `docs/INTEGRACION_KONTROLA.md`: bases Supabase separadas, Auth, RLS, mapeo y pruebas de sincronización. No se ha realizado aún la migración ni la conexión efectiva.
