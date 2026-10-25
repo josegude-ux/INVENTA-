@@ -9,7 +9,7 @@ Fecha: 25/10/2026. Proyecto origen: `oevetnszmfxeukcncwji`. Consulta de solo lec
 - Las tres son `STABLE SECURITY DEFINER` y declaran `SET search_path TO ''`; usan referencias cualificadas.
 
 ## Decisión de diseño para MOVENTA
-**No copiar ciegamente la regla de almacenes.** Proponer política por defecto denegar: un operario sin asignaciones no podrá acceder a ningún almacén hasta que administración le conceda acceso explícito. Requiere validación del comportamiento deseado antes de cambiar reglas funcionales.
+**Decisión confirmada por el usuario (25/10/2026): los operarios activos pueden acceder a todos los almacenes activos.** No se requerirá asignación individual por almacén. En la integración MOVENTA, el acceso a almacenes se basará en usuario activo y acceso habilitado al módulo KONTROLA; se mantiene la comprobación de almacén activo. Los roles y funciones administrativas seguirán restringidos. Revisar las políticas y RPC para que cualquier asignación histórica no limite accidentalmente este acceso global.
 
 ## Siguiente trabajo de implementación
 1. Definir esquema `moventa_app_access` para permisos separados por módulo y sus políticas RLS; mantener la administración de INVENTA sin autopromoción.
