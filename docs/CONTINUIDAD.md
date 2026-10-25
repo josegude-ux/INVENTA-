@@ -39,3 +39,9 @@
 Al abrir otro chat: «Continuamos INVENTA. Consulta `docs/CONTINUIDAD.md` y `.cursor/rules/inventa.mdc` en GitHub. Contrasta el estado del código antes de proponer cambios, sin mezclarlo con KONTROLA».
 
 Al finalizar un avance, actualizar esta ficha con **fecha; versión/commit/PR; hecho y probado; decisiones nuevas; pendientes; riesgos; siguiente tarea concreta**. La actualización documental no sustituye los commits del código.
+
+
+## 2026-10-25 — MOVENTA (rama de pruebas)
+- Se crea `moventa/arquitectura-pruebas` desde `main`, sin cambiar las instalaciones ni la versión estable.
+- Se añade `moventa-preview/index.html` como prototipo aislado de lanzador y `docs/MOVENTA_ARQUITECTURA.md` con fases, riesgos PWA, Auth y pruebas.
+- Los enlaces del prototipo son navegación externa, no integración SSO ni una sola PWA terminada.
