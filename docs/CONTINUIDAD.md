@@ -47,3 +47,5 @@ Al finalizar un avance, actualizar esta ficha con **fecha; versión/commit/PR; h
 - Se actualizan títulos, manifest, textos visibles, wordmark SVG provisional y precarga PWA. Se mantiene el inventario existente y la gestión de usuarios. No se modifica la versión funcional 0.30.5 ni la rama de importador 0.30.6.
 - La imagen grande de bienvenida usa temporalmente la ilustración 3D local de inventario sin el antiguo texto integrado. **Pendiente** incorporar la imagen 3D específica y los iconos PNG iPhone aprobados por el usuario en `VISURA_Identidad_3D(1).zip`; la marca matriz no debe reutilizar su misma imagen.
 - No se ha fusionado, publicado ni aplicado migración Supabase. Verificación de cadenas previa al commit; pendiente CI, pruebas en móvil y revisión de la portada final con los activos definitivos.
+
+- Ajuste de CI: prueba de caché PWA actualizada para reconocer `inventa-demo-visura-v0305-02` sin modificar la versión funcional 0.30.5 ni el guardado de recuentos. Pruebas de PR pendientes.
