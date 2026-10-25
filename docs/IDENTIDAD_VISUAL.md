@@ -2,7 +2,7 @@
 
 La marca matriz es **VISURA** y el nombre comercial del módulo de inventarios es **VISURA INVENTA**. La aplicación de preparación de pedidos es **VISURA PREPARA** (antes KONTROLA). Las pantallas y lógica de inventario existentes se conservan.
 
-Esta rama introduce un identificador vectorial provisional y textos comerciales. El usuario entregó imágenes definitivas tridimensionales exclusivas para VISURA MATRIZ, VISURA INVENTA y VISURA PREPARA en `VISURA_Identidad_3D(1).zip`. **Pendiente incorporar los PNG/WebP aprobados** y generar iconos PNG iOS/PWA antes de fusionar o desplegar. Eliminar el recurso provisional de portada cuando se incorpore la imagen oficial.
+Esta rama introduce un identificador vectorial provisional y textos comerciales. El usuario entregó imágenes definitivas tridimensionales exclusivas para VISURA MATRIZ, VISURA INVENTA y VISURA PREPARA en `VISURA_Identidad_3D(1).zip`. Los archivos PNG/WebP aprobados están ya incorporados en esta rama de propuesta; **pendiente validación visual, de PWA e iPhone antes de fusionar o desplegar**. El recurso SVG de palabra sigue como wordmark auxiliar; la portada principal utiliza ya la imagen oficial VISURA INVENTA 3D.
 
 ---
 

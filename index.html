@@ -4,7 +4,7 @@
 <title>VISURA INVENTA · Inventario y consulta</title>
 <meta name="theme-color" content="#c61921"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="VISURA INVENTA">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/brand/app-icon-192.png"><link rel="icon" href="assets/brand/app-icon-192.png" type="image/png">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/brand/visura-inventa-192.png"><link rel="icon" href="assets/brand/visura-inventa-192.png" type="image/png">
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1d2e43;background:#f0f3f7;font-synthesis:none}
 *{box-sizing:border-box}button,input,select{font:inherit}button{touch-action:manipulation;cursor:pointer}body{margin:0}body,input,button{ -webkit-tap-highlight-color:transparent}
@@ -527,7 +527,7 @@ function renderHome(){
  const top='<div class="landing-top"><img class="landing-logo" src="assets/brand/visura-inventa.svg" alt="VISURA INVENTA" width="496" height="80">'+settingsButton()+'</div>'+person+'<p class="landing-tagline">Tu almacén, bajo control</p>';
  function tile(kind,title,subtitle,image,action){return '<button type="button" class="landing-card '+kind+'" onclick="'+action+'"><span class="copy"><strong>'+title+'</strong><small>'+subtitle+'</small><span class="arrow" aria-hidden="true">→</span></span><img src="assets/menu/'+image+'.webp" alt="" width="640" height="640"></button>';}
  if(!allowed.authenticated){
-  place(top+'<section class="welcome-art" aria-label="Bienvenido a VISURA INVENTA"><button type="button" class="welcome-image-access" onclick="go(\'manager-login\')" aria-label="Acceder a VISURA INVENTA desde la imagen del almacén"><img src="assets/menu/inventory-3d.webp" alt="Ilustración tridimensional del módulo de inventarios" width="768" height="768"></button><button type="button" class="welcome-logo-access" onclick="go(\'manager-login\')" aria-label="Acceder a VISURA INVENTA"><img src="assets/brand/visura-inventa.svg" alt="VISURA INVENTA" width="496" height="80"></button><p class="welcome-hint">Pulsa VISURA INVENTA para entrar</p></section><div class="landing-bottom"><span>Entorno piloto · v'+APP_VERSION+'</span>'+installMarkup()+'</div>','');return;
+  place(top+'<section class="welcome-art" aria-label="Bienvenido a VISURA INVENTA"><button type="button" class="welcome-image-access" onclick="go(\'manager-login\')" aria-label="Acceder a VISURA INVENTA desde la imagen del almacén"><img src="assets/brand/visura-inventa-3d.webp" alt="VISURA INVENTA: inventario de almacén, terminal de recuento y mercancías" width="768" height="768"></button><button type="button" class="welcome-logo-access" onclick="go(\'manager-login\')" aria-label="Acceder a VISURA INVENTA"><img src="assets/brand/visura-inventa.svg" alt="VISURA INVENTA" width="496" height="80"></button><p class="welcome-hint">Pulsa VISURA INVENTA para entrar</p></section><div class="landing-bottom"><span>Entorno piloto · v'+APP_VERSION+'</span>'+installMarkup()+'</div>','');return;
  }
  const cards=(allowed.inventory?tile('inventory','Hacer<br>inventario','Cuenta y registra · Individual','inventory-3d','openAuthorizedHome(\'inventory\')'):'')
  +(allowed.consultation?tile('consultation','Realizar<br>consulta','Encuentra lo que buscas','consult-3d','openAuthorizedHome(\'consultation\')'):'')

@@ -1,6 +1,6 @@
 /* INVENTA: versioned offline shell with network-first navigation. */
-const CACHE='inventa-demo-visura-v0305-02';
-const FILES=['./','./index.html','./warehouse-management.js?v=0.30.5','./bc-excel-import.js?v=0.30.5','./fixed-positions-import.js?v=0.30.5','./real-counts.js?v=0.30.5','./consultation-core.js?v=0.30.5','./consultation-ui.js?v=0.30.5','./manifest.webmanifest','./assets/menu/settings-3d.webp','./assets/brand/inventa-warehouse.webp','./assets/brand/visura-inventa.svg','./assets/brand/visura-inventa-icon.svg','./assets/brand/app-icon-192.png','./assets/brand/app-icon-512.png','./assets/menu/inventory-3d.webp','./assets/menu/consult-3d.webp','./assets/menu/management-3d.webp'];
+const CACHE='inventa-demo-visura-v0305-03';
+const FILES=['./','./index.html','./warehouse-management.js?v=0.30.5','./bc-excel-import.js?v=0.30.5','./fixed-positions-import.js?v=0.30.5','./real-counts.js?v=0.30.5','./consultation-core.js?v=0.30.5','./consultation-ui.js?v=0.30.5','./manifest.webmanifest','./assets/menu/settings-3d.webp','./assets/brand/visura-inventa-3d.webp','./assets/brand/visura-inventa.svg','./assets/brand/visura-inventa-icon.svg','./assets/brand/visura-inventa-192.png','./assets/brand/visura-inventa-512.png','./assets/menu/inventory-3d.webp','./assets/menu/consult-3d.webp','./assets/menu/management-3d.webp'];
 const SCANNER_LIBRARY='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
 const INDEX_URL=new URL('./index.html',self.registration.scope).href;
 self.addEventListener('install',event=>{

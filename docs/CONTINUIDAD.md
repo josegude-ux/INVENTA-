@@ -49,3 +49,10 @@ Al finalizar un avance, actualizar esta ficha con **fecha; versión/commit/PR; h
 - No se ha fusionado, publicado ni aplicado migración Supabase. Verificación de cadenas previa al commit; pendiente CI, pruebas en móvil y revisión de la portada final con los activos definitivos.
 
 - Ajuste de CI: prueba de caché PWA actualizada para reconocer `inventa-demo-visura-v0305-02` sin modificar la versión funcional 0.30.5 ni el guardado de recuentos. Pruebas de PR pendientes.
+
+
+### 2026-10-26 — Imagen 3D VISURA INVENTA e iconos PWA incorporados
+
+- Añadida la imagen **VISURA INVENTA exclusiva** desde el ZIP aprobado por el usuario, optimizada para web en `assets/brand/visura-inventa-3d.webp` (768 px), y mostrada en la portada de bienvenida, sin compartir la imagen de VISURA MATRIZ ni la de VISURA PREPARA.
+- Iconos 192/512 PNG incorporados al manifest y favicon/apple-touch-icon. Caché PWA `inventa-demo-visura-v0305-03` precarga estas imágenes. Se conserva la versión funcional 0.30.5 y las funciones de inventario, Supabase y BC sin cambios.
+- Revisión pendiente: CI del commit, prueba de instalación y actualización iPhone/Android, inspección visual a diferentes resoluciones. Sin fusión a main ni despliegue.
