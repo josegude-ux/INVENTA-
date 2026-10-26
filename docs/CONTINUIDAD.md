@@ -47,3 +47,5 @@ Al finalizar un avance, actualizar esta ficha con **fecha; versión/commit/PR; h
 - Cambio exclusivamente documental en rama `moventa/prototipo-lanzador`: sin modificación del código INVENTA, PWA publicada, Supabase, Business Central ni MOVENTA funcional; no mezclar esta rama con `main` sin autorización.
 
 - Comprobación GitHub Pages posterior en VISURA 0.2: PREPARA 0.3.35 publicada por run `40285888125` con SHA `7bfbb5e`; detalles y distinción respecto de la caché móvil en `moventa-prototipo/VISURA_0_2_CONTINUIDAD.md`. Sin modificaciones de apps en este commit.
+
+- Al continuar VISURA 0.2, revisar también el issue https://github.com/josegude-ux/KONTROLA/issues/42: la rama operativa PREPARA despliega automáticamente Pages al recibir un push; no fusionar sin autorización de publicación. Ficha central en `moventa-prototipo/VISURA_0_2_CONTINUIDAD.md`.

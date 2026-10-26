@@ -54,3 +54,9 @@ La última tarea conocida de VISURA 0.1 era verificar protecciones reales de Git
 - `version.json` de esa rama declara `0.3.35`.
 - GitHub Pages run #60 (`40285888125`) finalizó `success` sobre SHA `7bfbb5e0da26eba63b4763b4a88e15aa3393588a`, igual al HEAD operativo observado. Los runs `40285888364` y `40285894086` de Verificar KONTROLA también finalizaron `success`.
 - La respuesta HTTP del `version.json` público y el estado de caché de los dispositivos no pudieron verificarse desde esta sesión. No equiparar Actions desplegado con actualización comprobada en cada móvil.
+
+## Riesgo de despliegue automático y control de futuras fusiones
+
+- Verificación de `.github/workflows/pages.yml` de KONTROLA: `on.push.branches` incluye `cursor/verificacion-fisica-cargas-8ba0`. GitHub Pages #60 fue activado por `push` tras merge de PR #41; publicación `success`.
+- **Issue de seguimiento #42:** https://github.com/josegude-ux/KONTROLA/issues/42. Antes de fusionar sobre la rama operativa, verificar autorización explícita de publicación, porque merge puede desplegar automáticamente.
+- Opciones (no decididas): separar integración y despliegue, pasar Pages a activación manual controlada o requerir aprobaciones del entorno. **No se ha cambiado el workflow**.
