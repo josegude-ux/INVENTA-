@@ -45,3 +45,5 @@ Al finalizar un avance, actualizar esta ficha con **fecha; versión/commit/PR; h
 
 - Ficha de coordinación actual: `moventa-prototipo/VISURA_0_2_CONTINUIDAD.md`. Conserva el historial de `VISURA_0_1_CONTINUIDAD.md`, registra PR #37 y 236 pruebas correctas, riesgos de ruleset y Supabase, versiones documentadas y próxima tarea concreta.
 - Cambio exclusivamente documental en rama `moventa/prototipo-lanzador`: sin modificación del código INVENTA, PWA publicada, Supabase, Business Central ni MOVENTA funcional; no mezclar esta rama con `main` sin autorización.
+
+- Comprobación GitHub Pages posterior en VISURA 0.2: PREPARA 0.3.35 publicada por run `40285888125` con SHA `7bfbb5e`; detalles y distinción respecto de la caché móvil en `moventa-prototipo/VISURA_0_2_CONTINUIDAD.md`. Sin modificaciones de apps en este commit.

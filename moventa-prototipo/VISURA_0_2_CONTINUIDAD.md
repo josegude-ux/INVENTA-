@@ -6,7 +6,7 @@ Punto de recuperación de VISURA 0.2, continuación de VISURA 0.1. Mantener el f
 ## Identidad
 - VISURA: lanzador común (antes concepto MOVENTA); su prototipo está **solo en esta rama** y en `moventa-prototipo/`, no publicado como PWA unificada.
 - VISURA INVENTA: código en `josegude-ux/INVENTA-`; 0.30.5 estable documentada, propuesta 0.30.6 de importación en PR #18 y marca VISURA INVENTA en PR #20 (abierta en borrador).
-- VISURA PREPARA: código en `josegude-ux/KONTROLA`; 0.3.34 documentada como publicada y 0.3.35 como candidata responsiva, **no dar por publicada la candidata**.
+- VISURA PREPARA: código en `josegude-ux/KONTROLA`; 0.3.35 confirmada en la rama operativa y desplegada por GitHub Pages run #60 (`40285888125`), `success`, commit `7bfbb5e0da26eba63b4763b4a88e15aa3393588a`; CI #473/#474 también `success`. El estado de caché PWA en dispositivos físicos sigue sin comprobarse.
 - No cambiar nombres técnicos de proyectos, ID PWA, dominios, tablas, repositorios o cuentas por renombre comercial.
 
 ## Estado verificado en GitHub
@@ -47,3 +47,10 @@ La última tarea conocida de VISURA 0.1 era verificar protecciones reales de Git
 - https://github.com/josegude-ux/KONTROLA/pull/28
 
 **Limitación de validación:** este commit es documental. No constituye prueba de sincronización móvil, autorización real de GitHub, ni funcionalidad SSO.
+
+## Corrección verificada de despliegue PREPARA (26/10/2026)
+
+- PR #41 de interfaz responsiva fue fusionada el 26/10 a `cursor/verificacion-fisica-cargas-8ba0`.
+- `version.json` de esa rama declara `0.3.35`.
+- GitHub Pages run #60 (`40285888125`) finalizó `success` sobre SHA `7bfbb5e0da26eba63b4763b4a88e15aa3393588a`, igual al HEAD operativo observado. Los runs `40285888364` y `40285894086` de Verificar KONTROLA también finalizaron `success`.
+- La respuesta HTTP del `version.json` público y el estado de caché de los dispositivos no pudieron verificarse desde esta sesión. No equiparar Actions desplegado con actualización comprobada en cada móvil.
