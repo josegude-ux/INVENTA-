@@ -39,3 +39,9 @@
 Al abrir otro chat: «Continuamos INVENTA. Consulta `docs/CONTINUIDAD.md` y `.cursor/rules/inventa.mdc` en GitHub. Contrasta el estado del código antes de proponer cambios, sin mezclarlo con KONTROLA».
 
 Al finalizar un avance, actualizar esta ficha con **fecha; versión/commit/PR; hecho y probado; decisiones nuevas; pendientes; riesgos; siguiente tarea concreta**. La actualización documental no sustituye los commits del código.
+
+
+## 2026-10-26 — Punto central de recuperación VISURA 0.2 (solo rama MOVENTA)
+
+- Ficha de coordinación actual: `moventa-prototipo/VISURA_0_2_CONTINUIDAD.md`. Conserva el historial de `VISURA_0_1_CONTINUIDAD.md`, registra PR #37 y 236 pruebas correctas, riesgos de ruleset y Supabase, versiones documentadas y próxima tarea concreta.
+- Cambio exclusivamente documental en rama `moventa/prototipo-lanzador`: sin modificación del código INVENTA, PWA publicada, Supabase, Business Central ni MOVENTA funcional; no mezclar esta rama con `main` sin autorización.
