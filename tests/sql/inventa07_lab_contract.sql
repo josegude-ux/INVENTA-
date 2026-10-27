@@ -156,4 +156,27 @@ BEGIN
 END $revocation$;
 RESET ROLE;
 UPDATE inventa07_lab.actors SET active=true WHERE id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+-- Revocation while an old screen remains open: the next server write is denied.
+UPDATE inventa07_lab.assignments SET active=false
+ WHERE campaign_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+ AND location_code='K00-P01' AND actor_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+SET ROLE inventa07_lab_client;
+DO $reassigned$
+DECLARE denied boolean:=false;
+BEGIN
+ IF (SELECT count(*) FROM inventa07_lab.reference_states)<>0 THEN
+   RAISE EXCEPTION 'Revoked assignment remains readable';
+ END IF;
+ BEGIN
+   PERFORM inventa07_lab.apply_reference(
+    'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01','SKU0002','draft',
+    '10000000-0000-4000-8000-000000000011',0,3,false,NULL);
+ EXCEPTION WHEN OTHERS THEN denied:=position('Assignment revoked' in SQLERRM)>0;
+ END;
+ IF NOT denied THEN RAISE EXCEPTION 'Revoked assignment can still submit'; END IF;
+END $reassigned$;
+RESET ROLE;
+UPDATE inventa07_lab.assignments SET active=true
+ WHERE campaign_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+ AND location_code='K00-P01' AND actor_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 SELECT 'inventa07 reference contract PASS' AS result;
