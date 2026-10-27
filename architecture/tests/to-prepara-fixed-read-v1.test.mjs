@@ -6,7 +6,7 @@ const scope=(warehouse="COR_01_COR")=>({
  serverVerified:true,module:"prepara",role:"admin",warehouse
 });
 const snap=(warehouse="COR_01_COR")=>({
- warehouse,truncated:false,
+ warehouse,truncated:false,currentBatchId:"a",
  products:[{code:"0000123",description:"Producto",unit:"UD"}],
  locations:[{warehouse_code:warehouse,location_code:"SUELO 3",aisle:"S",zone:"Z"}],
  fixed:[{warehouse_code:warehouse,product_code:"0000123",location_code:"SUELO 3"}],
