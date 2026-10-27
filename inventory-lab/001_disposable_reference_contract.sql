@@ -1,6 +1,13 @@
 -- VISURA INVENTA 07 — EPHEMERAL CONTRACT TEST ONLY
 -- Run on a disposable PostgreSQL 16 database. DO NOT APPLY TO SUPABASE OR PRODUCTION.
 -- Request claims below are fake, set by psql tests; real Supabase must verify JWTs.
+-- Fail closed: these fixtures must NEVER be executed on the Supabase 'postgres' database.
+DO $inventa07_guard$
+BEGIN
+ IF current_database() <> 'inventa07_test' THEN
+   RAISE EXCEPTION 'INVENTA07 LAB ONLY: wrong database %', current_database();
+ END IF;
+END $inventa07_guard$;
 BEGIN;
 CREATE SCHEMA inventa07_lab;
 REVOKE ALL ON SCHEMA inventa07_lab FROM PUBLIC;
