@@ -64,6 +64,12 @@ CREATE TABLE inventa07_lab.mutation_receipts (
   response jsonb NOT NULL
 );
 REVOKE ALL ON ALL TABLES IN SCHEMA inventa07_lab FROM PUBLIC;
+ALTER TABLE inventa07_lab.assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inventa07_lab.assignments FORCE ROW LEVEL SECURITY;
+CREATE POLICY only_current_assignments ON inventa07_lab.assignments
+ FOR SELECT TO inventa07_lab_client USING (
+  actor_id=nullif(current_setting('request.jwt.claim.sub',true),'')::uuid
+ );
 ALTER TABLE inventa07_lab.reference_states ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inventa07_lab.reference_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inventa07_lab.bc_theoretical ENABLE ROW LEVEL SECURITY;
