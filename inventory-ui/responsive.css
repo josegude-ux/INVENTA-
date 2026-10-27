@@ -13,6 +13,7 @@
 .vi07-nav a[aria-current="page"]{background:#e7effb;color:#114779}
 .vi07-main{grid-area:main;min-width:0;width:100%;max-width:1720px;margin-inline:auto;padding:12px}
 .vi07-screen{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;min-width:0}
+.vi07-screen[hidden]{display:none!important}
 .vi07-pane,.vi07-panel{min-width:0;background:#fff;border:1px solid var(--vi07-line);border-radius:15px;padding:14px}
 .vi07-pane h2,.vi07-panel h2{font-size:18px;margin:0 0 12px}
 .vi07-panel h3{font-size:15px;margin:0 0 8px}
