@@ -73,3 +73,12 @@ jobs:
           wait "$HOLDER_PID"
           trap - EXIT
           docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/52_verify_after_concurrency_pg16.sql
+
+      - name: Guard immutability of validated BC batches in disposable PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_staging_guard_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/60_verify_staging_immutability_pg16.sql
