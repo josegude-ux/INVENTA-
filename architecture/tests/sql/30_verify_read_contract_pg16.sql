@@ -16,7 +16,8 @@ BEGIN
  OR has_table_privilege('authenticated','visura_shared.stock_current_v1','SELECT') THEN
    RAISE EXCEPTION 'no client should access unapproved stock contracts';
  END IF;
-END $test$;
+END;
+$test$;
 
 -- Synthetic admin confirms publication states; NOT representative of real RPC.
 UPDATE visura_shared.bc_batches
@@ -36,7 +37,8 @@ BEGIN
  SELECT count(*) INTO n FROM visura_shared.stock_current_v1
  WHERE warehouse_code='COR_02_NAR' AND stock_calculated=-2.5;
  IF n<>1 THEN RAISE EXCEPTION 'Ferrol row should preserve negative calculated stock'; END IF;
-END $test$;
+END;
+$test$;
 
 -- Simulate an import whose declared line count was not fully validated.
 UPDATE visura_shared.bc_batches SET validated_rows=0
@@ -47,5 +49,6 @@ DECLARE n integer;
 BEGIN
  SELECT count(*) INTO n FROM visura_shared.stock_current_v1;
  IF n<>1 THEN RAISE EXCEPTION 'incomplete publication must not be readable'; END IF;
-END $test$;
+END;
+$test$;
 SELECT 'VISURA_SHARED_PRIVATE_READ_V1_OK' AS result;
