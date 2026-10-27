@@ -67,7 +67,7 @@ test("no stock row is UNKNOWN, never automatic zero",()=>{
  const s=snap();s.stockLines=[];s.batch.expected_rows=0;s.batch.validated_rows=0;
  const x=adapt(s);
  assert.equal(x.stock.length,0);assert.equal(x.meta.absentStockIsZero,false);
- assert.equal(x.meta.stockComplete,true); // publisher certificate remains distinct from a position zero
+ assert.equal(x.meta.stockComplete,false); // no approved empty-batch model; absence remains UNKNOWN
  const missing=snap();missing.stockLines=[]; // count not reconciled
  assert.equal(adapt(missing).meta.stockComplete,false);
 });
