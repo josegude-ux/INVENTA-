@@ -60,3 +60,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/003_disposable_barcode_admin.sql
       - name: Validate admin-only barcodes, conflicts and immutable association history
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_barcode_admin.sql
+      - name: Install double-scan provisional contract in ephemeral database
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/004_disposable_provisionals.sql
+      - name: Verify independent scans, unknowns and manual administrative mapping
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_provisionals.sql
