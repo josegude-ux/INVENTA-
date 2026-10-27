@@ -16,6 +16,12 @@ VALUES (
  8,4,false,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
  '11111111-1111-4111-8111-111111111111',
  '60000000-0000-4000-8000-000000000010');
+-- This table exists ONLY in the disposable test session to simulate a
+-- forged correction identifier sent by a client, not an authorized candidate.
+CREATE TEMP TABLE wrong_product_correction AS
+ SELECT id FROM inventa07_lab.reference_events
+ WHERE mutation_id='60000000-0000-4000-8000-000000000010';
+GRANT SELECT ON pg_temp.wrong_product_correction TO inventa07_lab_client;
 SET ROLE inventa07_lab_client;
 SELECT set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
 SELECT set_config('request.jwt.claim.session_id','11111111-1111-4111-8111-111111111111',false);
@@ -116,11 +122,11 @@ BEGIN
   PERFORM inventa07_lab.review_incident(i_alias,'correction-verified',
     'Se intentó usar una corrección de otra referencia',1,
     '60000000-0000-4000-8000-000000000011',
-    (SELECT id FROM inventa07_lab.admin_incident_corrections(i_alias)
-      WHERE product_code='SKU0002' LIMIT 1));
+    (SELECT id FROM pg_temp.wrong_product_correction LIMIT 1));
  EXCEPTION WHEN OTHERS THEN
   blocked:=position('Verified correction event required' in SQLERRM)>0;
  END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Correction of unrelated product accepted'; END IF;
  IF (SELECT count(*) FROM inventa07_lab.admin_incident_corrections(i_alias)
     WHERE product_code='SKU0002')<>0 THEN
    RAISE EXCEPTION 'Admin candidate list leaked an unrelated corrected product'; END IF;
