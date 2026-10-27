@@ -111,3 +111,13 @@ test("imported stock rows never confused with mixed import total rows",()=>{
  s.batch.expected_rows=3041;
  assert.equal(adapt(s).meta.stockComplete,false);
 });
+
+test("a validated historical batch cannot impersonate the warehouse's current pointer",()=>{
+ const s=snap();
+ s.currentBatchId="newer-batch";
+ assert.throws(()=>adapt(s),/current warehouse pointer/);
+ s.currentBatchId=s.batch.id;
+ assert.equal(adapt(s).meta.stockComplete,true);
+ delete s.currentBatchId;
+ assert.throws(()=>adapt(s),/current warehouse pointer/);
+});
