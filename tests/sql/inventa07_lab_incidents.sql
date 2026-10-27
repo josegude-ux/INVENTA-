@@ -94,8 +94,8 @@ BEGIN
   '60000000-0000-4000-8000-000000000008',99999999);
  EXCEPTION WHEN OTHERS THEN blocked:=position('Verified correction event required' in SQLERRM)>0; END;
  IF NOT blocked THEN RAISE EXCEPTION 'Nonexistent correction event approved'; END IF;
- SELECT id INTO corrected_event FROM inventa07_lab.reference_events
-  WHERE kind='corrected' AND product_code='SKU0001' LIMIT 1;
+ SELECT id INTO corrected_event FROM inventa07_lab.admin_incident_corrections(i_alias)
+  WHERE product_code='SKU0001' LIMIT 1;
  IF corrected_event IS NULL THEN RAISE EXCEPTION 'Missing signed correction fixture'; END IF;
  r:=inventa07_lab.review_incident(i_alias,'correction-verified',
   'Corrección administrativa previa verificada',1,
