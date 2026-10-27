@@ -41,3 +41,5 @@ jobs:
           docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/00_bootstrap_pg16.sql
           docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_schema_UNAPPLIED.sql
           docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/20_verify_pg16.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_read_contracts_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/30_verify_read_contract_pg16.sql
