@@ -98,6 +98,7 @@ RESET ROLE;
 -- Admin IDs are obtained by a fixture-owned query, not an auto-match algorithm.
 CREATE TEMP TABLE provisional_ids AS
  SELECT location_code,id FROM inventa07_lab.provisionals;
+GRANT SELECT ON pg_temp.provisional_ids TO inventa07_lab_client;
 SET ROLE inventa07_lab_client;
 DO $manual_admin$
 DECLARE a uuid; b uuid; denied boolean:=false; r jsonb;
