@@ -54,3 +54,13 @@ Este ensayo aborda el hallazgo comprobado por SELECT a \`pg_policies\`: \`public
 5. Validar pantalla real en móvil vertical/horizontal, tablet vertical/horizontal y escritorio; no confundir maqueta responsive con aplicación integrada.
 
 **Prohibiciones:** NO MERGE, NO DEPLOY, NO SQL A SUPABASE ACTIVA, NO CAMBIAR USUARIOS, NO ESCRIBIR EN BUSINESS CENTRAL.
+
+## Cuarto contrato experimental — provisionales y validación administrativa
+
+- inventory-lab/004_disposable_provisionals.sql: registro sintético por ubicación de producto desconocido con dos lecturas distintas y coincidentes, descripción obligatoria, cantidad física explícita y fotografía opcional. No se crean referencias oficiales.
+- tests/sql/inventa07_lab_provisionals.sql: rechazo de una sola lectura, discrepancia de códigos, descripción ausente, duplicado en una ubicación, aceptación de la misma lectura en otra ubicación y lectura segregada por operario.
+- Cola admin_pending_provisionals(): muestra pendientes exclusivamente a Administración habilitada; no sugiere ninguna referencia oficial.
+- review_provisional(): Administración introduce manualmente la referencia y una decisión justificada. Los duplicados se documentan sin sumar; las cantidades adicionales pasan a awaiting_consolidation hasta una operación administrativa diferente. No se alteran automáticamente recuentos confirmados.
+- Los eventos de escáner simulados NO constituyen prueba técnica de una cámara real ni autenticación de segunda persona.
+
+**Evidencia PostgreSQL 16**: PASS en commit 1ffe71f412a8e5fb36775e571b3f9d0974b3ffbc, ejecución 40603077570. La suite general INVENTA también terminó correctamente sobre ese mismo commit. La API sigue aislada, sin Supabase ni Business Central.
