@@ -175,4 +175,25 @@ END $review$;
 REVOKE ALL ON FUNCTION inventa07_lab.review_provisional(uuid,text,text,text,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION inventa07_lab.review_provisional(uuid,text,text,text,uuid)
  TO inventa07_lab_client;
+-- Explicit authorized work queue for Administration. No automatic SKU suggestions.
+CREATE FUNCTION inventa07_lab.admin_pending_provisionals()
+ RETURNS TABLE(id uuid,location_code text,barcode text,description text,physical_qty numeric)
+ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $pending$
+DECLARE
+ v_actor uuid;
+ v_session uuid;
+BEGIN
+ v_actor:=nullif(current_setting('request.jwt.claim.sub',true),'')::uuid;
+ v_session:=nullif(current_setting('request.jwt.claim.session_id',true),'')::uuid;
+ IF v_actor IS NULL OR v_session IS NULL OR NOT EXISTS(
+   SELECT 1 FROM inventa07_lab.actors
+   WHERE actors.id=v_actor AND active AND role='admin') THEN
+   RAISE EXCEPTION 'Only enabled Administration can list pending provisionals';
+ END IF;
+ RETURN QUERY SELECT p.id,p.location_code,p.barcode,p.description,p.physical_qty
+ FROM inventa07_lab.provisionals p WHERE p.status='pending'
+ ORDER BY p.created_at,p.id LIMIT 500;
+END $pending$;
+REVOKE ALL ON FUNCTION inventa07_lab.admin_pending_provisionals() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION inventa07_lab.admin_pending_provisionals() TO inventa07_lab_client;
 COMMIT;
