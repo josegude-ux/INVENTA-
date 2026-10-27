@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>VISURA INVENTA 07 · prototipo responsive sin conexión</title><link rel="stylesheet" href="responsive.css"></head>
+<body style="margin:0">
+<div class="vi07-shell">
+<header class="vi07-head"><div><h1>VISURA INVENTA · Vista de diseño</h1><small>PROTOTIPO VISUAL · DATOS FICTICIOS · NO OPERATIVO</small></div><span class="vi07-status">07 / Inventario físico</span></header>
+<nav class="vi07-nav" aria-label="Secciones de demostración">
+<a href="#count" aria-current="page">Recuento físico</a><a href="#locations">Ubicaciones</a><a href="#assignments">Pasillos y tramos</a><a href="#admin">Administración</a><a href="#provisionals">Provisionales</a><a href="#incidents">Incidencias</a><a href="#reports">Informes</a><a href="#close">Cierre de campaña</a>
+</nav>
+<main class="vi07-main">
+<section id="count" class="vi07-screen" data-view="count">
+<div class="vi07-pane vi07-stack"><h2>Ubicación K00-P01</h2><p class="vi07-secondary">Recuento ciego · Equipo original A + B</p>
+<div class="vi07-reference"><div><strong>00001234 · Tornillería M8</strong><p>Referencia pendiente · el stock teórico no se muestra</p></div><button class="vi07-scan" type="button" aria-label="Escanear referencia 00001234">▣</button></div>
+<div class="vi07-reference"><div><strong>00007890 · Abrazadera galvanizada</strong><p>Referencia en borrador</p></div><button class="vi07-scan" type="button" aria-label="Escanear referencia 00007890">▣</button></div>
+<div class="vi07-entry"><div class="vi07-count-fields"><label>Unidades sueltas<input class="vi07-input" type="text" inputmode="decimal" placeholder="Sin contar"></label><label>Número de cajas sueltas<input class="vi07-input" type="text" inputmode="numeric" placeholder="Sin contar"></label><label>Unidades por caja<input class="vi07-input" type="text" inputmode="numeric" placeholder="Sin contar"></label></div><button class="vi07-pallet-toggle" type="button">▤ Calcular mercancía en palés</button><div class="vi07-pallet-detail"><p>Alturas reales × cajas por base × unidades por caja. Varios grupos se suman sin crear una ficha por palé.</p></div><button class="vi07-action" type="button">Revisar y confirmar recuento</button></div>
+<details class="vi07-confirmed"><summary>Confirmadas (2)</summary><div data-body>00004567 · 12 unidades. Corrección justificada desde aquí.</div></details>
+</div>
+<aside class="vi07-panel vi07-stack"><h2>Progreso de ubicación</h2><div class="vi07-cards"><div class="vi07-card"><strong>4</strong><p>Referencias totales</p></div><div class="vi07-card"><strong>2</strong><p>Confirmadas</p></div><div class="vi07-card"><strong>2</strong><p>Pendientes</p></div></div><p>La referencia permanece en su ubicación tras confirmar. No se avanza automáticamente.</p><button class="vi07-action vi07-action--secondary" type="button">Volver a ubicaciones</button></aside>
+</section>
+<section id="locations" class="vi07-screen" data-view="locations" hidden><div class="vi07-pane"><h2>Mis ubicaciones autorizadas</h2><div class="vi07-cards"><div class="vi07-card">K00-P01 · En curso</div><div class="vi07-card">K00-P02 · Sin iniciar</div><div class="vi07-card">K00-P03 · Finalizada</div></div></div><aside class="vi07-panel"><h2>Progreso</h2><p>1 de 3 ubicaciones finalizadas. La lista de pendientes no abre automáticamente la siguiente.</p></aside></section>
+<section id="assignments" class="vi07-screen" data-view="assignments" hidden><div class="vi07-pane vi07-wide"><h2>Asignación de pasillos y tramos</h2><div class="vi07-table-wrap"><table class="vi07-table"><thead><tr><th>Pasillo</th><th>Desde</th><th>Hasta</th><th>Equipo</th><th>Estado</th></tr></thead><tbody><tr><td>K</td><td>K00</td><td>K25</td><td>A + B</td><td>En curso</td></tr><tr><td>K</td><td>K26</td><td>K50</td><td>C + D</td><td>Asignado</td></tr></tbody></table></div></div></section>
+<section id="admin" class="vi07-screen" data-view="admin" hidden><div class="vi07-pane"><h2>Gestión administrativa</h2><div class="vi07-cards"><div class="vi07-card">Campañas activas</div><div class="vi07-card">Usuarios y asignaciones</div><div class="vi07-card">Resumen de diferencias</div></div></div><aside class="vi07-panel"><h2>Revisiones pendientes</h2><p>Las acciones requieren permisos de servidor, nunca solo botones.</p></aside></section>
+<section id="provisionals" class="vi07-screen" data-view="provisionals" hidden><div class="vi07-pane"><h2>Productos provisionales</h2><div class="vi07-stack"><p>Registro solo tras doble lectura independiente y exactamente coincidente.</p><div class="vi07-reference"><strong>0000-PRUEBA-7 · Por identificar</strong><button class="vi07-scan" type="button" aria-label="Escanear provisional">▣</button></div><label>Descripción breve<input class="vi07-input" placeholder="Obligatoria"></label><button class="vi07-action" type="button">Revisar provisional</button></div></div><aside class="vi07-panel"><h2>Validación</h2><p>La vinculación con el catálogo oficial es manual por Administración.</p></aside></section>
+<section id="incidents" class="vi07-screen" data-view="incidents" hidden><div class="vi07-pane vi07-wide"><h2>Incidencias</h2><div class="vi07-table-wrap"><table class="vi07-table"><thead><tr><th>Identificador</th><th>Ubicación</th><th>Tipo</th><th>Responsable</th><th>Estado</th></tr></thead><tbody><tr><td>INC-001</td><td>K00-P01</td><td>Código alternativo</td><td>Administración</td><td>Pendiente</td></tr></tbody></table></div></div></section>
+<section id="reports" class="vi07-screen" data-view="reports" hidden><div class="vi07-pane"><h2>Informes históricos</h2><div class="vi07-cards"><div class="vi07-card">Original inalterable</div><div class="vi07-card">Rectificado V1</div><div class="vi07-card">Rectificado V2</div></div></div><aside class="vi07-panel"><h2>Exportaciones</h2><p>Excel y versiones de rectificación con publicación administrativa manual.</p></aside></section>
+<section id="close" class="vi07-screen" data-view="close" hidden><div class="vi07-pane"><h2>Cierre de campaña</h2><p>Revisión física completa no equivale a cierre. Hay pendientes administrativos en este ejemplo.</p><button class="vi07-action" type="button" disabled>Cerrar inventario</button></div><aside class="vi07-panel"><h2>Bloqueos</h2><p>Provisionales, incidencias y diferencias requieren comprobación antes del cierre definitivo.</p></aside></section>
+</main>
+</div>
+<script>
+'use strict';
+const views=[...document.querySelectorAll('[data-view]')];
+const links=[...document.querySelectorAll('.vi07-nav a')];
+function show(){const selected=location.hash.slice(1)||'count';const active=views.some(v=>v.id===selected)?selected:'count';for(const view of views)view.hidden=view.id!==active;for(const a of links){if(a.hash.slice(1)===active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
+addEventListener('hashchange',show);show();
+</script>
+</body></html>
