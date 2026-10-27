@@ -64,3 +64,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/004_disposable_provisionals.sql
       - name: Verify independent scans, unknowns and manual administrative mapping
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_provisionals.sql
+      - name: Install synthetic incident audit workflow
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/005_disposable_incidents.sql
+      - name: Verify blocking incidents, authorizations and verified corrections
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_incidents.sql
