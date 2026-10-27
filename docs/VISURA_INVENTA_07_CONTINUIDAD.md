@@ -21,9 +21,9 @@ Archivos **nuevos**, sin modificar existentes:
 - `inventory-core/workflow.cjs`: guardas puras para inicio persistente de ubicación, finalización manual, revisión de pendientes, asignación correlativa según orden REAL de ubicaciones suministrado, extremos inclusivos, parejas autorizadas, no solapamiento y no traspaso de ubicaciones iniciadas. Resumen físico de pasillo independiente de incidencias administrativas.
 - `inventory-core/administration.cjs`: doble escaneo independiente, conflictos de código oficial/alternativo y verificación previa al cierre manual de campaña, sin efectos secundarios.
 - `tests/inventa07-domain.test.cjs`: 11 escenarios sintéticos.
-- `tests/inventa07-administration.test.cjs`: 4 escenarios sintéticos adicionales. Ejecutar `node --test tests/*.test.cjs` para todas las pruebas y `node --test tests/inventa07-domain.test.cjs` para este hito.
+- `tests/inventa07-administration.test.cjs`: 4 escenarios sintéticos adicionales. Ejecutar `node --test tests/*.test.cjs` para todas las pruebas y `node --test tests/inventa07-*.test.cjs` para los dos hitos.
 
-**Resultado comprobado localmente:** 15/15 pruebas de dominio y administración con Node.js 22.16.0, 0 fallos. Pendiente comprobación de CI para la PR y regresiones generales.
+**Resultado comprobado localmente:** 15/15 pruebas de dominio y administración con Node.js 22.16.0, 0 fallos. GitHub Actions INVENTA checks: PASS sobre el commit `a5d8a4cbc6074403666e9c80031f6248f624248c`, ejecución `40597962335`; 15/15 pruebas del dominio ejecutadas localmente. Este documento actualizado implica un nuevo HEAD, por lo que la CI volverá a comprobarlo.
 
 ### Segundo hito aislado — validación administrativa
 
