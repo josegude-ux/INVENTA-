@@ -93,20 +93,17 @@ BEGIN
  -- The client role sees no rows belonging to either operator, intentionally.
  IF id_a IS NOT NULL OR id_b IS NOT NULL THEN
   RAISE EXCEPTION 'Admin received a private operator row through raw SELECT'; END IF;
+ IF (SELECT count(*) FROM inventa07_lab.admin_pending_provisionals())<>2 THEN
+  RAISE EXCEPTION 'Authorized admin did not receive two pending provisionals'; END IF;
 END $admin_review$;
-RESET ROLE;
--- Admin IDs are obtained by a fixture-owned query, not an auto-match algorithm.
-CREATE TEMP TABLE provisional_ids AS
- SELECT location_code,id FROM inventa07_lab.provisionals;
-GRANT SELECT ON pg_temp.provisional_ids TO inventa07_lab_client;
-SET ROLE inventa07_lab_client;
+-- The authorized admin RPC supplies each provisional ID without SKU suggestions.
 DO $manual_admin$
 DECLARE a uuid; b uuid; denied boolean:=false; r jsonb;
 BEGIN
  -- Temporary fixture table is not necessarily readable after role switch.
  -- Instead, resolve test IDs via a trusted fixture function in the script.
- SELECT id INTO a FROM pg_temp.provisional_ids WHERE location_code='K00-P01';
- SELECT id INTO b FROM pg_temp.provisional_ids WHERE location_code='K00-P02';
+ SELECT id INTO a FROM inventa07_lab.admin_pending_provisionals() WHERE location_code='K00-P01';
+ SELECT id INTO b FROM inventa07_lab.admin_pending_provisionals() WHERE location_code='K00-P02';
  BEGIN
   PERFORM inventa07_lab.review_provisional(a,'NOT_IN_CATALOG','duplicate',
     'No debe crearse referencia oficial','50000000-0000-4000-8000-000000000007');
