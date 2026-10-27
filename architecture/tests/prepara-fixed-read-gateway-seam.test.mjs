@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {createPreparaFixedReadGateway} from "../lib/prepara-fixed-read-gateway-seam.mjs";
 const now="2026-10-27T18:00:00Z";
 const snapshot=warehouse=>({
- warehouse,truncated:false,
+ warehouse,truncated:false,currentBatchId:"x",
  products:[{code:"0000123",description:"Producto",unit:"UD"}],
  locations:[{warehouse_code:warehouse,location_code:"A-01",aisle:"A",zone:"Z"}],
  fixed:[{warehouse_code:warehouse,product_code:"0000123",location_code:"A-01"}],
