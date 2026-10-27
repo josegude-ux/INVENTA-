@@ -1,6 +1,7 @@
 // VISURA shared core: offline, side-effect-free validation, NO publication authorization.
 export const CONTRACT_VERSION = "visura-bc-batch-v1";
 const code = s => typeof s === "string" && /^[A-Za-z0-9][A-Za-z0-9_.\/-]{0,79}$/.test(s.trim()) ? s.trim() : null;
+const locationCode = s => typeof s === "string" && /^[A-Za-z0-9][A-Za-z0-9_.\/ -]{0,79}$/.test(s.trim()) ? s.trim() : null;
 const text = (v,max=500) => typeof v==="string" && v.trim().length && v.trim().length<=max && !/[\x00-\x1f\x7f]/.test(v) ? v.trim() : null;
 export function decimalBC(value) {
   if (typeof value!=="string" && typeof value!=="number") return null;
@@ -25,7 +26,7 @@ export function validateBCBatch({warehouse,fileName,expectedRows,rows,source="bc
   rows.forEach((r,i)=>{
     const line=i+1;
     if (!r || typeof r!=="object" || Array.isArray(r)) { errors.push({code:"INVALID_ROW",line}); return; }
-    const almacen=code(r.almacen),codigoArticulo=code(r.codigoArticulo),ubicacion=code(r.ubicacion);
+    const almacen=code(r.almacen),codigoArticulo=code(r.codigoArticulo),ubicacion=locationCode(r.ubicacion);
     const unidad=text(r.unidad,32),descripcion=text(r.descripcion,500);
     const lote=r.lote==null||r.lote===""?"":text(r.lote,120);
     const stockCalculado=decimalBC(r.stockCalculado);
