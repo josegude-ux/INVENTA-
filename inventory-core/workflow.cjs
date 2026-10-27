@@ -14,6 +14,9 @@ function advanceLocation(current, event, opts={}) {
   }
   if (state.status==='finished') throw new Error('La ubicación está finalizada; necesita reapertura autorizada.');
   if (event==='finish') {
+    // A zero-length review is not proof that an untouched physical location was checked.
+    // An empty physical location needs its own expressly approved verification workflow.
+    if (!state.everStarted) throw new Error('No se puede finalizar una ubicación sin recuento físico efectivo.');
     if (opts.ready!==true) throw new Error('No se puede finalizar: hay referencias sin confirmar o incidencias del recuento.');
     return {status:'finished',everStarted:state.everStarted};
   }
