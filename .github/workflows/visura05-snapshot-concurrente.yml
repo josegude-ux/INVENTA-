@@ -70,3 +70,32 @@ jobs:
           docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
             < architecture/audits/visura05/30_post_commit_fresh_read.sql
           echo VISURA05_READER_PUBLISHER_RR_ISOLATED_OK
+      - name: Control negativo - READ COMMITTED cambia entre SELECT de la misma transacción
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec "$PG_CONTAINER" rm -f /tmp/visura05_rc_ready /tmp/visura05_rc_published
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
+            < architecture/audits/visura05/40_prepare_rc_fixture.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
+            < architecture/audits/visura05/50_reader_read_committed.sql \
+            > /tmp/visura05-rc-reader.log 2>&1 &
+          READER_PID=$!
+          trap 'kill "$READER_PID" 2>/dev/null || true; cat /tmp/visura05-rc-reader.log 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 150); do
+            if docker exec "$PG_CONTAINER" test -f /tmp/visura05_rc_ready; then ready=1; break; fi
+            if ! kill -0 "$READER_PID" 2>/dev/null; then cat /tmp/visura05-rc-reader.log; exit 1; fi
+            sleep 0.1
+          done
+          if [ "$ready" -ne 1 ]; then echo 'READ COMMITTED reader did not start' >&2; exit 1; fi
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
+            < architecture/audits/visura05/60_writer_publish_rc.sql
+          wait "$READER_PID"
+          trap - EXIT
+          cat /tmp/visura05-rc-reader.log
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
+            < architecture/audits/visura05/70_verify_rc_negative_control.sql
+          echo VISURA05_READ_COMMITTED_NEGATIVE_CONTROL_OK
