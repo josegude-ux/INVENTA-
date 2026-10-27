@@ -42,3 +42,10 @@ Se añaden inventory-lab/005_disposable_incidents.sql y tests/sql/inventa07_lab_
 Condiciones ensayadas: denuncia de código ilegible con recuento físico expreso; prohibición de inventar un evento de recuento para afirmar un código alternativo utilizado; acceso del operario solo a sus propias incidencias; consulta pendiente exclusivamente a Administración; revisión con motivo; incidencia awaiting_correction bloqueante; cierre solo con referencia a una corrección real de la misma campaña y ubicación; eventos append-only e idempotencia; cantidades físicas sin modificación indirecta.
 
 La revisión y registro siguen siendo RPC sintéticas con identidad simulada por psql. Todavía se requieren sesiones autenticadas por Supabase, permisos transaccionales reales y compatibilidad de la interfaz antes de cualquier despliegue. La función administrativa no crea rectificaciones automáticamente.
+
+
+## Barreras adicionales detectadas en ensayo SQL
+
+La lista de correcciones candidatas para una incidencia se consulta mediante una función restringida a Administración, sin abrir SELECT general a todos los eventos de recuento. Las incidencias relacionadas con una referencia previamente contada solo pueden vincularse, en este contrato, a correcciones de la misma campaña, ubicación y código oficial. Un identificador de corrección perteneciente a otro artículo de la misma ubicación debe rechazarse, aunque corresponda a un evento real.
+
+**Importante:** demostrar que existe un evento de recuento no acredita por sí solo que su lectura haya empleado un código alternativo concreto. El uso real del código deberá vincularse, en producción, a un evento de escaneo autenticado y a la versión del catálogo de alias vigente al contabilizar; la prueba SQL actual es únicamente un ensayo de asociación y controles de referencia. Tampoco puede tratarse una sesión de psql simulada como un JWT validado. Ninguno de estos controles se ha aplicado a Supabase.
