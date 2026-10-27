@@ -62,3 +62,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/002_disposable_correction_contract.sql
       - name: Verify proposed corrections, attribution, review and audit
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_corrections.sql
+      - name: Install isolated barcode administration contract
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/003_disposable_barcode_admin.sql
+      - name: Validate admin-only barcodes, conflicts and immutable association history
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_barcode_admin.sql
