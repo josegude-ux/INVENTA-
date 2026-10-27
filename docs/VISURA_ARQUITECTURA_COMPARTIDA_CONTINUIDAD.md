@@ -75,3 +75,14 @@ COMPLETADO: auditoría read-only; diseño; validador + 15 pruebas Node en CI; es
 **Limitaciones expresas:** la función acepta un `p_actor` sintético y no establece de forma autónoma identidad verificada; es **inseguro exponerla como RPC pública**. Falta validación criptográfica del Excel/filas, control estricto de transición a estado validado, política de lectura RLS para módulos, correspondencia de identidades, ensayo de reversión y E2E con INVENTA/PREPARA. No ejecutar borradores en ninguna base real, ni fusionar o desplegar.
 
 **Siguiente tarea dentro del alcance:** ensayo en PostgreSQL descartable de transición validada protegida y aislamiento de permisos por rol/almacén; coordinar interfaces exclusivamente mediante contratos aprobados, sin tocar ramas de los otros responsables.
+
+
+## Addenda de validación previa protegida (27/10)
+
+- Nuevos borradores de prueba: `architecture/drafts/visura_shared_internal_validate_UNAPPLIED.sql` (prototipo interno de transición `staged -> validated`) y `architecture/tests/sql/80_verify_validation_gate_pg16.sql`.
+- La función comprueba que el almacén está habilitado, que existe autorización administrativa explícita por módulo y almacén, que el identificador de archivo recibido coincide con el registrado, que hay todas las filas esperadas y que las ubicaciones de las líneas están habilitadas.
+- Bloquea el lote durante la validación, comparte el bloqueo de lote utilizado por el trigger de modificación de líneas y devuelve una respuesta idempotente si ya se había validado. **No** cambia el puntero de existencias vigentes.
+- Este ensayo **no verifica el hash real del archivo original**, ni garantiza por sí mismo la identidad de un administrador mediante una sesión de servidor, ni sustituye los controles RLS y Auth que faltan.
+- Se integra en el workflow de PostgreSQL descartable de la PR #22; confirmar la ejecución más reciente antes de considerarlo validado.
+
+**Puertas antes de integración:** gateway de confianza con identidad comprobada, certificado criptográfico de archivo/filas, pruebas por rol/almacén y auditoría completa, restauración/reversión y aprobación expresa de migración. No ejecutar estos borradores en Supabase real.
