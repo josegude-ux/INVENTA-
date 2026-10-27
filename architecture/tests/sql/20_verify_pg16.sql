@@ -19,6 +19,15 @@ INSERT INTO visura_shared.bc_current_by_warehouse
  VALUES
  ('COR_01_COR','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','11111111-1111-4111-8111-111111111111'),
  ('FER_01_FER','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2','11111111-1111-4111-8111-111111111111');
+-- Third synthetic FER batch is intentionally not the current pointer;
+-- it lets the negative test exercise the composite warehouse FK rather than
+-- the unrelated UNIQUE(batch_id) on the live pointer.
+INSERT INTO visura_shared.bc_batches
+ (id,warehouse_code,file_name,file_sha256,expected_rows,validated_rows,state,created_by)
+ VALUES ('cccccccc-cccc-4ccc-8ccc-ccccccccccc3',
+         'FER_01_FER','fer-extra.xlsx',repeat('c',64),1,1,'validated',
+         '11111111-1111-4111-8111-111111111111');
+
 DO $test$
 DECLARE n integer;
 BEGIN
@@ -33,7 +42,7 @@ BEGIN
  -- Wrong warehouse batch must be refused by composite FK.
  BEGIN
    UPDATE visura_shared.bc_current_by_warehouse
-     SET batch_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2'
+     SET batch_id='cccccccc-cccc-4ccc-8ccc-ccccccccccc3'
      WHERE warehouse_code='COR_01_COR';
    RAISE EXCEPTION 'cross-warehouse publication wrongly allowed';
  EXCEPTION WHEN foreign_key_violation THEN NULL;
