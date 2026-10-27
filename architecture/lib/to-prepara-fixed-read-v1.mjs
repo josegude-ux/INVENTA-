@@ -70,7 +70,7 @@ export function toPreparaFixedReadV1({snapshot,verifiedScope,now}={}){
  const proof=snapshot.sourceCertification??{};
  const stockRows=stock.length;
  // This is a stock-specific batch, not total rows of a mixed Excel import.
- const countOK=Number.isSafeInteger(batch.expected_rows)&&
+ const countOK=Number.isSafeInteger(batch.expected_rows)&&batch.expected_rows>=1&&
   batch.expected_rows===batch.validated_rows && batch.expected_rows===stockRows;
  const importedMs=timestamp(batch.published_at),currentMs=timestamp(now);
  const hours=snapshot.freshness?.maxAgeHours;
