@@ -49,3 +49,29 @@ Estas funciones son **reglas puras de demostración técnica** y no constituyen 
 6. Someter la integración con otras PR y cualquier cambio en Supabase/productivo a revisión y autorización separadas.
 
 **Regla:** continuar por tareas independientes sin asumir que la arquitectura compartida de #22/#23 esté implantada. No hacer merge, despliegues, migraciones ni operaciones destructivas.
+
+
+## Continuación verificada — borradores, confirmaciones, pareja y persistencia (27/10/2026)
+
+**Estado real:** módulos de dominio puros y pruebas. NO se han conectado a la PWA, al backend operativo ni a las tablas reales. La verificación CI del HEAD 7fdc1c8c21ba3764b4f799813a38c070228a90a9 fue PASS (run 40599170438); 29 pruebas adicionales de esta ampliación fueron ejecutadas localmente con Node 22 (29/29 PASS) sobre una copia aislada de dependencias compatibles. Para confirmar el conjunto definitivo, CI ejecuta todas las pruebas existentes y nuevas del repositorio.
+
+Archivos NUEVOS incorporados, sin reemplazar archivos existentes:
+- inventory-core/count-lifecycle.cjs — borradores por referencia con versión optimista, revisión física previa a confirmar, cero expreso, eventos de confirmación inmutables, propuesta y revisión de corrección, motivo único por operación, valores anterior/nuevo y autor declarado separado de cuenta autenticada. No registrar un evento por cada pulsación de borrador.
+- inventory-core/team-session.cjs — integrantes originales de uno o dos operarios, una cuenta autenticada en el terminal, paso pareja/individual sin motivo obligatorio, relevo con nueva sesión, reincorporación de los originales y prohibición de terceros.
+- tests/inventa07-lifecycle.test.cjs — 15 pruebas.
+- tests/inventa07-team.test.cjs — 9 pruebas.
+- tests/inventa07-integrated.test.cjs — 5 pruebas entre equipo, recuento y estado de ubicación.
+- docs/VISURA_INVENTA_07_PERSISTENCIA_PROPUESTA.md — contrato de persistencia y seguridad para revisar antes de diseñar una migración, **SIN SQL aplicado**.
+
+La revisión de metadatos de Supabase INVENTA confirmó que la tabla actual public.counts no dispone de estructura completa para estados de borrador, versión de confirmación, equipo original o corrección con autor declarado. NO se han escrito tablas, filas, permisos ni migraciones. Las guardas JavaScript son ensayos de dominio: el cliente NO puede acreditar autenticación ni permisos vigentes, y una futura integración debe aplicar tales verificaciones transaccionalmente en el servidor.
+
+### Concurrencia entre desarrollos
+
+Se observó en la misma rama el commit 31d254735408cfdc8185af3b63efc0e00c12d8fc, que añade inventory-ui/responsive.css. No fue generado por este bloque de recuentos y se ha conservado; su autoría funcional debe contrastarse con el agente correspondiente. Ningún archivo compartido fue sobrescrito. Las PR #18/#19/#20/#22/#23 continúan como dependencias separadas que no deben fusionarse automáticamente.
+
+### Próximo trabajo seguro
+
+1. Auditar contratos servidor actuales y diseñar implementación aditiva de borradores/confirmaciones en entorno desechable, con aislamiento de stock teórico, RLS, CAS e idempotencia. No aplicar a Supabase activa sin aprobación.
+2. Probar transacciones con dos usuarios y concurrencia real en PostgreSQL temporal; verificar sesión, equipo y asignaciones antes de escribir cantidades.
+3. Solo tras las pruebas del backend, conectar el módulo de recuento a real-counts.js conservando cola/offline y sin editar index.html/manifest/service-worker.js mientras el trabajo de branding esté abierto. Realizar UX responsive verificable por dispositivo.
+4. Revalidar CI y conflictos justo antes de proponer integración; no merge, no deploy ni conexión directa con Business Central.
