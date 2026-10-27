@@ -112,3 +112,34 @@ Vinculación administrativa manual: el Administrador elige referencia oficial y 
 Pruebas: run 40603077570, commit 1ffe71f412a8e5fb36775e571b3f9d0974b3ffbc, PostgreSQL 16 PASS. La suite general INVENTA también PASS sobre ese commit. Escáner y sesiones de dispositivo en el laboratorio son simulados; se necesita validación real antes de integrar.
 
 Siguiente tarea técnica no bloqueada: preparar contratos de consolidación administrativa y cierre con protección de recuentos físicos, después verificar inserciones y permisos reales en una base descartable con roles Supabase equivalentes. No aplicar migrations a la base activa. Priorizar la compatibilidad con la PR #22 de arquitectura antes de cambiar almacenes/identidades compartidos.
+
+
+## Continuidad verificada — 28/10/2026: cierre físico, provisionales e incidencias
+
+**Ámbito autorizado:** exclusivamente VISURA INVENTA 07, rama feature/visura-inventa-07-domain-20261027, PR #24 borrador. Se conservan main, las PR paralelas, los permisos y datos de Supabase real, y Business Central sin cambios.
+
+### Nuevas reglas de dominio, sin despliegue
+
+- inventory-core/workflow.cjs: una ubicación no puede marcarse finalizada por revisión vacía ni si jamás comenzó un recuento efectivo; borrar todos los borradores no revierte su marca de inicio. La ausencia de mercancía conocida en una ubicación vacía requiere procedimiento de verificación pendiente de definición; no inventar referencias o ceros.
+- La confirmación física de provisionales se diferencia del estado administrativo pendiente: la ubicación puede terminar físicamente mientras el cierre de campaña continúa bloqueado. Ningún cliente acredita por sí solo la confirmación.
+- inventory-core/incidents.cjs: conservación de cantidad física en etiquetas ilegibles; incidencias de código alternativo que afectan a recuentos históricos; decisión administrativa auditada con motivo y estado awaiting_correction bloqueante, hasta obtener corrección verificada.
+- inventory-lab/005_disposable_incidents.sql: RPC ficticias de alta, revisión, cola autorizada y corrección vinculada a un evento real de mismo artículo, campaña y ubicación, con PostgreSQL descartable; NO migración productiva.
+
+### Regresiones nuevas
+
+- tests/inventa07-location-completion.test.cjs: cinco casos sintéticos.
+- tests/inventa07-provisional-physical-vs-admin.test.cjs: cinco casos sintéticos.
+- tests/inventa07-incidents.test.cjs: once casos sintéticos.
+- tests/sql/inventa07_lab_incidents.sql: autenticación ficticia, permisos de operario/Administración, cantidad física, idempotencia, motivos, rechazo de eventos inventados o de correcciones de otra referencia, y trazabilidad sin reescribir el histórico.
+- docs/VISURA_INVENTA_07_CIERRE_FISICO.md y docs/VISURA_INVENTA_07_INCIDENCIAS.md detallan las decisiones, limitaciones y pendientes.
+
+**Evidencia CI:** suite general INVENTA PASS sobre el commit de pruebas incidentes 8ea7314e9933a958161e2547818d4a23066b55d8; PostgreSQL 16 descartable PASS con el contrato y regresión de corrección vinculada al producto en commit 626eb267fdad02ebc2ed7183f2587cdc84ef5055, GitHub Actions run 40604184315. Los commits posteriores de documentación no cambian la lógica del ensayo SQL.
+
+### Pendiente y bloqueo parcial
+
+- La autenticación en laboratorio usa claims de psql; NO acredita sesiones reales. La vinculación efectiva de alias mal atribuido requiere evento de escáner autenticado y versión del catálogo vigente, no solo evento de recuento. La corrección de producto asociada debe comprobarse transaccionalmente.
+- Faltan repositorios de autorizaciones y validaciones de sesión reales, migración aditiva probada de Supabase, compatibilidad de cola offline, PWA operativa, E2E en dispositivos, y resolución de los conflictos con PR #18/#19/#20/#22/#23.
+- El formato definitivo Excel de Business Central permanece pendiente de ejemplo auténtico.
+- **Próximo trabajo seguro:** contrato del servidor de incidencias/provisionales y compatibilidad de datos heredados sobre PostgreSQL temporal, sin modificar la base activa. Solo integrar y activar con autorización expresa de producción.
+
+**No merge, no deploy, no cambios en producción, no API directa de BC.**
