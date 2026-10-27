@@ -1,31 +1,32 @@
 -- PostgreSQL 16 ephemeral test, synthetic rows only. Must run AFTER bootstrap and draft.
 \set ON_ERROR_STOP on
 INSERT INTO visura_shared.warehouses(code,name,enabled)
- VALUES ('COR_01_COR','Coruna',true),('FER_01_FER','Ferrol',true);
-INSERT INTO visura_shared.warehouse_locations(warehouse_code,location_code)
- VALUES ('COR_01_COR','A-01'),('FER_01_FER','A-01');
+ VALUES ('COR_01_COR','Coruna',true),('COR_02_NAR','Ferrol',true);
+INSERT INTO visura_shared.warehouse_locations(warehouse_code,location_code,aisle,description,enabled)
+ VALUES ('COR_01_COR','A-01','A','Coruna - pasillo A',true),
+        ('COR_02_NAR','A-01','F','Ferrol - otra descripcion',true);
 INSERT INTO visura_shared.bc_batches
  (id,warehouse_code,file_name,file_sha256,expected_rows,validated_rows,state,created_by)
  VALUES
  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','COR_01_COR','cor.xlsx',repeat('a',64),1,1,'validated','11111111-1111-4111-8111-111111111111'),
- ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2','FER_01_FER','fer.xlsx',repeat('b',64),1,1,'validated','11111111-1111-4111-8111-111111111111');
+ ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2','COR_02_NAR','fer.xlsx',repeat('b',64),1,1,'validated','11111111-1111-4111-8111-111111111111');
 INSERT INTO visura_shared.bc_batch_lines
  (batch_id,warehouse_code,row_number,product_code,description,unit,location_code,lot,stock_calculated)
  VALUES
  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','COR_01_COR',1,'0000123','Prueba','UD','A-01','',0),
- ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2','FER_01_FER',1,'0000123','Prueba','UD','A-01','',-2.5);
+ ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2','COR_02_NAR',1,'0000123','Prueba','UD','A-01','',-2.5);
 INSERT INTO visura_shared.bc_current_by_warehouse
  (warehouse_code,batch_id,published_by)
  VALUES
  ('COR_01_COR','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','11111111-1111-4111-8111-111111111111'),
- ('FER_01_FER','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2','11111111-1111-4111-8111-111111111111');
+ ('COR_02_NAR','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2','11111111-1111-4111-8111-111111111111');
 -- Third synthetic FER batch is intentionally not the current pointer;
 -- it lets the negative test exercise the composite warehouse FK rather than
 -- the unrelated UNIQUE(batch_id) on the live pointer.
 INSERT INTO visura_shared.bc_batches
  (id,warehouse_code,file_name,file_sha256,expected_rows,validated_rows,state,created_by)
  VALUES ('cccccccc-cccc-4ccc-8ccc-ccccccccccc3',
-         'FER_01_FER','fer-extra.xlsx',repeat('c',64),1,1,'validated',
+         'COR_02_NAR','fer-extra.xlsx',repeat('c',64),1,1,'validated',
          '11111111-1111-4111-8111-111111111111');
 
 DO $test$
@@ -33,10 +34,16 @@ DECLARE n integer;
 BEGIN
  SELECT count(*) INTO n FROM visura_shared.bc_current_by_warehouse;
  IF n<>2 THEN RAISE EXCEPTION 'expected independent per-warehouse pointers'; END IF;
+ IF (SELECT description FROM visura_shared.warehouse_locations
+     WHERE warehouse_code='COR_01_COR' AND location_code='A-01') =
+    (SELECT description FROM visura_shared.warehouse_locations
+     WHERE warehouse_code='COR_02_NAR' AND location_code='A-01') THEN
+   RAISE EXCEPTION 'shared location code must allow different warehouse descriptions';
+ END IF;
  IF (SELECT sum(stock_calculated) FROM visura_shared.bc_batch_lines WHERE warehouse_code='COR_01_COR')<>0 THEN
    RAISE EXCEPTION 'COR stock not exact';
  END IF;
- IF (SELECT sum(stock_calculated) FROM visura_shared.bc_batch_lines WHERE warehouse_code='FER_01_FER')<>-2.5 THEN
+ IF (SELECT sum(stock_calculated) FROM visura_shared.bc_batch_lines WHERE warehouse_code='COR_02_NAR')<>-2.5 THEN
    RAISE EXCEPTION 'FER stock not exact';
  END IF;
  -- Wrong warehouse batch must be refused by composite FK.
@@ -54,6 +61,14 @@ BEGIN
      VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','COR_01_COR',2,'0000123','Dup','UD','A-01','',1);
    RAISE EXCEPTION 'duplicate position lot wrongly allowed';
  EXCEPTION WHEN unique_violation THEN NULL;
+ END;
+ -- A new batch line must use a registered location in its own warehouse.
+ BEGIN
+   INSERT INTO visura_shared.bc_batch_lines
+    (batch_id,warehouse_code,row_number,product_code,description,unit,location_code,lot,stock_calculated)
+    VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','COR_01_COR',3,'0000123','Prueba','UD','MISSING-LOC','',1);
+   RAISE EXCEPTION 'unmapped warehouse location was accepted';
+ EXCEPTION WHEN foreign_key_violation THEN NULL;
  END;
  -- Check all eight new tables start RLS enabled.
  SELECT count(*) INTO n FROM pg_class c JOIN pg_namespace ns ON ns.oid=c.relnamespace
