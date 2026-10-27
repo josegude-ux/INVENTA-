@@ -74,10 +74,9 @@ REVOKE ALL ON ALL TABLES IN SCHEMA inventa07_lab FROM PUBLIC;
 -- The data-facing RLS must also revoke SELECT once an account is disabled.
 -- This helper exposes only the enabled predicate, not other users' profiles.
 CREATE FUNCTION inventa07_lab.current_actor_active() RETURNS boolean
- LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $
- SELECT EXISTS (SELECT 1 FROM inventa07_lab.actors
-  WHERE id=nullif(current_setting('request.jwt.claim.sub',true),'')::uuid AND active)
- $;
+ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS
+ 'SELECT EXISTS (SELECT 1 FROM inventa07_lab.actors
+  WHERE id=nullif(current_setting(''request.jwt.claim.sub'',true),'''')::uuid AND active)';
 REVOKE ALL ON FUNCTION inventa07_lab.current_actor_active() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION inventa07_lab.current_actor_active() TO inventa07_lab_client;
 ALTER TABLE inventa07_lab.assignments ENABLE ROW LEVEL SECURITY;
