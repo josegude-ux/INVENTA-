@@ -177,6 +177,32 @@ BEGIN
  FROM inventa07_lab.incidents i WHERE i.status<>'resolved'
  ORDER BY i.id LIMIT 500;
 END $queue$;
+-- Administration can inspect ONLY correction events relevant to a given incident.
+-- The query is a restricted worklist, not broad SELECT on all counts.
+CREATE FUNCTION inventa07_lab.admin_incident_corrections(p_incident uuid)
+ RETURNS TABLE(id bigint,product_code text)
+ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $correction_list$
+DECLARE actor uuid;sess uuid;item inventa07_lab.incidents%ROWTYPE;
+BEGIN
+ actor:=nullif(current_setting('request.jwt.claim.sub',true),'')::uuid;
+ sess:=nullif(current_setting('request.jwt.claim.session_id',true),'')::uuid;
+ IF actor IS NULL OR sess IS NULL OR NOT EXISTS(
+  SELECT 1 FROM inventa07_lab.actors
+  WHERE actors.id=actor AND active AND role='admin') THEN
+  RAISE EXCEPTION 'Only enabled Administration can read correction candidates'; END IF;
+ SELECT * INTO item FROM inventa07_lab.incidents WHERE incidents.id=p_incident;
+ IF NOT FOUND OR item.status<>'awaiting_correction' THEN
+  RAISE EXCEPTION 'Incident not awaiting correction'; END IF;
+ RETURN QUERY SELECT e.id,e.product_code FROM inventa07_lab.reference_events e
+ WHERE e.kind='corrected' AND e.campaign_id=item.campaign_id
+   AND e.location_code=item.location_code
+   AND (item.affected_count_event IS NULL OR e.product_code=(
+    SELECT original.product_code FROM inventa07_lab.reference_events original
+    WHERE original.id=item.affected_count_event))
+ ORDER BY e.id;
+END $correction_list$;
+REVOKE ALL ON FUNCTION inventa07_lab.admin_incident_corrections(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION inventa07_lab.admin_incident_corrections(uuid) TO inventa07_lab_client;
 REVOKE ALL ON FUNCTION inventa07_lab.register_incident(uuid,text,text,text,numeric,boolean,bigint,uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION inventa07_lab.review_incident(uuid,text,text,bigint,uuid,bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION inventa07_lab.admin_pending_incidents() FROM PUBLIC;
