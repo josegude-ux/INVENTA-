@@ -98,3 +98,9 @@ Se entregan **solo en PR #22**:
 6. No fusionar, desplegar ni ejecutar SQL real de esta PR. Control de Cargas y Tanques quedan fuera.
 
 **Entrega a chat 02:** la interfaz de PR #76 y su nombre de RPC se mantienen intactos. El propietario de la PR #76 debe revisar este documento antes de cualquier integración y NO presupone que el backend ya esté disponible. Las pruebas actuales solo verifican forma y comportamiento en datos ficticios, no autorización productiva ni sincronización real.
+
+## 7. Pasarela administrativa y caso de lote sin ninguna línea
+
+- `architecture/lib/prepara-fixed-read-gateway-seam.mjs` es un prototipo de servicio de servidor con funciones inyectadas `authorize(session,warehouse,module)`, `loadSnapshot(warehouse,userId)` y `serverNow()`. **No implementa Auth real, no se expone en HTTP ni como RPC y no consulta Supabase.** Exige aprobación administrativa activa, sesión vigente, módulo PREPARA y almacén por solicitud, y deniega ANTES de leer datos. `architecture/tests/prepara-fixed-read-gateway-seam.test.mjs` comprueba la revocación entre solicitudes, operarios, almacén equivocado y ausencia de credenciales, con identidades ficticias.
+- **Importación sin líneas de stock:** el esquema compartido V1 solo admite `expected_rows >= 1` para lotes de stock. Un snapshot con `stockLines=[]` NO puede marcar `stockComplete=true` en ese modelo, aunque se anuncie `expected_rows=0`. Para legitimar un almacén vacío tendría que diseñarse un manifiesto explícito de lote vacío, de fuente y ámbito certificados; **no** reinterpretar una lista vacía como ceros de todas las posiciones.
+- El adaptador no transforma por sí mismo las cuentas entre Supabase PREPARA e INVENTA ni importa credenciales de un proyecto al otro. Solo el gateway aprobado podrá dar `verifiedScope` de servidor tras hacer cumplir identidad y permisos reales.
