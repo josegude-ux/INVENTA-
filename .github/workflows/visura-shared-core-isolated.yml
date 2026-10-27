@@ -91,3 +91,12 @@ jobs:
           test -n "$PG_CONTAINER"
           docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_reference_contracts_UNAPPLIED.sql
           docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/70_verify_reference_contracts_pg16.sql
+
+      - name: Verify private staged-to-validated gate on disposable PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_internal_validate_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/80_verify_validation_gate_pg16.sql
