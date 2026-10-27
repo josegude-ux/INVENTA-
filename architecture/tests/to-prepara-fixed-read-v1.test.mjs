@@ -49,7 +49,7 @@ test("isolation: same location code may safely exist in both warehouses",()=>{
  assert.throws(()=>adapt(snap("COR_02_NAR"),scope("COR_01_COR")),/scope/);
  const crossing=snap();
  crossing.fixed[0].warehouse_code="COR_02_NAR";
- assert.throws(()=>adapt(crossing),/another warehouse/);
+ assert.throws(()=>adapt(crossing),/scoped warehouse/);
 });
 test("all completeness flags need independent attestations, not array presence",()=>{
  const s=snap();
