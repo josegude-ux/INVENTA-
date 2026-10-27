@@ -140,7 +140,11 @@ BEGIN
   IF item.status<>'awaiting_correction' OR p_correction_event IS NULL OR NOT EXISTS(
     SELECT 1 FROM inventa07_lab.reference_events
     WHERE id=p_correction_event AND kind='corrected' AND
-     campaign_id=item.campaign_id AND location_code=item.location_code)
+     campaign_id=item.campaign_id AND location_code=item.location_code
+     AND (item.affected_count_event IS NULL OR product_code=(
+       SELECT original.product_code FROM inventa07_lab.reference_events original
+       WHERE original.id=item.affected_count_event
+     )))
   THEN RAISE EXCEPTION 'Verified correction event required'; END IF;
   new_status:='resolved';
  ELSE
