@@ -6,16 +6,16 @@
 
 ## Hallazgo comprobado de la interfaz actual
 
-El CSS de index.html en main define por defecto \`#app{max-width:640px}\`. En pantallas >=1000px amplía parcialmente \`#app:not(.counter)\` hasta 1180px, con excepción de la pantalla \`.counter\`, que conserva ancho móvil. La portada puede alcanzar 960px; esto no equivale a adaptar todos los flujos de trabajo a escritorio. El formulario real individual de real-counts.js es una cadena de controles dentro de tarjetas, sin panel administrativo lateral ni distribución específica para monitores grandes. **No declarar aprobado el diseño desktop de la PWA actual.**
+El CSS de index.html en main define por defecto `#app{max-width:640px}`. En pantallas >=1000px amplía parcialmente `#app:not(.counter)` hasta 1180px, con excepción de la pantalla `.counter`, que conserva ancho móvil. La portada puede alcanzar 960px; esto no equivale a adaptar todos los flujos de trabajo a escritorio. El formulario real individual de real-counts.js es una cadena de controles dentro de tarjetas, sin panel administrativo lateral ni distribución específica para monitores grandes. **No declarar aprobado el diseño desktop de la PWA actual.**
 
 ## Implementación aislada de preparación visual
 
 Se añadieron **solo archivos nuevos**:
-- \`inventory-ui/responsive.css\`: estilos bajo el prefijo \`.vi07-\`; base móvil, adaptación tablet a partir de 700px, desktop a partir de 1180px, ajuste de móvil apaisado de poca altura y reglas de impresión. No altera \`#app\`, marca ni estilos publicados.
-- \`inventory-ui/preview.html\`: prototipo **visual no operativo**, con datos ficticios y navegación entre ocho escenarios. No tiene conexión a Supabase ni Business Central.
-- \`tests/inventa07-responsive.test.cjs\`: seis contratos sintéticos de CSS/HTML, sin dependencias adicionales.
+- `inventory-ui/responsive.css`: estilos bajo el prefijo `.vi07-`; base móvil, adaptación tablet a partir de 700px, desktop a partir de 1180px, ajuste de móvil apaisado de poca altura y reglas de impresión. No altera `#app`, marca ni estilos publicados.
+- `inventory-ui/preview.html`: prototipo **visual no operativo**, con datos ficticios y navegación entre ocho escenarios. No tiene conexión a Supabase ni Business Central.
+- `tests/inventa07-responsive.test.cjs`: seis contratos sintéticos de CSS/HTML, sin dependencias adicionales.
 
-El contenedor de contenido es fluido hasta 1720px; en desktop se prevé barra lateral de 288px y zona de trabajo de dos paneles, sin reproducir simplemente el diseño de teléfono. En tablet la barra lateral es de 220px. En móvil es una columna con navegación horizontal de acceso táctil. Se exige que tablas anchas desplacen dentro de su superficie y que elementos interactivos conserven al menos 44px de alto. La referencia y su escáner están asociados por fila, el control de palés permanece después de los campos de unidades/cajas y las referencias confirmadas están en un \`details\` cerrado por defecto. Los paneles no seleccionados deben llevar \`hidden\` y un guardado CSS que lo respete.
+El contenedor de contenido es fluido hasta 1720px; en desktop se prevé barra lateral de 288px y zona de trabajo de dos paneles, sin reproducir simplemente el diseño de teléfono. En tablet la barra lateral es de 220px. En móvil es una columna con navegación horizontal de acceso táctil. Se exige que tablas anchas desplacen dentro de su superficie y que elementos interactivos conserven al menos 44px de alto. La referencia y su escáner están asociados por fila, el control de palés permanece después de los campos de unidades/cajas y las referencias confirmadas están en un `details` cerrado por defecto. Los paneles no seleccionados deben llevar `hidden` y un guardado CSS que lo respete.
 
 ## Matriz obligatoria de verificación visual
 
@@ -44,8 +44,8 @@ El contenedor de contenido es fluido hasta 1720px; en desktop se prevé barra la
 ## Próximo trabajo seguro
 
 1. Ejecutar y registrar inspección visual de la maqueta con navegador a los seis tamaños, revisar overflow, densidad y distribución.
-2. Corregir problemas de accesibilidad/densidad **solo** en \`inventory-ui/\`, sin tocar la aplicación publicada.
-3. Coordinar el contrato con \`real-counts.js\` y la PR #20 de marca antes de integrar diseños en \`index.html\`.
+2. Corregir problemas de accesibilidad/densidad **solo** en `inventory-ui/`, sin tocar la aplicación publicada.
+3. Coordinar el contrato con `real-counts.js` y la PR #20 de marca antes de integrar diseños en `index.html`.
 4. Después del servidor de prueba, conectar progresivamente recuento real, asignaciones y administración; repetir ensayos de navegación, escáner, borradores y sin teórico BC para operarios.
 
 **NO FUSIONAR · NO DESPLEGAR · NO MODIFICAR SUPABASE PRODUCTIVO · NO CONECTAR BC.**
@@ -53,11 +53,11 @@ El contenedor de contenido es fluido hasta 1720px; en desktop se prevé barra la
 
 ## Evidencia visual local adicional (27/10/2026)
 
-Se reprodujo en Chromium de escritorio (motor real, modo headless) **el contenido exacto de \`inventory-ui/responsive.css\` del commit \`c4561b913b5efe3570771451f85f06cd5a5bd836\`**. Se comprobó igualdad de longitud (6057 caracteres) y firma FNV32 (1741551598) entre el CSS leído de GitHub y la copia utilizada en el navegador. Esto verifica el CSS ensayado, no una versión desplegada.
+Se reprodujo en Chromium de escritorio (motor real, modo headless) **el contenido exacto de `inventory-ui/responsive.css` del commit `c4561b913b5efe3570771451f85f06cd5a5bd836`**. Se comprobó igualdad de longitud (6057 caracteres) y firma FNV32 (1741551598) entre el CSS leído de GitHub y la copia utilizada en el navegador. Esto verifica el CSS ensayado, no una versión desplegada.
 
 **Seis resoluciones evaluadas del recuento representativo:** 390×844, 844×390, 768×1024, 1024×768, 1366×768 y 1920×1080.
 
-- \`document.documentElement.scrollWidth <= innerWidth\` en los seis tamaños.
+- `document.documentElement.scrollWidth <= innerWidth` en los seis tamaños.
 - La navegación pasa de horizontal táctil (menos de 700px) a barra lateral (700px y más).
 - El contenido del escritorio a 1366px ocupa 1078px de ancho, y a 1920px ocupa 1632px; no está limitado a 640px.
 - El escáner de referencia mide 48px de alto, el botón de acción al menos 44px, las confirmadas empiezan plegadas y el botón de palés sigue por debajo de unidades/cajas.
@@ -65,7 +65,12 @@ Se reprodujo en Chromium de escritorio (motor real, modo headless) **el contenid
 - Se detectó y corrigió un problema de especificidad que reducía el botón del escáner a 44px pese a declarar 48px.
 - Se comprobó adicionalmente una **maqueta local representativa** con ocho secciones a las seis resoluciones (48 combinaciones), sin desbordamiento horizontal y con navegación que ocultaba correctamente los paneles no seleccionados.
 
-**Límite de esta evidencia:** las 48 combinaciones se ejecutaron contra una maqueta local representativa, NO contra la versión publicada ni contra una copia completa del \`preview.html\` remoto. Las capturas locales se generaron durante la auditoría y no están versionadas en GitHub. Las comprobaciones estáticas de \`tests/inventa07-responsive.test.cjs\` sí apuntan al HTML/CSS exactos versionados, y GitHub CI ejecuta el conjunto Node. Para repetir visuales sobre los archivos exactos del repositorio se añadió \`tests/visual/inventa07_responsive_visual.py\`, script opcional con Playwright + Chromium; no forma parte del CI Node y su ejecución sobre el checkout completo sigue pendiente.
+**Límite de esta evidencia:** las 48 combinaciones se ejecutaron contra una maqueta local representativa, NO contra la versión publicada ni contra una copia completa del `preview.html` remoto. Las capturas locales se generaron durante la auditoría y no están versionadas en GitHub. Las comprobaciones estáticas de `tests/inventa07-responsive.test.cjs` sí apuntan al HTML/CSS exactos versionados, y GitHub CI ejecuta el conjunto Node. Para repetir visuales sobre los archivos exactos del repositorio se añadió `tests/visual/inventa07_responsive_visual.py`, script opcional con Playwright + Chromium; no forma parte del CI Node y su ejecución sobre el checkout completo sigue pendiente.
 
-**Bloqueos pendientes para aceptación final:** evaluación funcional con identidades/permisos reales, escáner real en navegador móvil, pruebas en iPhone/Android/tablets reales, datos físicos, persistencia, modales y flujos administrativos después de integración. No se ha alterado \`index.html\`, el servicio PWA ni producción.
+**Bloqueos pendientes para aceptación final:** evaluación funcional con identidades/permisos reales, escáner real en navegador móvil, pruebas en iPhone/Android/tablets reales, datos físicos, persistencia, modales y flujos administrativos después de integración. No se ha alterado `index.html`, el servicio PWA ni producción.
 
+
+
+## Último ajuste de interacción visual
+
+El prototipo de recuento ahora inicia **oculto** el panel de cálculo por palés. El botón inferior a unidades/cajas lo muestra u oculta y actualiza `aria-expanded`; existe una guarda CSS explícita para `[hidden]`. Se añadieron dos regresiones automatizadas en `tests/inventa07-pallet-visibility.test.cjs`, junto a las seis pruebas responsive existentes. GitHub Actions: PASS sobre `b3038e61f992e20ccf60f1f8a04c9ba36fce0820` (ejecución `40600164382`). La vista sigue siendo una maqueta sintética, no un escáner ni un recuento funcional publicado.
