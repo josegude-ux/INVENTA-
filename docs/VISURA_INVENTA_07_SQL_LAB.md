@@ -32,6 +32,13 @@ La ejecución PostgreSQL confirma exclusivamente propiedades del modelo ficticio
 - No modificar ni publicar datos de Business Central. El Excel definitivo de BC sigue pendiente de archivo real.
 - No se ha tocado ningún proyecto Supabase, credencial, usuario real, política, migración activa ni tabla productiva.
 
+
+## Tercer contrato experimental — códigos alternativos
+
+Se han añadido \`inventory-lab/003_disposable_barcode_admin.sql\` y \`tests/sql/inventa07_lab_barcode_admin.sql\`, integrados en la CI aislada. El contrato **solo ficticio** verifica que activar o desactivar un código alternativo exija Administrador habilitado y motivo, que ningún código oficial pueda reutilizarse como alias, que una asociación activa no se sobrescriba y que primero se desactive justificadamente antes de vincular otra referencia. Los eventos de asociación se conservan sin modificar automáticamente ningún recuento anterior. La política de consulta de alias ocultará asociaciones desactivadas a lectores ordinarios. Aún no constituye migración ni cambio de políticas reales.
+
+Este ensayo aborda el hallazgo comprobado por SELECT a \`pg_policies\`: \`public.barcodes\` en la base real todavía permite INSERT a cualquier perfil habilitado. Ese permiso debe modificarse únicamente al integrar el nuevo flujo administrativo, con revisión de compatibilidad y autorización. La auditoría está en \`docs/VISURA_INVENTA_07_RLS_AUDIT.md\`.
+
 ## Compatibilidad con el sistema existente
 
 \`main\` usa \`public.counts\` como entradas append-only, \`public.assignments\` por usuario y \`real-counts.js\` como interfaz real individual con cola local; carece del contrato completo de borrador y confirmación. Los experimentos están bajo \`inventory-lab/\` para **no sustituir** esos componentes ni interferir con PR #18/#19 (Excel), #20 (marca) o #22/#23 (arquitectura compartida).
