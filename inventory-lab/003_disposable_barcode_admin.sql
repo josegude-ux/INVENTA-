@@ -36,7 +36,7 @@ ALTER TABLE inventa07_lab.alternate_barcode_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inventa07_lab.alternate_barcode_events FORCE ROW LEVEL SECURITY;
 GRANT SELECT ON inventa07_lab.alternate_barcodes TO inventa07_lab_client;
 CREATE POLICY barcode_enabled_read ON inventa07_lab.alternate_barcodes
- FOR SELECT TO inventa07_lab_client USING (inventa07_lab.current_actor_active());
+ FOR SELECT TO inventa07_lab_client USING (inventa07_lab.current_actor_active() AND active);
 
 CREATE FUNCTION inventa07_lab.manage_alternate_barcode(
  p_action text,p_barcode text,p_product_code text,p_reason text,p_mutation uuid
@@ -83,7 +83,7 @@ BEGIN
    IF EXISTS(SELECT 1 FROM inventa07_lab.official_barcodes
       WHERE barcode=p_barcode) THEN
     RAISE EXCEPTION 'Official barcode cannot be replaced by an alias'; END IF;
-   IF FOUND AND v_row.active THEN RAISE EXCEPTION 'Barcode already active'; END IF;
+   IF v_row.barcode IS NOT NULL AND v_row.active THEN RAISE EXCEPTION 'Barcode already active'; END IF;
    IF v_row.barcode IS NULL THEN
       INSERT INTO inventa07_lab.alternate_barcodes(barcode,product_code,active,version)
        VALUES(p_barcode,p_product_code,true,1) RETURNING version INTO v_version;
