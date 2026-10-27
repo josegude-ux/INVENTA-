@@ -31,6 +31,8 @@ export function toPreparaFixedReadV1({snapshot,verifiedScope,now}={}){
   ok(Array.isArray(snapshot[name])&&snapshot[name].length<=100000,"Invalid "+name);
  const batch=snapshot.batch;
  ok(batch&&batch.warehouse_code===warehouse,"Missing warehouse-specific import");
+ ok(typeof batch.id==="string"&&batch.id.length>0&&
+    snapshot.currentBatchId===batch.id,"Snapshot batch is not the current warehouse pointer");
  ok(typeof now==="string"&&timestamp(now)!==null,"Trusted server clock required");
  const productCodes=new Map();
  const products=snapshot.products.map(p=>{
