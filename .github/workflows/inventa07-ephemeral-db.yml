@@ -49,3 +49,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_contract.sql
       - name: Verify competing writes in two PostgreSQL sessions
         run: bash tests/sql/inventa07_lab_concurrency.sh
+      - name: Install synthetic correction workflow
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/002_disposable_correction_contract.sql
+      - name: Verify proposed corrections, attribution, review and audit
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_corrections.sql
