@@ -46,3 +46,17 @@ No hay RPC de publicación ni cambios de bases reales. **Prueba PostgreSQL 16 de
 ## Continuidad / puertas
 COMPLETADO: auditoría read-only; diseño; validador + 15 pruebas Node en CI; esquema ficticio y restricciones verificadas en PostgreSQL 16 efímero (40532549110); suite general de INVENTA verde. PREPARADO: SQL NO aplicado en bases reales. PENDIENTE: contratos read-only, compatibilidad real de códigos de almacén, correspondencia de identidad y RLS, Auth/Storage/PDF, pruebas de publicación/concurrencia, regresión E2E de ambas PWA y restauración ensayada. BLOQUEOS DE APROBACIÓN: migrar cuentas/datos, costes, ejecutar DDL real, cambios de permisos, fusionar, desplegar, pausar sistemas.
 **Siguiente tarea técnica segura:** convertir el borrador en una migración validada en PostgreSQL descartable, probar integridad y concurrencia; revisar el SQL existente antes de introducir cualquier adaptador de consumo.
+
+
+## Addenda de compatibilidad 27/10 (contrastada después de la auditoría inicial)
+
+- Almacenes PREPARA reales: `COR_01_COR` (A Coruña) y `COR_02_NAR` (Ferrol); `PEND_00_CLAS` está inactivo. El nombre sintético anterior `FER_01_FER` no es un código de almacén verificado.
+- En INVENTA hay 3.041 líneas de stock BC importadas para COR_01_COR; **0 referencias a artículo o ubicación inexistentes** en los maestros consultados.
+- Los códigos de ubicación `PLV USAD` y `SUELO 3` ocupan 39 y 14 líneas BC respectivamente. El validador inicial rechazaba espacios; se corrigió y se añadieron pruebas de regresión sin publicar ni reimportar datos.
+- `fixed_positions` contiene **1** asignación manual y `fixed_position_imports` **0** registros en el estado consultado. El código de importación preparado no prueba que las posiciones del Excel estén ya publicadas: conciliación pendiente con el responsable de INVENTA.
+- En el borrador `visura_shared.warehouse_locations` ya se permite `(almacén,código)` como clave compuesta independiente del `public.locations(code)` histórico. El sistema existente conserva su modelo sin modificación.
+- `architecture/drafts/visura_shared_read_contracts_UNAPPLIED.sql` prepara una vista `security_invoker` **privada**, limitada a batches completos con `state='published'`, sin grants a usuarios. No existe todavía RPC segura de publicación ni integración de PWA.
+- `architecture/tests/sql/30_verify_read_contract_pg16.sql` añade prueba PostgreSQL 16 de los contratos privados. Verificar la ejecución CI de la rama y no confundirla con prueba Auth/Storage, prueba de permisos reales o despliegue.
+- Evidencia detallada: `architecture/reports/2026-10-27-compatibility-readonly.md`.
+
+**Siguiente trabajo seguro:** corregir posibles incidencias CI; diseñar autorización por módulo/almacén, staging/publicación con bloqueo y trazabilidad, y pruebas de concurrencia sobre un PostgreSQL descartable. **Sin activar API, ejecutar SQL real, fusionar ni desplegar.**
