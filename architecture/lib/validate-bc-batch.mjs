@@ -1,7 +1,7 @@
 // VISURA shared core: offline, side-effect-free validation, NO publication authorization.
 export const CONTRACT_VERSION = "visura-bc-batch-v1";
 const code = s => typeof s === "string" && /^[A-Za-z0-9][A-Za-z0-9_.\/-]{0,79}$/.test(s.trim()) ? s.trim() : null;
-const locationCode = s => typeof s === "string" && /^[A-Za-z0-9][A-Za-z0-9_.\/ -]{0,79}$/.test(s.trim()) ? s.trim() : null;
+const locationCode = s => typeof s === "string" && /^[A-Za-z0-9][A-Za-z0-9_.\/ -]{0,79}$/.test(s.trim()) && !/(^|[\\/])\\.\\.(?:[\\/]|$)/.test(s.trim()) ? s.trim() : null;
 const text = (v,max=500) => typeof v==="string" && v.trim().length && v.trim().length<=max && !/[\x00-\x1f\x7f]/.test(v) ? v.trim() : null;
 export function decimalBC(value) {
   if (typeof value!=="string" && typeof value!=="number") return null;
