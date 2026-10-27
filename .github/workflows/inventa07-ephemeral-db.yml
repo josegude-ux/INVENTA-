@@ -1,12 +1,6 @@
 name: INVENTA 07 isolated PostgreSQL 16 contract
 on:
-  push:
-    branches:
-      - feature/visura-inventa-07-domain-20261027
-    paths:
-      - 'inventory-lab/**'
-      - 'tests/sql/inventa07_lab_*'
-      - '.github/workflows/inventa07-ephemeral-db.yml'
+  workflow_dispatch:
   pull_request:
     branches: [main]
     paths:
