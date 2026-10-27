@@ -75,3 +75,13 @@ Se observó en la misma rama el commit 31d254735408cfdc8185af3b63efc0e00c12d8fc,
 2. Probar transacciones con dos usuarios y concurrencia real en PostgreSQL temporal; verificar sesión, equipo y asignaciones antes de escribir cantidades.
 3. Solo tras las pruebas del backend, conectar el módulo de recuento a real-counts.js conservando cola/offline y sin editar index.html/manifest/service-worker.js mientras el trabajo de branding esté abierto. Realizar UX responsive verificable por dispositivo.
 4. Revalidar CI y conflictos justo antes de proponer integración; no merge, no deploy ni conexión directa con Business Central.
+
+
+## Hito adicional — rectificaciones posteriores al cierre (27/10/2026)
+
+Nuevos archivos aditivos:
+- inventory-core/rectifications.cjs: composición inmutable de resultado original de campaña, expediente independiente pendiente, aprobación/rechazo por Administración, publicación MANUAL de versiones V1/V2..., acumulación de aprobados, identificación de casos incluidos y conflicto explícito cuando dos cambios incompatibles pretenden modificar la misma cantidad.
+- tests/inventa07-rectifications.test.cjs: 11 pruebas sintéticas de cierre, autorización, integridad histórica, publicación, rechazo, duplicidad y conflicto. 11/11 locales correctas con Node.js 22.
+- Suite de dominio TOTAL a fecha de esta edición: 55 pruebas sintéticas añadidas en los hitos 1–4 (15 iniciales + 15 lifecycle + 9 equipos + 5 integradas + 11 rectificaciones). La suite CI de GitHub valida adicionalmente las pruebas preexistentes; revisar el HEAD final antes de asumir PASS.
+
+Importante: el módulo es lógica pura, **no** es generación de Excel/PDF, expediente guardado en Supabase ni firma real del Administrador. Los indicadores physicalComplete/administrativeReviewed y la identidad de Administración en un contrato JavaScript NO son sustitutos de controles de servidor. Se requieren almacenamiento inmutable, RLS, revisión y prueba de operaciones transaccionales antes de uso real.
