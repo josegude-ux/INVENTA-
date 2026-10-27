@@ -14,7 +14,7 @@ const args = (more={})=>({
  fileBytes:bytes("fake XLSX bytes, synthetic only"),fileName:"BC.xlsx",
  warehouse:"COR_01_COR", readRowsFromBytes:async seen=>{
    assert.ok(seen instanceof Uint8Array);
-   return [row(),row({lote:"L2",ubicacion:"SUELO 3",stockCalculado:"-2.500"})];
+   return {rows:[row(),row({lote:"L2",ubicacion:"SUELO 3",stockCalculado:"-2.500"})],expectedRows:2};
  },...more
 });
 
@@ -22,7 +22,7 @@ test("requires one trusted parser callback over copied file bytes",async()=>{
  const a=args();const original=Array.from(a.fileBytes);let calls=0;
  const r=await attestManualBCImport({...a,readRowsFromBytes:async seen=>{
    calls++;assert.deepEqual(Array.from(seen),original);
-   return [row(),row({lote:"L2",ubicacion:"SUELO 3",stockCalculado:"-2.500"})];
+   return {rows:[row(),row({lote:"L2",ubicacion:"SUELO 3",stockCalculado:"-2.500"})],expectedRows:2};
  }});
  assert.equal(calls,1);assert.equal(r.valid,true);
  assert.equal(r.normalizedRows[0].codigoArticulo,"0000123");
@@ -42,21 +42,21 @@ test("does not attest altered source bytes, missing calculated stock or mixed wa
   expectedRows:2,rows:attested.normalizedRows});
  assert.equal(verifyBCIntegrityReceipt({
   fileBytes:bytes("different file"),batch:b,expectedReceipt:attested.receipt}),false);
- const invalid=await attestManualBCImport(args({readRowsFromBytes:()=>[
+ const invalid=await attestManualBCImport(args({readRowsFromBytes:()=>({rows:[
    row({stockCalculado:undefined,stockFisico:"42"}),
    row({lote:"L2",stockCalculado:"-2"})
- ]}));
+ ],expectedRows:2})}));
  assert.equal(invalid.valid,false);
  assert.equal(invalid.receipt,null);assert.deepEqual(invalid.normalizedRows,[]);
- const mixed=await attestManualBCImport(args({readRowsFromBytes:()=>[
+ const mixed=await attestManualBCImport(args({readRowsFromBytes:()=>({rows:[
   row(),row({lote:"L2",almacen:"COR_02_NAR"})
- ]}));
+ ],expectedRows:2})}));
  assert.equal(mixed.valid,false);assert.equal(mixed.rowsDigestV2,null);
 });
 test("parser mutating input buffer is rejected, caller original is protected",async()=>{
  const src=bytes("synthetic workbook");const before=Array.from(src);
  await assert.rejects(attestManualBCImport(args({
-   fileBytes:src,readRowsFromBytes:async b=>{b[0]^=0xff;return [row()];}
+   fileBytes:src,readRowsFromBytes:async b=>{b[0]^=0xff;return {rows:[row()],expectedRows:1};}
  })),/modified source buffer/);
  assert.deepEqual(Array.from(src),before);
 });
@@ -65,4 +65,11 @@ test("missing parser, empty file or invalid parser output cannot mint evidence",
  await assert.rejects(attestManualBCImport(args({fileBytes:bytes("")})),TypeError);
  await assert.rejects(attestManualBCImport(args({readRowsFromBytes:()=>null})),TypeError);
  await assert.rejects(attestManualBCImport(args({readRowsFromBytes:()=>{throw Error("parser rejected corrupt XLSX");}})),/corrupt XLSX/);
+});
+
+test("declared source row count cannot be inferred from truncated rows",async()=>{
+ const out=await attestManualBCImport(args({readRowsFromBytes:()=>({rows:[row()],expectedRows:2})}));
+ assert.equal(out.valid,false);
+ assert.equal(out.receipt,null);
+ assert.ok(out.errors.some(e=>e.code==="ROW_COUNT_MISMATCH"));
 });
