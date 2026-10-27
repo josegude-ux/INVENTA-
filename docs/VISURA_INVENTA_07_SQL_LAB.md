@@ -37,6 +37,8 @@ La ejecución PostgreSQL confirma exclusivamente propiedades del modelo ficticio
 
 Se han añadido \`inventory-lab/003_disposable_barcode_admin.sql\` y \`tests/sql/inventa07_lab_barcode_admin.sql\`, integrados en la CI aislada. El contrato **solo ficticio** verifica que activar o desactivar un código alternativo exija Administrador habilitado y motivo, que ningún código oficial pueda reutilizarse como alias, que una asociación activa no se sobrescriba y que primero se desactive justificadamente antes de vincular otra referencia. Los eventos de asociación se conservan sin modificar automáticamente ningún recuento anterior. La política de consulta de alias ocultará asociaciones desactivadas a lectores ordinarios. Aún no constituye migración ni cambio de políticas reales.
 
+**Resultado comprobado de la tercera ampliación:** PostgreSQL 16 aislado PASS, ejecución 40602351353, commit fe782c3dc8a73246d24d83dbb61bfe2681efa4e7. Las pruebas de la suite general también finalizaron correctamente sobre ese commit. La prueba de revocación de asignación al cambiar una pantalla abierta fue añadida y verificada antes de esta ampliación (commit f520bbae916f4f460af9a111904e0f9ed1a0e075). La CI del laboratorio queda con activación por PR o manual para evitar ejecuciones duplicadas.  
+
 Este ensayo aborda el hallazgo comprobado por SELECT a \`pg_policies\`: \`public.barcodes\` en la base real todavía permite INSERT a cualquier perfil habilitado. Ese permiso debe modificarse únicamente al integrar el nuevo flujo administrativo, con revisión de compatibilidad y autorización. La auditoría está en \`docs/VISURA_INVENTA_07_RLS_AUDIT.md\`.
 
 ## Compatibilidad con el sistema existente
