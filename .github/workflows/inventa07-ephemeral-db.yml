@@ -43,6 +43,15 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y postgresql-client
+      - name: Reject accidental execution in other databases
+        env:
+          PGDATABASE: postgres
+        run: |
+          if psql -X -v ON_ERROR_STOP=1 -f inventory-lab/001_disposable_reference_contract.sql > /tmp/inventa07-guard.log 2>&1; then
+            echo 'Safety guard failed: wrong database accepted'
+            exit 1
+          fi
+          grep -q 'INVENTA07 LAB ONLY' /tmp/inventa07-guard.log
       - name: Install isolated schema (no Supabase credentials or connections)
         run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/001_disposable_reference_contract.sql
       - name: Verify stock isolation, zero, review, revocation and idempotency
