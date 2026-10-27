@@ -86,3 +86,20 @@ COMPLETADO: auditoría read-only; diseño; validador + 15 pruebas Node en CI; es
 - Se integra en el workflow de PostgreSQL descartable de la PR #22; confirmar la ejecución más reciente antes de considerarlo validado.
 
 **Puertas antes de integración:** gateway de confianza con identidad comprobada, certificado criptográfico de archivo/filas, pruebas por rol/almacén y auditoría completa, restauración/reversión y aprobación expresa de migración. No ejecutar estos borradores en Supabase real.
+
+
+## Addenda de integridad SHA-256 y auditoría de privilegios (27/10, última continuidad)
+
+**Verificación de rama:** misma rama `architecture/visura-shared-core-20261027`, PR #22 DRAFT/OPEN, base `main`; ninguna fusión ni despliegue.
+
+- `architecture/lib/bc-integrity-receipt.mjs`: comprobante **puramente offline** de SHA-256 de bytes binarios del Excel manual más SHA-256 separado de datos BC normalizados. Protege SKU, lote, ubicación, almacén, stock calculado, orden de filas, contrato y conteo; `timingSafeEqual` compara ambos hashes ante un comprobante de confianza. No se conecta a Supabase.
+- `architecture/tests/bc-integrity-receipt.test.mjs`: regresiones sobre cambio de bytes/filas, ceros y negativos, códigos reales con espacios, orden, decimales, datos inválidos y ausencia de mutación. **CI #40552454034 SUCCESS**, suite general INVENTA **#40552453783 SUCCESS**.
+- `architecture/tests/sql/90_verify_client_role_denial_pg16.sql`: intentos de leer vistas privadas y ejecutar prototipos como `SET ROLE anon/authenticated`; no afecta los roles de producción.
+- `architecture/tests/sql/100_verify_rollback_pg16.sql`: transacción de publicación ficticia seguida de ROLLBACK, restauración de puntero, estados y auditoría. No es mecanismo de revertir transacciones ya confirmadas.
+- `architecture/reports/2026-10-27-import-integrity-and-cutover-plan.md`: propone corte por almacén de **solo lectura**, sin doble autoridad ni escrituras espejo, con autorización y regreso controlado a lecturas anteriores. No autoriza ejecución.
+- `architecture/reports/2026-10-27-privileged-function-body-review-readonly.md`: lectura de cuerpos y triggers de cinco funciones SECURITY DEFINER de PREPARA. Dos son triggers, dos consultan `auth.uid()` y la RPC de finalización valida identidad y propiedad; **no se ha demostrado explotación**, y **no se han revocado permisos**.
+- Evidencia de las pruebas SQL 90/100: confirmar el estado de GitHub Actions posterior al commit `fcdd56a099e4e922680872c8a5c01f37f303e790`. Si sigue QUEUED/IN_PROGRESS, no informar SUCCESS para esas pruebas.
+
+**Bloqueo principal:** no existe un parser XLSX confiable que ligue bytes originales con filas introducidas, ni una pasarela de identidad de servidor vinculada a Auth, ni un digest SQL validado de forma independiente. El comprobante SHA offline detecta alteraciones con referencia de confianza, **no certifica la procedencia de filas por sí solo**. No exponer `p_actor` ni habilitar SQL en bases reales.
+
+**Siguiente tarea segura tras CI:** si fallan pruebas, corregir el test sin tocar código operativo; si pasan, documentar protocolo de attestation y probar negación por rol/almacén en base descartable, luego ensayar reversión compensatoria sin aplicar nada a producción.
