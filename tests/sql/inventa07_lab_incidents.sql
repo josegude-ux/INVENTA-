@@ -6,6 +6,16 @@ UPDATE inventa07_lab.actors SET active=true WHERE id IN(
  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
  'dddddddd-dddd-4ddd-8ddd-dddddddddddd');
+-- Separate artificial corrected event for a DIFFERENT product; must not
+-- release an incident affecting SKU0001 even within the same location.
+INSERT INTO inventa07_lab.reference_events(
+ campaign_id,location_code,product_code,kind,quantity,previous_quantity,
+ explicit_zero,actor_id,authenticated_session_id,mutation_id)
+VALUES (
+ 'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01','SKU0002','corrected',
+ 8,4,false,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+ '11111111-1111-4111-8111-111111111111',
+ '60000000-0000-4000-8000-000000000010');
 SET ROLE inventa07_lab_client;
 SELECT set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
 SELECT set_config('request.jwt.claim.session_id','11111111-1111-4111-8111-111111111111',false);
@@ -52,6 +62,13 @@ BEGIN
  IF NOT blocked THEN RAISE EXCEPTION 'Operator can query admin incidents'; END IF;
  blocked:=false;
  BEGIN
+  PERFORM * FROM inventa07_lab.admin_incident_corrections((r->>'incidentId')::uuid);
+ EXCEPTION WHEN OTHERS THEN
+  blocked:=position('Only enabled Administration' in SQLERRM)>0;
+ END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Operator can query admin correction candidates'; END IF;
+ blocked:=false;
+ BEGIN
   PERFORM inventa07_lab.review_incident((r->>'incidentId')::uuid,
    'resolved','No autorizado',0,'60000000-0000-4000-8000-000000000005');
  EXCEPTION WHEN OTHERS THEN blocked:=position('Only enabled Administration' in SQLERRM)>0; END;
@@ -94,6 +111,19 @@ BEGIN
   '60000000-0000-4000-8000-000000000008',99999999);
  EXCEPTION WHEN OTHERS THEN blocked:=position('Verified correction event required' in SQLERRM)>0; END;
  IF NOT blocked THEN RAISE EXCEPTION 'Nonexistent correction event approved'; END IF;
+ blocked:=false;
+ BEGIN
+  PERFORM inventa07_lab.review_incident(i_alias,'correction-verified',
+    'Se intentó usar una corrección de otra referencia',1,
+    '60000000-0000-4000-8000-000000000011',
+    (SELECT id FROM inventa07_lab.admin_incident_corrections(i_alias)
+      WHERE product_code='SKU0002' LIMIT 1));
+ EXCEPTION WHEN OTHERS THEN
+  blocked:=position('Verified correction event required' in SQLERRM)>0;
+ END;
+ IF (SELECT count(*) FROM inventa07_lab.admin_incident_corrections(i_alias)
+    WHERE product_code='SKU0002')<>0 THEN
+   RAISE EXCEPTION 'Admin candidate list leaked an unrelated corrected product'; END IF;
  SELECT id INTO corrected_event FROM inventa07_lab.admin_incident_corrections(i_alias)
   WHERE product_code='SKU0001' LIMIT 1;
  IF corrected_event IS NULL THEN RAISE EXCEPTION 'Missing signed correction fixture'; END IF;
