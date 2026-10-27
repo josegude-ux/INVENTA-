@@ -103,7 +103,7 @@ BEGIN
  resp:=inventa07_lab.apply_reference(
     'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01','SKU0001','confirm',
     '10000000-0000-4000-8000-000000000002',1,NULL,false,1);
- IF resp->>'status'<>'confirmed' OR resp->>'physicalQuantity'<>'0'
+ IF resp->>'status'<>'confirmed' OR (resp->>'physicalQuantity')::numeric<>0
     OR resp->>'explicitZero'<>'true' THEN RAISE EXCEPTION 'Confirmation incorrect: %',resp; END IF;
  IF (SELECT count(*) FROM inventa07_lab.reference_events)<>1 THEN
    RAISE EXCEPTION 'Confirmation not append-only'; END IF;
