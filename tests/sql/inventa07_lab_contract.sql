@@ -139,7 +139,7 @@ UPDATE inventa07_lab.campaigns SET status='open'
 -- Disabled user loses read access via RLS even if a simulated JWT still exists.
 UPDATE inventa07_lab.actors SET active=false WHERE id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 SET ROLE inventa07_lab_client;
-DO $
+DO $revocation$
 DECLARE denied boolean:=false;
 BEGIN
  IF (SELECT count(*) FROM inventa07_lab.reference_states)<>0 OR
@@ -153,7 +153,7 @@ BEGIN
  EXCEPTION WHEN OTHERS THEN denied:=position('Account disabled' in SQLERRM)>0;
  END;
  IF NOT denied THEN RAISE EXCEPTION 'Disabled account can still submit'; END IF;
-END $;
+END $revocation$;
 RESET ROLE;
 UPDATE inventa07_lab.actors SET active=true WHERE id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 SELECT 'inventa07 reference contract PASS' AS result;
