@@ -63,6 +63,15 @@ BEGIN
  END;
  IF NOT denied THEN RAISE EXCEPTION 'Duplicate within location accepted'; END IF;
 END $two_scans$;
+DO $deny_pending_list$
+DECLARE denied boolean:=false;
+BEGIN
+ BEGIN
+  PERFORM * FROM inventa07_lab.admin_pending_provisionals();
+ EXCEPTION WHEN OTHERS THEN denied:=position('Only enabled Administration' in SQLERRM)>0;
+ END;
+ IF NOT denied THEN RAISE EXCEPTION 'Operario accedió a la cola administrativa'; END IF;
+END $deny_pending_list$;
 SELECT set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',false);
 SELECT set_config('request.jwt.claim.session_id','22222222-2222-4222-8222-222222222222',false);
 DO $second_location$
