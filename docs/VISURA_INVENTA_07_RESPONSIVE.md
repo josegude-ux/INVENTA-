@@ -49,3 +49,23 @@ El contenedor de contenido es fluido hasta 1720px; en desktop se prevé barra la
 4. Después del servidor de prueba, conectar progresivamente recuento real, asignaciones y administración; repetir ensayos de navegación, escáner, borradores y sin teórico BC para operarios.
 
 **NO FUSIONAR · NO DESPLEGAR · NO MODIFICAR SUPABASE PRODUCTIVO · NO CONECTAR BC.**
+
+
+## Evidencia visual local adicional (27/10/2026)
+
+Se reprodujo en Chromium de escritorio (motor real, modo headless) **el contenido exacto de \`inventory-ui/responsive.css\` del commit \`c4561b913b5efe3570771451f85f06cd5a5bd836\`**. Se comprobó igualdad de longitud (6057 caracteres) y firma FNV32 (1741551598) entre el CSS leído de GitHub y la copia utilizada en el navegador. Esto verifica el CSS ensayado, no una versión desplegada.
+
+**Seis resoluciones evaluadas del recuento representativo:** 390×844, 844×390, 768×1024, 1024×768, 1366×768 y 1920×1080.
+
+- \`document.documentElement.scrollWidth <= innerWidth\` en los seis tamaños.
+- La navegación pasa de horizontal táctil (menos de 700px) a barra lateral (700px y más).
+- El contenido del escritorio a 1366px ocupa 1078px de ancho, y a 1920px ocupa 1632px; no está limitado a 640px.
+- El escáner de referencia mide 48px de alto, el botón de acción al menos 44px, las confirmadas empiezan plegadas y el botón de palés sigue por debajo de unidades/cajas.
+- Se detectó y corrigió un error de densidad: a 768px el contenido quedaba dividido en dos columnas de 248px; ahora el recuento usa una columna de contenido de 512px con barra lateral, manteniendo dos paneles a 1024px y escritorio.
+- Se detectó y corrigió un problema de especificidad que reducía el botón del escáner a 44px pese a declarar 48px.
+- Se comprobó adicionalmente una **maqueta local representativa** con ocho secciones a las seis resoluciones (48 combinaciones), sin desbordamiento horizontal y con navegación que ocultaba correctamente los paneles no seleccionados.
+
+**Límite de esta evidencia:** las 48 combinaciones se ejecutaron contra una maqueta local representativa, NO contra la versión publicada ni contra una copia completa del \`preview.html\` remoto. Las capturas locales se generaron durante la auditoría y no están versionadas en GitHub. Las comprobaciones estáticas de \`tests/inventa07-responsive.test.cjs\` sí apuntan al HTML/CSS exactos versionados, y GitHub CI ejecuta el conjunto Node. Para repetir visuales sobre los archivos exactos del repositorio se añadió \`tests/visual/inventa07_responsive_visual.py\`, script opcional con Playwright + Chromium; no forma parte del CI Node y su ejecución sobre el checkout completo sigue pendiente.
+
+**Bloqueos pendientes para aceptación final:** evaluación funcional con identidades/permisos reales, escáner real en navegador móvil, pruebas en iPhone/Android/tablets reales, datos físicos, persistencia, modales y flujos administrativos después de integración. No se ha alterado \`index.html\`, el servicio PWA ni producción.
+
