@@ -1,5 +1,12 @@
 -- VISURA INVENTA 07 — correction workflow, DISPOSABLE POSTGRESQL ONLY.
 -- Apply ONLY after 001_disposable_reference_contract.sql in a throwaway CI database.
+-- Fail closed: these fixtures must NEVER be executed on the Supabase 'postgres' database.
+DO $inventa07_guard$
+BEGIN
+ IF current_database() <> 'inventa07_test' THEN
+   RAISE EXCEPTION 'INVENTA07 LAB ONLY: wrong database %', current_database();
+ END IF;
+END $inventa07_guard$;
 BEGIN;
 CREATE TABLE inventa07_lab.original_team_members (
  campaign_id uuid NOT NULL, location_code text NOT NULL, actor_id uuid NOT NULL
