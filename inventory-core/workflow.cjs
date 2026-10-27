@@ -26,8 +26,14 @@ function advanceLocation(current, event, opts={}) {
 }
 function reviewLocation({knownReferences=[],provisionals=[]}={}) {
   if (!Array.isArray(knownReferences)||!Array.isArray(provisionals)) throw new Error('Listas de recuento inválidas.');
-  const pending=[...knownReferences,...provisionals].filter(x=>x?.status!=='confirmed');
-  const confirmed=[...knownReferences,...provisionals].filter(x=>x?.status==='confirmed');
+  // Administrative resolution of a provisional is separate from its PHYSICAL count.
+  // 'pending' may mean unresolved by Administration while physically confirmed.
+  // Legacy provisional entries without physicalStatus remain compatible.
+  const physicalConfirmed=x=>x?.physicalStatus===undefined?x?.status==='confirmed':x.physicalStatus==='confirmed';
+  const pending=[...knownReferences].filter(x=>x?.status!=='confirmed')
+    .concat(provisionals.filter(x=>!physicalConfirmed(x)));
+  const confirmed=[...knownReferences].filter(x=>x?.status==='confirmed')
+    .concat(provisionals.filter(physicalConfirmed));
   const zeros=confirmed.filter(x=>x.explicitZero===true && String(x.quantity)==='0');
   return {ready:pending.length===0&&confirmed.length>0,confirmed:confirmed.length,zeros:zeros.length,pending:pending.length,provisionals:provisionals.length};
 }
