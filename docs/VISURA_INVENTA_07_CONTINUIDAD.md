@@ -19,9 +19,15 @@
 Archivos **nuevos**, sin modificar existentes:
 - `inventory-core/counting.cjs`: cálculo exacto de unidades sueltas, cajas sueltas y grupos de palés (alturas totales × cajas/base × unidades/caja), cero expreso, campos vacíos distintos del cero, desglose, rechazo de cantidades inválidas y límite compatible con `numeric(16,3)`. No crea fichas obligatorias individuales por palé.
 - `inventory-core/workflow.cjs`: guardas puras para inicio persistente de ubicación, finalización manual, revisión de pendientes, asignación correlativa según orden REAL de ubicaciones suministrado, extremos inclusivos, parejas autorizadas, no solapamiento y no traspaso de ubicaciones iniciadas. Resumen físico de pasillo independiente de incidencias administrativas.
-- `tests/inventa07-domain.test.cjs`: 11 escenarios sintéticos. Ejecutar `node --test tests/*.test.cjs` para todas las pruebas y `node --test tests/inventa07-domain.test.cjs` para este hito.
+- `inventory-core/administration.cjs`: doble escaneo independiente, conflictos de código oficial/alternativo y verificación previa al cierre manual de campaña, sin efectos secundarios.
+- `tests/inventa07-domain.test.cjs`: 11 escenarios sintéticos.
+- `tests/inventa07-administration.test.cjs`: 4 escenarios sintéticos adicionales. Ejecutar `node --test tests/*.test.cjs` para todas las pruebas y `node --test tests/inventa07-domain.test.cjs` para este hito.
 
-**Resultado comprobado localmente:** 11/11 pruebas de dominio con Node.js 22.16.0, 0 fallos. Pendiente comprobación de CI para la PR y regresiones generales.
+**Resultado comprobado localmente:** 15/15 pruebas de dominio y administración con Node.js 22.16.0, 0 fallos. Pendiente comprobación de CI para la PR y regresiones generales.
+
+### Segundo hito aislado — validación administrativa
+
+Se implementó `inventory-core/administration.cjs` para comprobar dos lecturas distintas exactamente iguales, preservar ceros iniciales, bloquear conflictos entre código oficial y código alternativo interno, y determinar condiciones de cierre general. Son validaciones puras y NO operan sobre datos reales. Se añadieron cuatro pruebas locales, todas correctas. El escaneo real, la evidencia autenticada de cada lectura, la resolución administrativa de provisionales y el cierre transaccional continúan pendientes de integración en servidor.
 
 ## Limitaciones expresas
 
