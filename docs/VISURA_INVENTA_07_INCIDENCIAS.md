@@ -33,3 +33,12 @@ Todas las validaciones de rol y actor en JavaScript son solamente pruebas de con
 4. Integrar la UI responsive y la persistencia real después de pruebas de permisos/solapamientos y autorización productiva específica.
 
 **No se ha modificado main, otras ramas, Supabase real, Business Central ni ningún despliegue.**
+
+
+## Segundo hito de incidencias: PostgreSQL aislado
+
+Se añaden inventory-lab/005_disposable_incidents.sql y tests/sql/inventa07_lab_incidents.sql, ejecutados en PostgreSQL 16 descartable desde el workflow de la PR. **No son migraciones productivas.**
+
+Condiciones ensayadas: denuncia de código ilegible con recuento físico expreso; prohibición de inventar un evento de recuento para afirmar un código alternativo utilizado; acceso del operario solo a sus propias incidencias; consulta pendiente exclusivamente a Administración; revisión con motivo; incidencia awaiting_correction bloqueante; cierre solo con referencia a una corrección real de la misma campaña y ubicación; eventos append-only e idempotencia; cantidades físicas sin modificación indirecta.
+
+La revisión y registro siguen siendo RPC sintéticas con identidad simulada por psql. Todavía se requieren sesiones autenticadas por Supabase, permisos transaccionales reales y compatibilidad de la interfaz antes de cualquier despliegue. La función administrativa no crea rectificaciones automáticamente.
