@@ -102,3 +102,13 @@ Importante: el módulo es lógica pura, **no** es generación de Excel/PDF, expe
 **Siguiente tarea independiente:** diseñar la capa de compatibilidad con \`public.counts\`, \`public.assignments\` y la cola de \`real-counts.js\`, incluyendo un endpoint transaccional autenticado y un plan de migración aditiva sometido a aprobación. Antes de editar UI, contrastar trabajo de PR #20 (branding), #18/#19 (Excel) y #22/#23 (arquitectura). La estructura definitiva del Excel real de BC sigue pendiente; no paraliza el trabajo independiente.
 
 **Restricciones persistentes:** NO MERGE; NO DESPLIEGUE; NO APLICAR SQL A SUPABASE ACTIVA; NO CONECTAR API BC; NO CAMBIAR CREDENCIALES, ROLES NI DATOS REALES. La PR #24 permanece como borrador.
+
+## Cuarto hito de backend aislado — provisionales (28/10/2026)
+
+Archivos nuevos: inventory-lab/004_disposable_provisionals.sql y tests/sql/inventa07_lab_provisionals.sql; workflow PostgreSQL temporal actualizado. Implementan solo en el laboratorio: doble escaneo simulado, rechazo de lecturas no independientes o divergentes, descripción obligatoria, cantidad explícita, provisionales independientes por ubicación, bloqueo de duplicados dentro de la misma ubicación y cola de revisión únicamente administrativa.
+
+Vinculación administrativa manual: el Administrador elige referencia oficial y documenta si el provisional es duplicado o cantidad adicional. La cantidad adicional permanece awaiting_consolidation, sin modificar automáticamente recuentos ni crear artículos oficiales. Ninguna vinculación o sugerencia se ejecuta tras importar Excel.
+
+Pruebas: run 40603077570, commit 1ffe71f412a8e5fb36775e571b3f9d0974b3ffbc, PostgreSQL 16 PASS. La suite general INVENTA también PASS sobre ese commit. Escáner y sesiones de dispositivo en el laboratorio son simulados; se necesita validación real antes de integrar.
+
+Siguiente tarea técnica no bloqueada: preparar contratos de consolidación administrativa y cierre con protección de recuentos físicos, después verificar inserciones y permisos reales en una base descartable con roles Supabase equivalentes. No aplicar migrations a la base activa. Priorizar la compatibilidad con la PR #22 de arquitectura antes de cambiar almacenes/identidades compartidos.
