@@ -155,3 +155,16 @@ Fecha 27/10/2026; misma rama privada `architecture/visura-shared-core-20261027`,
 **Pendiente ANTES DE ACTIVACIÓN:** conciliación de posiciones sin almacén, correspondencia Auth entre sistemas, parser XLSX autenticado y digest end-to-end, expiry_date comprometida en contrato V3 si se usa como dato acreditado, política de caducidad del Excel, certificados de cobertura para cada almacén, API/RPC de confianza por servidor, pruebas con roles/usuarios de prueba y E2E de ambas PWAs; permiso expreso para todo cambio de permisos/migración/merge/deploy. Sin autorizar, la PR #76 debe continuar indicando origen central no disponible.
 
 **Próxima acción técnica segura:** revisión documental y de ensayos privados por responsable de chat 02. Si pide ajustar la forma JSON, modificar exclusivamente el adaptador/borradores de PR #22 con pruebas, no su rama. Queda prohibido ejecutar SQL de borrador en los Supabase existentes.
+
+
+## Aseguramiento de puntero vigente en interoperabilidad (27/10/2026)
+
+Tras la primera entrega del adaptador PR #76, se ha reforzado la exigencia de que `snapshot.currentBatchId` coincida con `snapshot.batch.id`, y además que el lote esté vinculado al `warehouse_code` solicitado. Evita que un lote histórico o un snapshot sin puntero vigente parezca una publicación actual. El gateway futuro debe leer puntero, lote y líneas mediante una **instantánea consistente de base de datos**, con identidad y permiso efectivos, sin confiar en un puntero proporcionado por navegador.
+
+Archivos cambiados exclusivamente en PR #22:
+- `architecture/lib/to-prepara-fixed-read-v1.mjs`
+- `architecture/tests/to-prepara-fixed-read-v1.test.mjs`
+- `architecture/tests/prepara-fixed-read-gateway-seam.test.mjs`
+- `architecture/reports/2026-10-27-prepara-pr76-interoperability-contract.md`
+
+Prueba de regresión del lote histórico y ausencia de puntero añadida. Acción del último código `a8e3b2b0ac01da5deb246ea61a0cbd741aadba81` / [CI aislada #40569134490](https://github.com/josegude-ux/INVENTA-/actions/runs/40569134490): verificar conclusión real antes de declarar SUCCESS. [Suite INVENTA #40569134491](https://github.com/josegude-ux/INVENTA-/actions/runs/40569134491): SUCCESS observado. No se ha tocado la rama de PR #76, ni SQL/RLS de producción, ni se ha creado conexión entre aplicaciones.
