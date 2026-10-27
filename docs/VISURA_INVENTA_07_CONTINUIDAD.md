@@ -85,3 +85,20 @@ Nuevos archivos aditivos:
 - Suite de dominio TOTAL a fecha de esta edición: 55 pruebas sintéticas añadidas en los hitos 1–4 (15 iniciales + 15 lifecycle + 9 equipos + 5 integradas + 11 rectificaciones). La suite CI de GitHub valida adicionalmente las pruebas preexistentes; revisar el HEAD final antes de asumir PASS.
 
 Importante: el módulo es lógica pura, **no** es generación de Excel/PDF, expediente guardado en Supabase ni firma real del Administrador. Los indicadores physicalComplete/administrativeReviewed y la identidad de Administración en un contrato JavaScript NO son sustitutos de controles de servidor. Se requieren almacenamiento inmutable, RLS, revisión y prueba de operaciones transaccionales antes de uso real.
+
+
+## Continuación de backend aislado, seguridad y RLS — 28/10/2026
+
+**Alcance comprobado:** tres contratos SQL sintéticos en \`inventory-lab/\` para borradores/confirmaciones, correcciones justificadas y códigos alternativos administrados. No hay migración activa, integración PWA ni alteración de datos de usuario. No se han realizado commits sobre \`main\`, PREPARA u otras ramas.
+
+**Archivos añadidos:** \`inventory-lab/001_disposable_reference_contract.sql\`, \`002_disposable_correction_contract.sql\`, \`003_disposable_barcode_admin.sql\`, \`tests/sql/inventa07_lab_contract.sql\`, \`inventa07_lab_concurrency.sh\`, \`inventa07_lab_corrections.sql\`, \`inventa07_lab_barcode_admin.sql\` y workflow exclusivo \`.github/workflows/inventa07-ephemeral-db.yml\`.
+
+**Pruebas PASS verificadas:** PostgreSQL 16 descartable (run 40602351353, commit fe782c3dc8a73246d24d83dbb61bfe2681efa4e7) y suite general INVENTA (PASS para ese commit). Ejercitados: cero explícito, validación de borrador, revisión de confirmación, denegación de stock teórico, revocación de usuario/asignación, idempotencia, dos conexiones compitiendo por igual versión, corrección revisada y auditada con autor declarado distinto de la cuenta autenticada, códigos alternativos con administración exclusiva, conflicto, desactivación y recuentos históricos preservados. El laboratorio rechaza ejecuciones fuera de la base llamada \`inventa07_test\`. Los fallos iniciales del laboratorio se corrigieron y se revalidaron antes de documentar el PASS. Las dos configuraciones de GitHub Actions (suite general y Postgres temporal) quedan independientes.
+
+**Revisión de Supabase real, solo lectura:** consulta a \`pg_policies\` confirmó que la política \`barcodes_insert\` vigente aún acepta altas de cualquier cuenta habilitada; la nueva decisión exige validación administrativa. \`counts_insert\` sigue admitiendo inserciones sin el nuevo protocolo de revisión. NO se cambiaron estas políticas: hacerlo antes de modificar el cliente rompería la compatibilidad. Ver \`docs/VISURA_INVENTA_07_RLS_AUDIT.md\` y \`docs/VISURA_INVENTA_07_SQL_LAB.md\`.
+
+**Limitaciones explícitas:** las identidades del laboratorio son simuladas con claims de prueba; la autenticación real, validación de session_id, RLS en Supabase, terminal de pareja, acceso entre dos usuarios reales, supresión de recuentos teóricos por toda vía de datos y cierre/rectificaciones definitivos siguen pendientes de integración y pruebas de seguridad. El SQL de laboratorio no es un artefacto de migración listo para producción.
+
+**Siguiente tarea independiente:** diseñar la capa de compatibilidad con \`public.counts\`, \`public.assignments\` y la cola de \`real-counts.js\`, incluyendo un endpoint transaccional autenticado y un plan de migración aditiva sometido a aprobación. Antes de editar UI, contrastar trabajo de PR #20 (branding), #18/#19 (Excel) y #22/#23 (arquitectura). La estructura definitiva del Excel real de BC sigue pendiente; no paraliza el trabajo independiente.
+
+**Restricciones persistentes:** NO MERGE; NO DESPLIEGUE; NO APLICAR SQL A SUPABASE ACTIVA; NO CONECTAR API BC; NO CAMBIAR CREDENCIALES, ROLES NI DATOS REALES. La PR #24 permanece como borrador.
