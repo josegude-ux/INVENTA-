@@ -33,3 +33,7 @@ En este chat se verificaron PR #22 y #76 OPEN/DRAFT/UNMERGED y no hay rama exist
 - Son **16 ensayos de compatibilidad** y **4 TODO visibles** que requieren intervención de los propietarios de chats 02/04. Los TODO no son aprobaciones de seguridad, y no deben volverse PASS antes de cambios reales en las ramas correspondientes.
 - Workflow CI solo sobre la rama VISURA05 o la PR en GitHub con `contents: read`, sin escritura ni ejecución del código de aplicaciones empresariales. Bloquea deriva inesperada de HEAD/archivo consumidor.
 - Mantener dependencia técnica documentada con PR #22 y PR #80; si cambian sus versiones, renovar pines tras revisar exactamente el diff y reejecutar la batería. No inferir garantía E2E ni permisos RLS reales de pruebas de JS puro.
+
+## Ampliación de casos de contrato cruzado — 27/10/2026
+- Se añaden regresiones específicas de **misma ubicación en dos almacenes**, **artículo sin fija mostrando ubicaciones reales**, **suma precisa de lotes distintos**, **fija desconocida rechazada** y **caducidad opcional (sin inventar fecha)**, usando el mismo contrato fuente y consumidor reales.
+- Evidencia independiente y decisiones consolidadas: `architecture/audits/visura05/MATRIZ_ACEPTACION.md`. Las fechas de digest/caducidad de BC continúan pendientes de acreditar.

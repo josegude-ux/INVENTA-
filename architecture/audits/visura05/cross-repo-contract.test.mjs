@@ -86,6 +86,81 @@ for (const [title,alter,expectedSuccess,category] of cases) {
   });
 }
 
+
+// Additional cross-application invariants after KONTROLA B01 PR #80 integration.
+test("INVENTA→PREPARA: warehouse-specific identical location is not shared",()=>{
+  const cor=build();
+  cor.stockLines[0].stock_calculated="0";
+  const nar=build();
+  const fer="COR_02_NAR";
+  nar.warehouse=fer;
+  nar.batch.warehouse_code=fer;
+  nar.locations.forEach(x=>{x.warehouse_code=fer;});
+  nar.fixed.forEach(x=>{x.warehouse_code=fer;});
+  nar.stockLines.forEach(x=>{x.warehouse_code=fer;});
+  nar.stockLines[0].stock_calculated="-0.000001";
+  const outCor=classifyFixedPositions(toPreparaFixedReadV1({
+    snapshot:cor,verifiedScope:trustedScope,now:NOW
+  }));
+  const outNar=classifyFixedPositions(toPreparaFixedReadV1({
+    snapshot:nar,verifiedScope:{...trustedScope,warehouse:fer},now:NOW
+  }));
+  assert.equal(outCor.warehouse,WH);
+  assert.equal(outCor.rows[0].category,"cero");
+  assert.equal(outNar.warehouse,fer);
+  assert.equal(outNar.rows[0].category,"negativo");
+  assert.equal(outNar.rows[0].positionQuantity,"-0.000001");
+  assert.equal(outNar.rows[0].location,"A-01");
+  assert.equal(outCor.rows[0].location,"A-01");
+});
+test("INVENTA→PREPARA: no fixed position exposes actual stock locations",()=>{
+  const s=build();
+  s.fixed=[];
+  s.stockLines[0].stock_calculated="3.25";
+  const report=classifyFixedPositions(toPreparaFixedReadV1({
+    snapshot:s,verifiedScope:trustedScope,now:NOW
+  }));
+  assert.equal(report.complete,true);
+  assert.equal(report.rows[0].category,"sin_fija");
+  assert.equal(report.rows[0].location,null);
+  assert.deepEqual(report.rows[0].locations,[{location:"A-01",quantity:"3.25"}]);
+});
+test("INVENTA→PREPARA: two distinct lots net to exact six-decimal positive",()=>{
+  const s=build();
+  s.batch.expected_rows=2;
+  s.batch.validated_rows=2;
+  s.stockLines[0].stock_calculated="-1.500000";
+  s.stockLines.push({...s.stockLines[0],lot:"L2",stock_calculated:"1.500001"});
+  const adapted=toPreparaFixedReadV1({
+    snapshot:s,verifiedScope:trustedScope,now:NOW
+  });
+  assert.equal(adapted.meta.stockComplete,true);
+  assert.deepEqual(adapted.stock.map(x=>x.quantity),["-1.5","1.500001"]);
+  const report=classifyFixedPositions(adapted);
+  assert.equal(report.complete,true);
+  assert.equal(report.rows.length,0);
+});
+test("INVENTA→PREPARA: unknown fixed location always rejected",()=>{
+  const s=build();
+  s.fixed[0].location_code="MISSING";
+  assert.throws(()=>toPreparaFixedReadV1({
+    snapshot:s,verifiedScope:trustedScope,now:NOW
+  }),/Unresolved fixed position/);
+});
+test("INVENTA→PREPARA: expiry is optional metadata and cannot be invented",()=>{
+  const s=build();
+  s.stockLines[0].expiry_date="2027-08-01";
+  const explicit=toPreparaFixedReadV1({
+    snapshot:s,verifiedScope:trustedScope,now:NOW
+  });
+  assert.equal(explicit.stock[0].expiryDate,"2027-08-01");
+  delete s.stockLines[0].expiry_date;
+  const omitted=toPreparaFixedReadV1({
+    snapshot:s,verifiedScope:trustedScope,now:NOW
+  });
+  assert.equal(Object.hasOwn(omitted.stock[0],"expiryDate"),false);
+});
+
 // Known consumer-only defense-in-depth issues belong to Chat 02; DO NOT
 // mark these TODO checks as passed or change the consumer from Chat 05.
 test.todo("PREPARA classifier must require meta.stale === false even without gateway");
