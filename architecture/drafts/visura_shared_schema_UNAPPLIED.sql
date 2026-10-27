@@ -22,11 +22,16 @@ CREATE TABLE visura_shared.user_module_warehouses (
  PRIMARY KEY(user_id,module,warehouse_code)
 );
 
--- WARNING: current public.locations(code) is not warehouse scoped.
--- Reject warehouse-colliding location codes before cutover.
+-- New scoped location keys need NOT share a single global public.locations(code).
+-- INVENTA's existing public.locations remains UNCHANGED/authoritative until cutover.
+-- Distinct warehouses may reuse a location code with different aisle or zone.
 CREATE TABLE visura_shared.warehouse_locations (
  warehouse_code text NOT NULL REFERENCES visura_shared.warehouses(code),
- location_code text NOT NULL REFERENCES public.locations(code),
+ location_code text NOT NULL CHECK (length(btrim(location_code)) BETWEEN 1 AND 80),
+ aisle text NOT NULL DEFAULT '',
+ zone text NOT NULL DEFAULT '',
+ description text NOT NULL DEFAULT '',
+ enabled boolean NOT NULL DEFAULT false,
  PRIMARY KEY(warehouse_code,location_code)
 );
 
@@ -68,7 +73,11 @@ CREATE TABLE visura_shared.bc_batch_lines (
  PRIMARY KEY(batch_id,row_number),
  UNIQUE(batch_id,product_code,location_code,lot),
  FOREIGN KEY(batch_id,warehouse_code)
- REFERENCES visura_shared.bc_batches(id,warehouse_code)
+ REFERENCES visura_shared.bc_batches(id,warehouse_code),
+ FOREIGN KEY(warehouse_code,location_code)
+ REFERENCES visura_shared.warehouse_locations(warehouse_code,location_code),
+ FOREIGN KEY(product_code)
+ REFERENCES public.products(code)
 );
 CREATE INDEX visura_lines_search ON visura_shared.bc_batch_lines
  (warehouse_code,product_code,location_code,lot);
