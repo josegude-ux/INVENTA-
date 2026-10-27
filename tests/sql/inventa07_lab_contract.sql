@@ -136,4 +136,24 @@ RESET ROLE;
 -- Reopen ONLY this synthetic campaign for independent CAS concurrency check.
 UPDATE inventa07_lab.campaigns SET status='open'
  WHERE id='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+-- Disabled user loses read access via RLS even if a simulated JWT still exists.
+UPDATE inventa07_lab.actors SET active=false WHERE id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+SET ROLE inventa07_lab_client;
+DO $
+DECLARE denied boolean:=false;
+BEGIN
+ IF (SELECT count(*) FROM inventa07_lab.reference_states)<>0 OR
+    (SELECT count(*) FROM inventa07_lab.reference_events)<>0 THEN
+    RAISE EXCEPTION 'Disabled account can still read counts';
+ END IF;
+ BEGIN
+   PERFORM inventa07_lab.apply_reference(
+    'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01','SKU0002','draft',
+    '10000000-0000-4000-8000-000000000010',0,3,false,NULL);
+ EXCEPTION WHEN OTHERS THEN denied:=position('Account disabled' in SQLERRM)>0;
+ END;
+ IF NOT denied THEN RAISE EXCEPTION 'Disabled account can still submit'; END IF;
+END $;
+RESET ROLE;
+UPDATE inventa07_lab.actors SET active=true WHERE id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 SELECT 'inventa07 reference contract PASS' AS result;
