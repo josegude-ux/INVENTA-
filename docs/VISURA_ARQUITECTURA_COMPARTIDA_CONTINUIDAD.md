@@ -41,7 +41,7 @@ Staging no visible -> conteos/hash y permisos -> lock exclusivo por almacén -> 
 - architecture/lib/validate-bc-batch.mjs: validador puro offline, sin conexión a BD.
 - architecture/tests/validate-bc-batch.test.mjs y architecture/tests/locations-inventa-compat.test.mjs: suite Node sin escrituras, incluye formatos reales de códigos de ubicación (espacios internos seguros).
 - architecture/drafts/visura_shared_schema_UNAPPLIED.sql: diseño multialmacén fuera de migrations, tablas con RLS activado sin políticas permisivas ni grants.
-No hay RPC de publicación ni cambios de bases reales. **Prueba PostgreSQL 16 descartable SUPERADA** (GitHub Actions 40532549110, 27/10/2026): SQL del borrador aplicado solamente al contenedor, con datos ficticios; comprobados dos almacenes, stock cero/negativo, prohibición de batch cruzado por FK, duplicados y RLS deny-by-default. Las 15 pruebas Node de la rama también han pasado. Las comprobaciones generales INVENTA también han pasado (run 40532548973). Esto NO prueba Auth/Storage/RPC futuros ni seguridad efectiva productiva. No fusionar ni desplegar esta rama.
+No hay RPC de publicación expuesta ni cambios de bases reales. Se ha preparado un prototipo **interno** de publicación no desplegado. **Prueba PostgreSQL 16 descartable SUPERADA** (GitHub Actions 40532549110, 27/10/2026): SQL del borrador aplicado solamente al contenedor, con datos ficticios; comprobados dos almacenes, stock cero/negativo, prohibición de batch cruzado por FK, duplicados y RLS deny-by-default. Las 15 pruebas Node de la rama también han pasado. Las comprobaciones generales INVENTA también han pasado (run 40532548973). Esto NO prueba Auth/Storage/RPC futuros ni seguridad efectiva productiva. No fusionar ni desplegar esta rama.
 
 ## Continuidad / puertas
 COMPLETADO: auditoría read-only; diseño; validador + 15 pruebas Node en CI; esquema ficticio y restricciones verificadas en PostgreSQL 16 efímero (40532549110); suite general de INVENTA verde. PREPARADO: SQL NO aplicado en bases reales. PENDIENTE: contratos read-only, compatibilidad real de códigos de almacén, correspondencia de identidad y RLS, Auth/Storage/PDF, pruebas de publicación/concurrencia, regresión E2E de ambas PWA y restauración ensayada. BLOQUEOS DE APROBACIÓN: migrar cuentas/datos, costes, ejecutar DDL real, cambios de permisos, fusionar, desplegar, pausar sistemas.
@@ -55,8 +55,23 @@ COMPLETADO: auditoría read-only; diseño; validador + 15 pruebas Node en CI; es
 - Los códigos de ubicación `PLV USAD` y `SUELO 3` ocupan 39 y 14 líneas BC respectivamente. El validador inicial rechazaba espacios; se corrigió y se añadieron pruebas de regresión sin publicar ni reimportar datos.
 - `fixed_positions` contiene **1** asignación manual y `fixed_position_imports` **0** registros en el estado consultado. El código de importación preparado no prueba que las posiciones del Excel estén ya publicadas: conciliación pendiente con el responsable de INVENTA.
 - En el borrador `visura_shared.warehouse_locations` ya se permite `(almacén,código)` como clave compuesta independiente del `public.locations(code)` histórico. El sistema existente conserva su modelo sin modificación.
-- `architecture/drafts/visura_shared_read_contracts_UNAPPLIED.sql` prepara una vista `security_invoker` **privada**, limitada a batches completos con `state='published'`, sin grants a usuarios. No existe todavía RPC segura de publicación ni integración de PWA.
+- `architecture/drafts/visura_shared_read_contracts_UNAPPLIED.sql` prepara una vista `security_invoker` **privada**, limitada a batches completos con `state='published'`, sin grants a usuarios. No existe todavía RPC **de cliente autorizada** ni integración de PWA; el publicador privado posterior es únicamente un borrador experimental.
 - `architecture/tests/sql/30_verify_read_contract_pg16.sql` añade prueba PostgreSQL 16 de los contratos privados. Verificar la ejecución CI de la rama y no confundirla con prueba Auth/Storage, prueba de permisos reales o despliegue.
 - Evidencia detallada: `architecture/reports/2026-10-27-compatibility-readonly.md`.
 
 **Siguiente trabajo seguro:** corregir posibles incidencias CI; diseñar autorización por módulo/almacén, staging/publicación con bloqueo y trazabilidad, y pruebas de concurrencia sobre un PostgreSQL descartable. **Sin activar API, ejecutar SQL real, fusionar ni desplegar.**
+
+
+## Addenda de publicación y acceso aislados 27/10 (segunda continuidad)
+
+- La misma rama y **PR #22 en borrador** contienen propuestas nuevas, exclusivamente bajo `architecture/`, sin tocar los códigos operativos:
+  - `drafts/visura_shared_internal_publish_UNAPPLIED.sql`: función interna `SECURITY INVOKER`, sin acceso anónimo/autenticado ni exposición por API; bloqueo de fila por almacén, chequeo de privilegio administrativo explícito, comparación del puntero previo, publicación atómica, auditoría y reintentos idempotentes.
+  - `drafts/visura_shared_staging_guard_UNAPPLIED.sql`: impide modificar líneas de un lote cuyo estado no sea `staged`.
+  - `drafts/visura_shared_reference_contracts_UNAPPLIED.sql`: vistas privadas y `security_invoker` de artículos, ubicaciones y posiciones fijas; sin grants a `anon` o `authenticated` y sin rellenar posiciones fijas históricas automáticamente.
+- Pruebas PostgreSQL 16 con datos **sintéticos**: lotes incompletos denegados, identidad no aprobada denegada, almacén ajeno bloqueado, estados antiguos rechazados, sin duplicar auditoría, permisos directos denegados, integridad de referencias, misma ubicación en almacenes distintos y dos conexiones simultáneas contra un bloqueo de almacén.
+- Evidencias actuales: **GitHub Actions VISURA shared-core isolated run 40541282735 — SUCCESS**, suite general INVENTA run 40541283110 — SUCCESS. Son pruebas de PostgreSQL local descartable, no de Auth ni Storage en Supabase real.
+- Especificación de permisos y puertas: `architecture/reports/2026-10-27-access-import-cutover.md`.
+
+**Limitaciones expresas:** la función acepta un `p_actor` sintético y no establece de forma autónoma identidad verificada; es **inseguro exponerla como RPC pública**. Falta validación criptográfica del Excel/filas, control estricto de transición a estado validado, política de lectura RLS para módulos, correspondencia de identidades, ensayo de reversión y E2E con INVENTA/PREPARA. No ejecutar borradores en ninguna base real, ni fusionar o desplegar.
+
+**Siguiente tarea dentro del alcance:** ensayo en PostgreSQL descartable de transición validada protegida y aislamiento de permisos por rol/almacén; coordinar interfaces exclusivamente mediante contratos aprobados, sin tocar ramas de los otros responsables.
