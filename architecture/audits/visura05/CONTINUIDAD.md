@@ -25,3 +25,11 @@ En este chat se verificaron PR #22 y #76 OPEN/DRAFT/UNMERGED y no hay rama exist
 - El último control negativo que se añade al workflow demuestra que una transacción **READ COMMITTED** puede observar referencias de lotes distintos en SELECT sucesivos mientras otro proceso publica; la prueba se considera válida solo si detecta esta variación controlada. No confundir esa observación con una falla de PostgreSQL.
 
 **No resuelto:** el futuro `loadSnapshot` empresarial NO está implementado. En su futura implementación, debe usar aislamiento real de una sola instantánea para puntero, lote, líneas, catálogo, fijos y acreditaciones. Una ejecución PG verde no concede autorización para activar.
+
+## VISURA 05 — contrato automatizado entre dos repositorios (hito adicional)
+
+- Detectada **KONTROLA PR #80** con HEAD `65a9ddc343921f6be8844476903748a493881a8f`: incorpora el informe de #76 mediante #79 en B01; no reutilizar/mezclar #76 otra vez. El módulo consumidor `src/fixed-position-report.mjs` tiene el **mismo blob** `db7e0ffebf804751f9461f12c996866354b190ab` en #76 y #80.
+- La comprobación nueva en `cross-repo-contract.test.mjs` importa directamente los dos **módulos originales** (adaptador INVENTA + clasificador PREPARA) usando checkout explícito de KONTROLA, fijado al SHA de #80. No copia ni modifica la lógica de PREPARA. Todo dato es ficticio; sin conexión a Business Central ni Supabase, sin credenciales, sin servicios de terceros.
+- Son **16 ensayos de compatibilidad** y **4 TODO visibles** que requieren intervención de los propietarios de chats 02/04. Los TODO no son aprobaciones de seguridad, y no deben volverse PASS antes de cambios reales en las ramas correspondientes.
+- Workflow CI solo sobre la rama VISURA05 o la PR en GitHub con `contents: read`, sin escritura ni ejecución del código de aplicaciones empresariales. Bloquea deriva inesperada de HEAD/archivo consumidor.
+- Mantener dependencia técnica documentada con PR #22 y PR #80; si cambian sus versiones, renovar pines tras revisar exactamente el diff y reejecutar la batería. No inferir garantía E2E ni permisos RLS reales de pruebas de JS puro.
