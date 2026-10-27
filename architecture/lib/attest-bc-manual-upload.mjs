@@ -24,16 +24,19 @@ export async function attestManualBCImport({
 
   // Parser MUST derive rows solely from parseInput; never accept a separate
   // caller-provided rows array in the public API of this module.
-  const rows = await readRowsFromBytes(parseInput);
+  const parsed = await readRowsFromBytes(parseInput);
 
   // Detect mutation of parser input: prevents SHA being generated from a
   // different binary buffer than the bytes observed by the parser.
   if (sha256(parseInput) !== baselineFileSha256) {
     throw new Error("Trusted XLSX parser modified source buffer");
   }
-  if (!Array.isArray(rows)) throw new TypeError("Parser returned no row array");
+  if (!parsed || !Array.isArray(parsed.rows) || !Number.isSafeInteger(parsed.expectedRows)) {
+    throw new TypeError("Trusted parser must report rows and independent expectedRows");
+  }
+  const {rows,expectedRows} = parsed;
   const validated = validateBCBatch({
-    warehouse, fileName, rows, expectedRows: rows.length
+    warehouse, fileName, rows, expectedRows
   });
   if (!validated.valid) {
     return Object.freeze({
