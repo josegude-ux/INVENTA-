@@ -103,3 +103,13 @@ COMPLETADO: auditoría read-only; diseño; validador + 15 pruebas Node en CI; es
 **Bloqueo principal:** no existe un parser XLSX confiable que ligue bytes originales con filas introducidas, ni una pasarela de identidad de servidor vinculada a Auth, ni un digest SQL validado de forma independiente. El comprobante SHA offline detecta alteraciones con referencia de confianza, **no certifica la procedencia de filas por sí solo**. No exponer `p_actor` ni habilitar SQL en bases reales.
 
 **Siguiente tarea segura tras CI:** si fallan pruebas, corregir el test sin tocar código operativo; si pasan, documentar protocolo de attestation y probar negación por rol/almacén en base descartable, luego ensayar reversión compensatoria sin aplicar nada a producción.
+
+
+## Cierre de verificación CI SHA y rollback (27/10/2026)
+
+Se ha consultado GitHub Actions **después** de las pruebas nuevas. Resultados reales:
+
+- [VISURA shared-core isolated #40553218829](https://github.com/josegude-ux/INVENTA-/actions/runs/40553218829): **SUCCESS**, con pruebas Node de huella SHA-256 más PostgreSQL 16 descartable que ejecuta denegaciones `anon/authenticated` y reversión transaccional ficticia (junto con las pruebas anteriores).
+- [INVENTA checks #40553218792](https://github.com/josegude-ux/INVENTA-/actions/runs/40553218792): **SUCCESS**.
+
+**La PR #22 continúa en DRAFT sin merge.** Ningún SQL se ha aplicado al Supabase del usuario. La siguiente fase de integración real depende de aprobación explícita, gateway de identidad Auth, vínculo comprobable XLSX→filas→digest DB, permisos mínimos comprobados y plan de reversión confirmado. Los tests actuales **no** sustituyen estas puertas.
