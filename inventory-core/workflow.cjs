@@ -29,7 +29,7 @@ function reviewLocation({knownReferences=[],provisionals=[]}={}) {
   const pending=[...knownReferences,...provisionals].filter(x=>x?.status!=='confirmed');
   const confirmed=[...knownReferences,...provisionals].filter(x=>x?.status==='confirmed');
   const zeros=confirmed.filter(x=>x.explicitZero===true && String(x.quantity)==='0');
-  return {ready:pending.length===0,confirmed:confirmed.length,zeros:zeros.length,pending:pending.length,provisionals:provisionals.length};
+  return {ready:pending.length===0&&confirmed.length>0,confirmed:confirmed.length,zeros:zeros.length,pending:pending.length,provisionals:provisionals.length};
 }
 function validateContiguousAssignments({orderedLocationCodes,segments,authorizedByOperator={},originalOwners={},startedCodes=[]}) {
   if (!Array.isArray(orderedLocationCodes)||!Array.isArray(segments)) throw new Error('Ubicaciones o tramos incorrectos.');
