@@ -107,6 +107,7 @@ BEGIN
     OR resp->>'explicitZero'<>'true' THEN RAISE EXCEPTION 'Confirmation incorrect: %',resp; END IF;
  IF (SELECT count(*) FROM inventa07_lab.reference_events)<>1 THEN
    RAISE EXCEPTION 'Confirmation not append-only'; END IF;
+ blocked:=false;
  BEGIN
   PERFORM inventa07_lab.apply_reference(
     'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01','SKU0001','draft',
