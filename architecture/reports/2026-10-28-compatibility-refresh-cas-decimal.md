@@ -66,6 +66,6 @@
 
 ## 6. Evidencia y siguiente validación
 
-CI final de esta iteración: verificar la conclusión de la acción sobre el último commit con código. No citar un SHA anterior para declarar probada la última modificación. La evidencia verde precedente de CAS sintético con concurrencia en `f618fb7a1310c8a4f265e5108e3955f2306275fd` consta en los workflows de ese SHA.
+**CI final VERIFICADA** sobre el último commit de código `9be7a4afd4b92572ade6df2fa341d92f219d90b0`: [VISURA shared-core isolated #40637686658](https://github.com/josegude-ux/INVENTA-/actions/runs/40637686658) **SUCCESS** (Node y PostgreSQL 16, incluida carrera CAS a dos sesiones), [INVENTA checks #40637686790](https://github.com/josegude-ux/INVENTA-/actions/runs/40637686790) **SUCCESS**. Los commits siguientes solo incorporan documentación; no hay que atribuir a ellos cambios ejecutables. La evidencia verde precedente de CAS sintético con concurrencia en `f618fb7a1310c8a4f265e5108e3955f2306275fd` consta en los workflows de ese SHA.
 
 **Siguen bloqueadas:** identidad/Auth real, datos empresariales, origen temporal del Excel, importador XLSX exacto, histórico fijos sin almacén, RLS real, validación E2E y aprobación de despliegue/merge. La PR #22 no constituye integración real ni permisos de publicación.
