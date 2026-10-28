@@ -7,6 +7,7 @@ import {transitionFixedAssociation} from "../fixed-stock-08/associations.mjs";
 const meta=()=>({verifiedByServer:true,authorized:true,stockComplete:true,
  positionsComplete:true,catalogComplete:true,locationsComplete:true,truncated:false,stale:false,
  warehouse:"COR_01_COR",publishedBatchId:"B-1",snapshotId:"S-1",positionsVersion:"P-1",
+ contractVersion:"visura-inventa08-fixed-stock-v1",
  sourceFile:"bc.xlsx",exportedAt:"2026-10-27T07:00:00Z",
  importedAt:"2026-10-27T08:00:00Z",publishedAt:"2026-10-27T09:00:00Z",absentStockIsZero:false});
 const record=(code,location,quantity,warehouse="COR_01_COR",importId="B-1")=>({
