@@ -142,3 +142,16 @@ test("XLSX incluye todas las filas, no solo una página visual",()=>{
  const xml=z.get("xl/worksheets/sheet1.xml");
  assert.equal((xml.match(/<row r=/g)||[]).length,1209);
 });
+
+
+test("fail closed: nunca se muestra asociación fija de otro almacén, ni como NO FIABLE",()=>{
+ const x=data();
+ x.fixed.push({associationId:"EXTERNA",warehouse:"COR_02_NAR",
+  product_code:"CODIGO_RESERVADO",location_code:"Z99",active:true});
+ x.products.push({code:"CODIGO_RESERVADO",description:"Solo otro almacén",unit:"UD"});
+ const r=buildFixedStockReport({...x,filters:{view:"all"}});
+ assert.equal(r.rows.length,4);
+ assert.equal(r.rows.some(row=>row.code==="CODIGO_RESERVADO"),false);
+ assert.ok(r.issues.some(issue=>issue.includes("almacén ajeno")));
+ assert.ok(r.rows.every(row=>row.state===ESTADOS.NO_FIABLE));
+});
