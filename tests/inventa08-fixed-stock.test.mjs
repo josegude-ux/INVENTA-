@@ -217,3 +217,19 @@ test("posición fija sin ubicación certificada invalida instantánea completa",
  assert.equal(report.rows.length,4);
  assert.ok(report.issues.some(v=>v.includes("Posición fija sin artículo o ubicación")));
 });
+
+test("doble línea BC del mismo artículo, ubicación y lote bloquea un total inflado",()=>{
+ const x=data();
+ x.stock.push({...x.stock[0],quantity:"200",lot:""});
+ const report=buildFixedStockReport({...x,filters:{view:"unreliable"}});
+ assert.ok(report.issues.some(v=>v.includes("duplicada por artículo")));
+ assert.ok(report.rows.every(r=>r.quantity===null&&r.state===ESTADOS.NO_FIABLE));
+});
+test("dos lotes distintos de una ubicación sí se acumulan con exactitud",()=>{
+ const x=data();
+ x.stock=x.stock.filter(v=>v.product_code!=="00200");
+ x.stock.push({...record("00200","RESERVA","-7.5"),lot:"L1"});
+ x.stock.push({...record("00200","RESERVA","-4.625"),lot:"L2"});
+ const report=buildFixedStockReport(x);
+ assert.equal(report.rows.find(r=>r.code==="00200").quantity,"-12.125");
+});
