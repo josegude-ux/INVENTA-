@@ -185,6 +185,24 @@ REVOKE ALL ON FUNCTION inventa07_lab.team_operate(uuid,text,text,bigint,uuid) FR
 GRANT EXECUTE ON FUNCTION inventa07_lab.team_operate(uuid,text,text,bigint,uuid)
  TO inventa07_lab_client;
 
+-- New confirmations retain immutable team identity at time of count.
+-- Earlier events are intentionally left untouched (NULL team metadata).
+ALTER TABLE inventa07_lab.lot_confirmation_events
+ ADD COLUMN team_id uuid REFERENCES inventa07_lab.team_terminals(team_id),
+ ADD COLUMN original_a uuid,
+ ADD COLUMN original_b uuid;
+CREATE FUNCTION inventa07_lab.stamp_original_team_on_confirmation()
+ RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $stamp$
+DECLARE team inventa07_lab.team_terminals%ROWTYPE;
+BEGIN
+ SELECT * INTO STRICT team FROM inventa07_lab.team_terminals
+  WHERE campaign_id=NEW.campaign_id AND location_code=NEW.location_code;
+ NEW.team_id:=team.team_id;
+ NEW.original_a:=team.original_a;
+ NEW.original_b:=team.original_b;
+ RETURN NEW;
+END $stamp$;
+REVOKE ALL ON FUNCTION inventa07_lab.stamp_original_team_on_confirmation() FROM PUBLIC;
 -- Fail-closed database barrier even if an old count RPC forgets the team.
 -- Existing laboratory tests run BEFORE this additive module is installed.
 CREATE FUNCTION inventa07_lab.block_unleased_lot_write()
@@ -201,4 +219,7 @@ CREATE TRIGGER enforce_team_lease_lot BEFORE INSERT OR UPDATE
 CREATE TRIGGER enforce_team_lease_event BEFORE INSERT
  ON inventa07_lab.lot_confirmation_events FOR EACH ROW
  EXECUTE FUNCTION inventa07_lab.block_unleased_lot_write();
+CREATE TRIGGER stamp_original_team_on_confirmation BEFORE INSERT
+ ON inventa07_lab.lot_confirmation_events FOR EACH ROW
+ EXECUTE FUNCTION inventa07_lab.stamp_original_team_on_confirmation();
 COMMIT;
