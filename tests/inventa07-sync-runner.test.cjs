@@ -30,7 +30,7 @@ function harness(options={}){
   saveV2:async(_u,next)=>{written++;saved=structuredClone(next);},
   getCapabilities:async()=>options.capabilities??caps,
   withExclusiveLock:async(_key,fn)=>fn(),
-  submitV2:async job=>{submitted++;if(backend.submit)return backend.submit(job,{validReceipt,replaceQueue:q=>saved=q,setAccount:u=>account=u,setAuthenticated:v=>authenticated});return validReceipt(job);},
+  submitV2:async job=>{submitted++;if(backend.submit)return backend.submit(job,{validReceipt,replaceQueue:q=>saved=q,setAccount:u=>account=u,setAuthenticated:v=>authenticated=v});return validReceipt(job);},
   lookupV2Receipt:async job=>{lookups++;if(backend.lookup)return backend.lookup(job,{validReceipt});return null;}
  };
  return {deps,get queue(){return saved;},get written(){return written;},
