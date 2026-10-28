@@ -74,15 +74,21 @@ export function toPreparaFixedReadV1({snapshot,verifiedScope,now}={}){
  // This is a stock-specific batch, not total rows of a mixed Excel import.
  const countOK=Number.isSafeInteger(batch.expected_rows)&&batch.expected_rows>=1&&
   batch.expected_rows===batch.validated_rows && batch.expected_rows===stockRows;
- const importedMs=timestamp(batch.published_at),currentMs=timestamp(now);
+ const exportedMs=timestamp(batch.exported_at),importedMs=timestamp(batch.imported_at);
+ const publishedMs=timestamp(batch.published_at),currentMs=timestamp(now);
  const hours=snapshot.freshness?.maxAgeHours;
  const ageOK=Number.isSafeInteger(hours)&&hours>0&&hours<=8760;
- const stale=batch.state!=="published"||importedMs===null||!ageOK||
-   importedMs>currentMs||currentMs-importedMs>hours*3600000||
+ const datesVerified=proof.exportDateAttested===true&&proof.importDateAttested===true&&
+   exportedMs!==null&&importedMs!==null&&publishedMs!==null&&
+   exportedMs<=importedMs&&importedMs<=publishedMs&&publishedMs<=currentMs;
+ // A recent publication cannot make a historic BC Excel fresh again.
+ const stale=batch.state!=="published"||!ageOK||!datesVerified||
+   currentMs-exportedMs>hours*3600000||
    snapshot.freshness?.forcedStale!==false;
  const stockComplete=batch.state==="published"&&batch.source==="bc_excel_manual"&&
    countOK&&coverage.stock===true&&proof.fileAndRowsAttested===true&&
-   proof.parserApproved===true&&clean(batch.file_name)!==""&&importedMs!==null;
+   proof.parserApproved===true&&clean(batch.file_name)!==""&&
+   datesVerified;
  const catalogComplete=coverage.catalog===true&&coverage.catalogScopeVerified===true;
  const positionsComplete=coverage.positions===true&&coverage.positionsReconciled===true;
  const locationsComplete=coverage.locations===true&&coverage.locationsScoped===true;
@@ -92,7 +98,9 @@ export function toPreparaFixedReadV1({snapshot,verifiedScope,now}={}){
   warehouse,authorized:true,truncated:false,stockComplete,catalogComplete,
   positionsComplete,locationsComplete,absentStockIsZero,stale,
   sourceFile:clean(batch.file_name)||null,
+  exportedAt:exportedMs===null?null:new Date(exportedMs).toISOString(),
   importedAt:importedMs===null?null:new Date(importedMs).toISOString(),
+  publishedAt:publishedMs===null?null:new Date(publishedMs).toISOString(),
   importId:batch.id??null,contractVersion:FIXED_CONTRACT_VERSION,
   stockRows,stockExpectedRows:batch.expected_rows,
   totalImportRows:Number.isSafeInteger(batch.total_import_rows)?batch.total_import_rows:null
