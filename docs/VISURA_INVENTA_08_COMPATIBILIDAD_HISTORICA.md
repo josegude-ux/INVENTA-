@@ -33,3 +33,6 @@
 
 ## Alcance y bloqueo
 Auditoría comprobada en ficheros de la rama main de GitHub, no es lectura del estado actual de Supabase ni de una PWA cacheada. NO ALTERAR PRODUCCIÓN, NO FUSIONAR, NO DESPLEGAR. La integración depende de arquitectura compartida y autorizaciones distintas.
+
+## Advertencia adicional: fallback de Consulta
+La función readConsultData de warehouse-management.js (líneas aproximadas 108-128) utiliza bc_import_current y, si no hay importación BC activa, recurre a stock_snapshot de una campaña. El módulo administrativo 08 **no puede adoptar ese fallback**: el contrato aprobado exige una única importación teórica de Excel BC validada y publicada, sin reemplazar su origen por snapshots de inventario físico o campaña. Cuando no existe, debe aparecer SIN DATOS / NO FIABLE. No cambiar este comportamiento histórico de Consulta desde el chat 08; coordinarlo con su responsable antes de integrar.
