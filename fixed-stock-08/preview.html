@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><title>VISURA INVENTA 08 · Demo aislada</title>
+<link rel="stylesheet" href="./preview.css"></head>
+<body><div class="app">
+<aside class="sidebar" aria-label="Administración">
+ <div><div class="brand">VISURA INVENTA</div><div class="sub">08 · Control administrativo</div></div>
+ <button class="navItem" type="button" disabled>Resumen</button>
+ <button class="navItem active" type="button" aria-current="page">Posiciones y stock</button>
+ <button class="navItem" type="button" disabled>Maestro de posiciones</button>
+</aside>
+<main class="main">
+ <div class="topline"><div><p class="muted">Administración / Control de posiciones fijas y stock</p>
+ <h1>Control de posiciones fijas y stock</h1></div>
+ <span class="pill">Vista aislada de pruebas</span></div>
+ <p class="disclaimer" role="note">DATOS SINTÉTICOS. Prototipo sin conexión, autenticación, acceso a Supabase ni edición de posiciones. No es una pantalla operativa.</p>
+ <section id="listing">
+  <section class="metrics" aria-label="Indicadores">
+   <div class="metric"><span>Referencias a cero</span><strong id="mZero">—</strong></div>
+   <div class="metric"><span>Referencias negativas</span><strong id="mNegative">—</strong></div>
+   <div class="metric"><span>Asociaciones afectadas</span><strong id="mAssociations">—</strong></div>
+   <div class="metric"><span>Posiciones distintas</span><strong id="mPositions">—</strong></div>
+   <div class="metric"><span>Sin datos fiables</span><strong id="mUnreliable">—</strong></div>
+  </section>
+  <section class="panel">
+   <h2>Filtrar asociaciones</h2>
+   <div class="filters">
+    <label>Referencia o descripción<input id="search" type="search" placeholder="Ej. 00100 o Artículo"></label>
+    <label>Pasillo<input id="aisle" type="text" placeholder="Ej. K"></label>
+    <label>Posición<input id="location" type="text" placeholder="Ej. K02"></label>
+    <label>Estado<select id="state"><option value="">Todos los estados</option><option>CERO</option><option>NEGATIVO</option><option>POSITIVO</option><option>SIN DATOS</option><option>NO FIABLE</option></select></label>
+   </div>
+   <div class="actions">
+    <label>Vista<select id="view"><option value="affected">Cero y negativos</option><option value="unreliable">Sin datos / no fiables</option><option value="all">Todas las referencias</option></select></label>
+    <button id="export" type="button" class="primary">Exportar XLSX · una hoja</button>
+   </div>
+   <p id="resultCount" class="muted" role="status"></p>
+   <div class="tableWrap"><table aria-label="Asociaciones de posiciones fijas">
+    <thead><tr><th>Pasillo</th><th>Posición</th><th>Referencia</th><th>Descripción</th><th>Stock total</th><th>Estado</th><th>Acción</th></tr></thead>
+    <tbody id="reportRows"></tbody></table></div>
+   <div class="cards" id="reportCards" aria-label="Asociaciones en móvil"></div>
+  </section>
+ </section>
+ <section class="panel detail hidden" id="detail" aria-label="Ficha de asociación">
+  <button class="secondary" id="back" type="button">Volver al informe</button>
+  <h2>Ficha de asociación (solo lectura)</h2>
+  <div id="detailText"></div>
+  <p class="muted">La gestión de altas, retiradas y reactivaciones requerirá el maestro auténtico y permisos verificados en servidor.</p>
+ </section>
+</main></div><script type="module" src="./preview.mjs"></script></body></html>
