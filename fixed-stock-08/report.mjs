@@ -57,7 +57,10 @@ export function buildFixedStockReport({meta,products=[],locations=[],fixed=[],st
  for(const f of fixed){
   if(f.active!==true)continue;
   const code=txt(f.product_code),loc=txt(f.location_code),wh=txt(f.warehouse),pair=key(wh,code,loc);
-  if(!code||!loc||wh!==warehouse||seen.has(pair)||!txt(f.associationId))issues.push("Asociación fija activa ambigua, duplicada o sin identidad");
+  // Nunca devolver asociaciones de otro almacén, ni siquiera como NO FIABLE.
+  // El origen es inconsistente: invalidar la fiabilidad del lote propio.
+  if(wh!==warehouse){issues.push("Asociación fija activa de almacén ajeno a la instantánea");continue;}
+  if(!code||!loc||seen.has(pair)||!txt(f.associationId))issues.push("Asociación fija activa ambigua, duplicada o sin identidad");
   seen.add(pair);active.push(f);
  }
  const consistency=[...new Set(issues)];
