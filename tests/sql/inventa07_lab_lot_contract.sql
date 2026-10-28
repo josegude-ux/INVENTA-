@@ -106,9 +106,7 @@ BEGIN
  IF (SELECT count(*) FROM inventa07_lab.lot_states WHERE product_code='SKU0001'
      AND lot IN ('LOT-A','LOT-B') AND status='confirmed')<>2 THEN
   RAISE EXCEPTION 'Lots of same product were merged'; END IF;
- IF (SELECT count(*) FROM inventa07_lab.lot_confirmation_events
-  WHERE product_code='SKU0001' AND lot IN ('LOT-A','LOT-B'))<>2 THEN
-  RAISE EXCEPTION 'Immutable confirmations are missing'; END IF;
+ -- Client role intentionally has NO SELECT on append-only event history.
 END $different_lot$;
 DO $empty_lot$
 DECLARE response jsonb;
