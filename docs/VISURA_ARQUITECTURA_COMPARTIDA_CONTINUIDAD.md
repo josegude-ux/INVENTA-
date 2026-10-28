@@ -211,3 +211,10 @@ Prueba de regresión del lote histórico y ausencia de puntero añadida. Acción
 **Responsables próximos:** 07 valida allowlist de físico con campañas/parejas, 08 certifica IDs/versiones y motor con nuevo HEAD, PREPARA certifica guard V1 con nuevo HEAD, 05 fija SHAs de todos y repite **solo** suites cruzadas afectadas. 04 conserva esquema y pasarela privados sin activar.
 
 **Prohibiciones cumplidas:** no tocar ramas 05/07/08/PREPARA, no ejecutar SQL real, no modificar Auth/RLS productivas, credenciales, Business Central, Tanques o Control de Cargas. Todos los cambios son de laboratorio/documentación exclusiva de PR #22.
+
+
+### Actualización concurrente PREPARA #76 a 154555fe — comprobada antes del cierre
+
+Al finalizar la revisión, KONTROLA PR #76 pasó de `3ec761c6e5cac52154846bda17737406499f479d` a `154555fe9990d5347679d23967848c3fc14e6eb4`. GitHub compara **un commit adicional que solo introduce** `docs/CONTROL_POSICIONES_FIJAS_CONTINUIDAD_20261028.md` (48 líneas). **No cambió código ni contrato V1 respecto del SHA funcional revisado**, por lo que no procede duplicar código ni asumir nueva incompatibilidad. En el HEAD documental nuevo se verificaron GitHub Actions: [general #40637340374](https://github.com/josegude-ux/KONTROLA/actions/runs/40637340374) **SUCCESS**, [responsive #40637340375](https://github.com/josegude-ux/KONTROLA/actions/runs/40637340375) **SUCCESS**, [RPC aislada #40637340380](https://github.com/josegude-ux/KONTROLA/actions/runs/40637340380) **SUCCESS**.
+
+El nuevo documento PREPARA alerta adicionalmente que la rama de integración B01/PR #75 contiene versiones anteriores del informe y deberá contemplar el nuevo `src/fixed-position-contract-v1.mjs` en su service worker y cache. **Responsabilidad del integrador 02/06, no de 04**. No se modifica KONTROLA, B01 ni `sw.js` desde arquitectura; 05 debe incluir esta comprobación en la matriz de aceptación.
