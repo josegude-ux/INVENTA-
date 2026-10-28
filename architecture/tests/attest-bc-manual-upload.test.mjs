@@ -73,3 +73,13 @@ test("declared source row count cannot be inferred from truncated rows",async()=
  assert.equal(out.receipt,null);
  assert.ok(out.errors.some(e=>e.code==="ROW_COUNT_MISMATCH"));
 });
+
+test("parser returning rounded Number never receives a valid signed receipt",async()=>{
+ const x=await attestManualBCImport(args({readRowsFromBytes:async()=>({
+  expectedRows:1,rows:[row({stockCalculado:Number("99999999999.123456")})]
+ })}));
+ assert.equal(x.valid,false);
+ assert.equal(x.receipt,null);
+ assert.equal(x.rowsDigestV2,null);
+ assert.ok(x.errors.some(e=>e.code==="INVALID_STOCK_CALCULATED"));
+});
