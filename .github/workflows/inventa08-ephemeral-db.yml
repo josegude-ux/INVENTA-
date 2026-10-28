@@ -49,3 +49,5 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f fixed-stock-08/lab/001_disposable_associations.sql
       - name: Probar asociaciones múltiples, bajas lógicas y rollback
         run: psql -X -v ON_ERROR_STOP=1 -f fixed-stock-08/lab/002_disposable_associations_tests.sql
+      - name: Comprobar dos escrituras en conflicto sin perder auditoría
+        run: bash fixed-stock-08/lab/003_concurrent_transition.sh
