@@ -68,8 +68,14 @@ function checkSource(meta,products,locations,fixed,stock){
     (!Number.isSafeInteger(meta.expectedFixedRows)||meta.expectedFixedRows<0||
       meta.expectedFixedRows!==fixedCount))
   issues.push("Control de integridad de posiciones activas incompleto");
+ const stockKeys=new Set();
  for(const line of stock){
   const code=txt(line?.product_code);
+  const stockKey=key(txt(line?.warehouse),txt(line?.importId),code,
+                     txt(line?.location_code),txt(line?.lot));
+  if(stockKeys.has(stockKey))
+   issues.push("Línea BC duplicada por artículo, ubicación y lote");
+  stockKeys.add(stockKey);
   if(txt(line?.warehouse)!==wh||txt(line?.importId)!==batch||
      !code||!txt(line?.location_code))
    issues.push("Línea BC sin ámbito, lote o artículo coherente");
