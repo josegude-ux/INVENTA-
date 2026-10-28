@@ -32,6 +32,9 @@ CREATE TABLE inventa07_lab.team_terminals (
     OR (mode<>'inactive' AND holder_actor IS NOT NULL AND holder_session IS NOT NULL AND expires_at IS NOT NULL)),
  CHECK(mode<>'pair' OR original_b IS NOT NULL)
 );
+-- One physical device cannot simultaneously hold two active team leases.
+CREATE UNIQUE INDEX one_active_team_per_physical_terminal
+ ON inventa07_lab.team_terminals(device_id) WHERE mode<>'inactive';
 CREATE TABLE inventa07_lab.team_terminal_events (
  mutation_id uuid PRIMARY KEY,
  team_id uuid NOT NULL REFERENCES inventa07_lab.team_terminals(team_id),
