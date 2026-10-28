@@ -207,6 +207,58 @@ BEGIN
  RETURN NEW;
 END $stamp$;
 REVOKE ALL ON FUNCTION inventa07_lab.stamp_original_team_on_confirmation() FROM PUBLIC;
+-- Remove the legacy direct lot entrypoint and replace it with the team gate.
+-- The old function remains callable internally by owner, but NEVER by client.
+REVOKE EXECUTE ON FUNCTION inventa07_lab.apply_lot(
+ uuid,text,text,text,text,uuid,bigint,jsonb,boolean,bigint)
+ FROM inventa07_lab_client;
+CREATE FUNCTION inventa07_lab.team_apply_lot(
+ p_campaign uuid,p_location text,p_product text,p_lot text,
+ p_operation text,p_mutation uuid,p_expected_revision bigint,
+ p_breakdown jsonb DEFAULT NULL,p_explicit_zero boolean DEFAULT false,
+ p_review_revision bigint DEFAULT NULL
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $gate$
+BEGIN
+ IF NOT inventa07_lab.team_authorized(p_campaign,p_location) THEN
+  RAISE EXCEPTION 'Team terminal lease or individual session invalid';
+ END IF;
+ RETURN inventa07_lab.apply_lot(p_campaign,p_location,p_product,p_lot,
+  p_operation,p_mutation,p_expected_revision,p_breakdown,p_explicit_zero,p_review_revision);
+END $gate$;
+REVOKE ALL ON FUNCTION inventa07_lab.team_apply_lot(
+ uuid,text,text,text,text,uuid,bigint,jsonb,boolean,bigint) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION inventa07_lab.team_apply_lot(
+ uuid,text,text,text,text,uuid,bigint,jsonb,boolean,bigint)
+ TO inventa07_lab_client;
+
+-- Lost-response receipts are also restricted to the current authenticated holder.
+REVOKE EXECUTE ON FUNCTION inventa07_lab.lot_v2_receipt(uuid)
+ FROM inventa07_lab_client;
+CREATE FUNCTION inventa07_lab.team_lot_v2_receipt(
+ p_campaign uuid,p_location text,p_mutation uuid
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $receipt_gate$
+DECLARE saved inventa07_lab.mutation_receipts%ROWTYPE;
+BEGIN
+ IF NOT inventa07_lab.team_authorized(p_campaign,p_location) THEN
+  RAISE EXCEPTION 'Team terminal lease or individual session invalid'; END IF;
+ SELECT * INTO saved FROM inventa07_lab.mutation_receipts WHERE mutation_id=p_mutation;
+ IF NOT FOUND OR saved.request->>'campaign'<>p_campaign::text
+   OR saved.request->>'location'<>p_location THEN
+  RETURN NULL; END IF;
+ RETURN inventa07_lab.lot_v2_receipt(p_mutation);
+END $receipt_gate$;
+REVOKE ALL ON FUNCTION inventa07_lab.team_lot_v2_receipt(uuid,text,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION inventa07_lab.team_lot_v2_receipt(uuid,text,uuid)
+ TO inventa07_lab_client;
+
+-- Earlier reference/correction RPCs lack the new team/terminal contract.
+-- They are intentionally disabled for this POST-INSTALL team laboratory stage.
+REVOKE EXECUTE ON FUNCTION inventa07_lab.apply_reference(
+ uuid,text,text,text,uuid,bigint,numeric,boolean,bigint)
+ FROM inventa07_lab_client;
+REVOKE EXECUTE ON FUNCTION inventa07_lab.apply_correction(
+ uuid,text,text,text,uuid,bigint,bigint,numeric,boolean,text,text,uuid)
+ FROM inventa07_lab_client;
 -- Fail-closed database barrier even if an old count RPC forgets the team.
 -- Existing laboratory tests run BEFORE this additive module is installed.
 CREATE FUNCTION inventa07_lab.block_unleased_lot_write()
