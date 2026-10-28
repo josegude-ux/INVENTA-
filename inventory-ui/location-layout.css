@@ -1,0 +1,29 @@
+/* VISURA INVENTA 07 — isolated location grouping visual only.
+   No selectors for published PWA, no real authentication or data operations. */
+.vi07-location-layout{display:flex;flex-direction:column;gap:16px;min-width:0}
+.vi07-location-head{padding-bottom:6px;border-bottom:1px solid #dbe3eb}
+.vi07-location-head h2{margin:0 0 6px;font-size:clamp(18px,2vw,24px)}
+.vi07-location-head p{margin:4px 0}
+.vi07-location-layout :is(.vi07-location-pending,.vi07-location-final){display:flex;flex-direction:column;gap:10px;min-width:0}
+.vi07-location-layout h3{margin:0 0 4px;font-size:16px}
+.vi07-location-item{min-width:0;background:#fff;padding:14px;border:1px solid #dbe3eb;border-radius:12px}
+.vi07-location-item strong{overflow-wrap:anywhere}
+.vi07-location-item p{margin:5px 0 0}
+.vi07-location-layout .vi07-location-confirmed{border:1px solid #c8ddce;background:#f3fbf6;border-radius:12px;min-width:0}
+.vi07-location-confirmed summary{min-height:48px;padding:12px 16px;display:list-item;cursor:pointer;font-weight:750}
+.vi07-location-confirmed>.vi07-location-final{padding:0 12px 14px}
+.vi07-location-confirmed .vi07-location-item{border-color:#c8ddce}
+.vi07-location-pending .vi07-location-item{border-left:4px solid #ad192d}
+.vi07-location-layout .vi07-secondary{color:#607388}
+@media (max-width:699px){
+ .vi07-location-item{padding:12px}
+ .vi07-location-confirmed summary{min-height:48px}
+}
+@media (min-width:1180px){
+ .vi07-location-layout{gap:20px}
+ .vi07-location-item{padding:18px}
+}
+@media print{
+ .vi07-location-confirmed>.vi07-location-final{display:block}
+ .vi07-location-layout{gap:10px}
+}

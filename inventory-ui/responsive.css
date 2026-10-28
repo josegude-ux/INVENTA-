@@ -1,0 +1,91 @@
+/* VISURA INVENTA 07 — isolated responsive UI contract.
+ * NOT loaded by the published PWA. All selectors stay under .vi07-shell. */
+.vi07-shell,.vi07-shell *{box-sizing:border-box}
+.vi07-shell{--vi07-ink:#20354a;--vi07-muted:#607388;--vi07-line:#dbe3eb;--vi07-accent:#ad192d;background:#f4f7fa;color:var(--vi07-ink);font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;min-height:100dvh;min-width:0;display:grid;grid-template-areas:"head" "nav" "main";grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto 1fr}
+.vi07-shell button,.vi07-shell input,.vi07-shell select{font:inherit}
+.vi07-shell button{min-height:44px;cursor:pointer;touch-action:manipulation}
+.vi07-shell :is(button,input,select,summary):focus-visible{outline:3px solid #337fc0;outline-offset:2px}
+.vi07-head{grid-area:head;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:white;border-bottom:1px solid var(--vi07-line)}
+.vi07-head h1{font-size:clamp(18px,2vw,25px);line-height:1.2;margin:0}
+.vi07-head small{color:var(--vi07-muted)}
+.vi07-nav{grid-area:nav;min-width:0;display:flex;gap:8px;overflow-x:auto;padding:8px 12px;background:#f9fafc;border-bottom:1px solid var(--vi07-line)}
+.vi07-nav a{display:flex;align-items:center;min-height:44px;border-radius:10px;white-space:nowrap;padding:8px 12px;color:#314e67;text-decoration:none;font-weight:700}
+.vi07-nav a[aria-current="page"]{background:#e7effb;color:#114779}
+.vi07-main{grid-area:main;min-width:0;width:100%;max-width:1720px;margin-inline:auto;padding:12px}
+.vi07-screen{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start;min-width:0}
+.vi07-screen[hidden]{display:none!important}
+.vi07-pane,.vi07-panel{min-width:0;background:#fff;border:1px solid var(--vi07-line);border-radius:15px;padding:14px}
+.vi07-pane h2,.vi07-panel h2{font-size:18px;margin:0 0 12px}
+.vi07-panel h3{font-size:15px;margin:0 0 8px}
+.vi07-stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.vi07-row{display:flex;align-items:center;gap:10px;min-width:0}
+.vi07-row>.vi07-grow{flex:1;min-width:0}
+.vi07-secondary{color:var(--vi07-muted);font-size:13px}
+.vi07-input{min-width:0;width:100%;min-height:44px;padding:9px;border:1px solid #bccbd9;border-radius:10px;background:#fff;color:var(--vi07-ink)}
+.vi07-reference{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--vi07-line)}
+.vi07-reference strong,.vi07-reference span{overflow-wrap:anywhere}
+.vi07-reference p{font-size:13px;color:var(--vi07-muted);margin:3px 0 0}
+.vi07-shell .vi07-scan{display:grid;place-items:center;width:48px;min-height:48px;border:1px solid #c3d5e5;border-radius:11px;background:#edf5fd;color:#173f66}
+.vi07-entry{display:flex;flex-direction:column;gap:12px}
+.vi07-count-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.vi07-count-fields label{display:grid;gap:5px;font-size:13px;font-weight:650}
+.vi07-pallet-toggle{align-self:flex-start;padding:10px 14px;border-radius:10px;background:#ecf3f9;border:1px solid #c5d6e6;color:#173f66;font-weight:750}
+.vi07-pallet-detail{background:#f7fafc;padding:12px;border:1px solid #d6e2ef;border-radius:12px}
+.vi07-pallet-detail[hidden]{display:none!important}
+.vi07-confirmed{border:1px solid #c8ddce;background:#f3fbf6;border-radius:12px}
+.vi07-confirmed summary{padding:13px;cursor:pointer;min-height:44px;font-weight:700}
+.vi07-confirmed [data-body]{padding:0 13px 13px}
+.vi07-action{border:0;border-radius:10px;padding:10px 14px;background:var(--vi07-accent);color:#fff;font-weight:800}
+.vi07-action--secondary{border:1px solid #becddc;background:white;color:#244b6c}
+.vi07-cards{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.vi07-card{border:1px solid var(--vi07-line);border-radius:12px;padding:12px;min-width:0}
+.vi07-table-wrap{max-width:100%;overflow-x:auto;border:1px solid var(--vi07-line);border-radius:12px}
+.vi07-table{border-collapse:collapse;width:100%;min-width:570px;font-size:14px}
+.vi07-table th,.vi07-table td{padding:11px;text-align:left;border-bottom:1px solid var(--vi07-line);white-space:nowrap}
+.vi07-table th{background:#eff4f8}
+.vi07-status{font-size:12px;font-weight:800;color:#476a82}
+.vi07-main :is(p,li){line-height:1.45}
+.vi07-main h2{overflow-wrap:anywhere}
+@media (max-width:699px){
+ .vi07-shell{min-height:100dvh}
+ .vi07-head{padding:10px 12px}
+ .vi07-main{padding:10px}
+ .vi07-pane,.vi07-panel{padding:12px}
+ .vi07-nav{overscroll-behavior-x:contain}
+ .vi07-reference{grid-template-columns:minmax(0,1fr) 48px}
+ .vi07-action{width:100%}
+}
+@media (min-width:700px){
+ .vi07-shell{grid-template-areas:"head head" "nav main";grid-template-columns:220px minmax(0,1fr);grid-template-rows:auto 1fr}
+ .vi07-nav{flex-direction:column;border-right:1px solid var(--vi07-line);border-bottom:0;overflow-x:visible;padding:16px 10px}
+ .vi07-nav a{white-space:normal}
+ .vi07-main{padding:18px}
+ .vi07-screen{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+ .vi07-screen> .vi07-wide{grid-column:1/-1}
+ .vi07-count-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .vi07-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (min-width:700px) and (max-width:959px){
+ .vi07-screen{grid-template-columns:minmax(0,1fr)}
+}
+@media (min-width:1180px){
+ .vi07-shell{grid-template-columns:288px minmax(0,1fr)}
+ .vi07-nav{padding:24px 18px}
+ .vi07-main{padding:24px clamp(20px,2.6vw,48px)}
+ .vi07-screen{grid-template-columns:minmax(0,1.6fr) minmax(340px,1fr);gap:22px}
+ .vi07-pane,.vi07-panel{padding:20px}
+ .vi07-cards{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-height:500px) and (orientation:landscape){
+ .vi07-head{padding-block:7px}
+ .vi07-nav{padding-block:5px}
+ .vi07-main{padding-block:8px}
+ .vi07-pane,.vi07-panel{padding-block:10px}
+}
+@media print{
+ .vi07-shell{display:block;background:white;min-height:auto}
+ .vi07-nav,.vi07-scan,.vi07-action,.vi07-pallet-toggle{display:none!important}
+ .vi07-main{max-width:none;padding:0}
+ .vi07-screen{display:block}
+ .vi07-pane,.vi07-panel{break-inside:avoid;border-color:#bcbcbc}
+}
