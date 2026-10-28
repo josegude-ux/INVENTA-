@@ -23,3 +23,16 @@ test("invalid numeric literal blocked",()=>{assert.equal(decimalBC("1e99"),null)
 test("no mutation of input",()=>{const r=row(),str=JSON.stringify(r);run([r]);assert.equal(JSON.stringify(r),str)});
 test("empty or unbounded data blocked",()=>{assert.equal(run([]).valid,false);assert.equal(run([row()],{expectedRows:200001}).valid,false)});
 test("source absent lot normalized to empty",()=>{const a=run([row({lote:undefined})]);assert.equal(a.valid,true);assert.equal(a.normalizedRows[0].lote,"")});
+
+test("BC decimal must be source lexical text, never already-rounded JS Number",()=>{
+ const source="99999999999.123456";
+ assert.equal(decimalBC(source),source);
+ assert.equal(decimalBC(Number(source)),null);
+ assert.equal(decimalBC(0),null);
+ const rowNumeric=row({stockCalculado:Number(source)});
+ const checked=run([rowNumeric]);
+ assert.equal(checked.valid,false);
+ assert.ok(checked.errors.some(e=>e.code==="INVALID_STOCK_CALCULATED"));
+ const rowText=row({stockCalculado:source});
+ assert.equal(run([rowText]).normalizedRows[0].stockCalculado,source);
+});
