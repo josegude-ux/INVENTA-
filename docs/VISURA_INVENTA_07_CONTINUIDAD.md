@@ -143,3 +143,24 @@ Siguiente tarea técnica no bloqueada: preparar contratos de consolidación admi
 - **Próximo trabajo seguro:** contrato del servidor de incidencias/provisionales y compatibilidad de datos heredados sobre PostgreSQL temporal, sin modificar la base activa. Solo integrar y activar con autorización expresa de producción.
 
 **No merge, no deploy, no cambios en producción, no API directa de BC.**
+
+
+## Continuación segura — 28/10/2026: transición de sincronización y clave por lote
+
+**Estado de partida comprobado:** main en a0f76ab1b1a6515ac647facbadca84cfe838d8ac; PR #24 en borrador, sin merge. Se leyó real-counts.js de main y el contrato de persistencia de esta rama; se verificó que la cola actual es inventa-count-outbox-v1:<uid>, usa client_mutation_id y POST directo a public.counts, con campo lot que no se debe perder. No se han modificado archivos de la PWA publicada ni datos reales.
+
+Nuevos archivos aislados:
+- inventory-core/outbox-compat.cjs y tests/inventa07-outbox-compat.test.cjs: auditoría no destructiva de cola heredada, sin descartar duplicados; cola V2 separada, conservando producto, lote, desglose y cantidad exacta; borrador, confirmación y corrección; cero explícito; recibo idempotente y bloqueo por capacidades no comprobadas.
+- inventory-core/sync-runner.cjs y tests/inventa07-sync-runner.test.cjs: orquestación con adaptadores inyectados y lock obligatorio de nombre compatible con flush V1, comprobación de identidad y permisos antes/después del envío, recuperación de respuesta perdida usando el mismo UUID, denegación de lectura tras 401/403, conservación al modificar la cola o cambiar la cuenta.
+- inventory-lab/006_disposable_lot_contract.sql y tests/sql/inventa07_lab_lot_contract.sql: en PostgreSQL temporal, nueva clave por (campaña, ubicación, referencia, lote), borrador/revisión/confirmación y recálculo de unidades, cajas y palés EN SERVIDOR, sin confiar en subtotales del cliente; históricos por lote. No altera las tablas de prueba anteriores.
+- docs/VISURA_INVENTA_07_COMPATIBILIDAD_OUTBOX.md: contrato de transición, requisitos de permiso y límites de activación.
+
+**Evidencia:** suite general INVENTA PASS sobre commit 2ac2b90aa4e557b27c112c0e859dfb985ba23023; PostgreSQL temporal con lotes y recálculo PASS en commit 3db87f8b674340ebacfacfa3f7576faf7048409e (run 40606918036). Después se añadieron pruebas de denegación de acceso por cuenta no asignada y de UPDATE directo sobre lotes; verificar el HEAD final y su CI antes de considerar concluido el hito.
+
+**Errores de ensayo corregidos:** aserción textual de una cola V1 conservada, simulación de logout en el test de transportes y aserción de acceso a históricos de lote que se estaba ejecutando erróneamente desde el rol de operario. Las nuevas pruebas pasan en CI después de las correcciones correspondientes; no se relajaron permisos reales.
+
+**Limitación principal:** la PWA no llama al nuevo contrato; los ensayos PostgreSQL usan una identidad simulada por psql, no JWT ni sesión real Supabase. El nuevo prototipo de lote todavía no añade todas las operaciones V2 de parejas/correcciones por lote ni el recibo estándar del adaptador. Ningún handshake de capacidades productivo debe estar activo. Continuar con laboratorio y pruebas seguras, no forzar la migración.
+
+**Siguiente tarea independiente autorizada:** unificar la devolución de recibos idempotentes entre el contrato PostgreSQL de lotes y el adaptador V2, añadir control de autor original/pareja y verificar permisos con sesiones realmente autenticadas en entorno de pruebas separado antes de integrar PWA. No alterar real-counts.js mientras PR #20 y #22/#23 sigan en curso sin verificar integración.
+
+**Prohibiciones preservadas:** NO MERGE, NO DEPLOY, NO MIGRACIONES A SUPABASE ACTIVA, NO CAMBIAR DATOS NI PERMISOS REALES, NO API DE BUSINESS CENTRAL, NO CONVERSION AUTOMATICA DE COLAS.
