@@ -161,3 +161,32 @@ jobs:
           test -n "$PG_CONTAINER"
           docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_fixed_transition_cas_UNAPPLIED.sql
           docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/150_verify_fixed_transition_cas_pg16.sql
+
+      - name: Two-session association CAS and audit race in disposable PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec "$PG_CONTAINER" rm -f /tmp/visura_fixed_cas_lock_ready
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/151_hold_fixed_cas_pg16.sql > /tmp/visura-fixed-cas-holder.log 2>&1 &
+          HOLDER_PID=$!
+          trap 'kill "$HOLDER_PID" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 100); do
+            if docker exec "$PG_CONTAINER" test -f /tmp/visura_fixed_cas_lock_ready; then ready=1; break; fi
+            if ! kill -0 "$HOLDER_PID" 2>/dev/null; then
+              cat /tmp/visura-fixed-cas-holder.log
+              exit 1
+            fi
+            sleep 0.1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/visura-fixed-cas-holder.log
+            echo "Timed out waiting for synthetic fixed association row lock" >&2
+            exit 1
+          fi
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/152_conflicting_fixed_cas_pg16.sql
+          wait "$HOLDER_PID"
+          trap - EXIT
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/153_verify_fixed_cas_concurrency_pg16.sql
