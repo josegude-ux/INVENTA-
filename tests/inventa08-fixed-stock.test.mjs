@@ -204,3 +204,16 @@ test("no se crean ceros si falta la unidad de catálogo",()=>{
  assert.equal(report.rows.length,4);
  assert.ok(report.issues.some(e=>e.includes("sin unidad")));
 });
+
+test("referencia fija huérfana no permite publicar otras filas como fiables",()=>{
+ const x=data();x.products=x.products.filter(p=>p.code!=="00200");
+ const report=buildFixedStockReport({...x,filters:{view:"unreliable"}});
+ assert.ok(report.issues.some(v=>v.includes("Posición fija sin artículo")));
+ assert.ok(report.rows.every(r=>r.state===ESTADOS.NO_FIABLE));
+});
+test("posición fija sin ubicación certificada invalida instantánea completa",()=>{
+ const x=data();x.locations=x.locations.filter(v=>v.code!=="K10");
+ const report=buildFixedStockReport({...x,filters:{view:"unreliable"}});
+ assert.equal(report.rows.length,4);
+ assert.ok(report.issues.some(v=>v.includes("Posición fija sin artículo o ubicación")));
+});
