@@ -57,3 +57,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f fixed-stock-08/lab/005_disposable_bc_snapshot.sql
       - name: Publicación BC concurrente sin mezcla de instantáneas
         run: bash fixed-stock-08/lab/006_disposable_bc_concurrency.sh
+      - name: Crear roles simulados en laboratorio descartable
+        run: psql -X -v ON_ERROR_STOP=1 -f fixed-stock-08/lab/007_disposable_read_roles.sql
+      - name: Operario sin acceso a teoría y administrador sin escritura BC
+        run: bash fixed-stock-08/lab/008_disposable_role_checks.sh
