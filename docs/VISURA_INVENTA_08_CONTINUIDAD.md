@@ -66,3 +66,19 @@ No hay enlace a `index.html` ni autorización real de servidor; existe un riesgo
 - Regresión añadida a `tests/inventa08-fixed-stock.test.mjs` con código reservado del almacén ajeno; no prueba por sí sola que RLS real esté protegido.
 - Contrato de lectura `docs/VISURA_INVENTA_08_CONTRATO_LECTURA_Y_RETIRADA.md`: propuesta no aplicada para autorización en servidor, instantánea REPEATABLE READ, lectura BC por todas las ubicaciones y retirada lógica reversible.
 - Pendiente CI del HEAD posterior a estos cambios. No hay adaptador de red, integración real ni modificaciones de otras ramas.
+
+## Hito 4 — controles de integridad reforzados (28/10/2026)
+
+**Código funcional HEAD:** `0b6449a8988cedbc3ab0bd46a7068400af2ffc04` (la actualización documental posterior no modifica el motor).
+
+- `fixed-stock-08/report.mjs`: control opcional de cantidades esperadas del lote y maestros si el servidor acredita `expectedStockRows`, `expectedProducts`, `expectedLocations` y `expectedFixedRows`. Una discrepancia impide declarar stock fiable.
+- Se detectan códigos de artículos maestros duplicados, unidades ausentes, ubicaciones repetidas o de otro almacén, asociaciones activas huérfanas, cantidades BC que hayan pasado por `Number` (riesgo de precisión perdida), unidades BC incompatibles con la unidad del maestro y líneas repetidas por artículo + ubicación + lote.
+- Los lotes diferentes en una misma ubicación siguen acumulándose mediante decimal exacto; los artículos con varias posiciones conservan un único total lógico.
+- Las asociaciones de almacenes ajenos **se excluyen siempre del resultado**, también de la vista de incidencias no fiables. La instantánea propia se marca inconsistente.
+- `tests/inventa08-fixed-stock.test.mjs`: **29 pruebas sintéticas** en total, incluidas importación incompleta, maestros huérfanos, duplicados BC, lotes distintos, 24 decimales y exportación XLSX con más de 15 cifras significativas conservadas como texto.
+- CI sobre commit de código `0b6449a8`: `40608164207` (motor Node): **SUCCESS**; `40608164003` (regresión INVENTA): **SUCCESS**. La ejecución visual `40608164045` continuaba en progreso en la última consulta; revisar antes de calificar el HEAD completo.
+- La validación no modifica la arquitectura compartida, PREPARA, el inventario físico ni la navegación pública. Sigue sin conexión a Supabase y sin datos BC auténticos.
+
+**Advertencia de integración:** todos los indicadores de completitud son una propuesta de contrato, no un permiso ni una prueba real por sí solos. Únicamente el servidor, tras comprobar la importación y permisos por almacén, puede certificarlos. El módulo 08 no puede habilitarse en producción hasta aprobar el modelo multialmacén de PR #22/#23, las autorizaciones efectivas y la sustitución reversible de los comportamientos destructivos de las migraciones 006/008.
+
+**Siguiente tarea independiente segura:** pruebas adicionales de límites y documentación del plan de compatibilidad con los consumidores históricos del RPC sin crear endpoints ni alterar datos reales.
