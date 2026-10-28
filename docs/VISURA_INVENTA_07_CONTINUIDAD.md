@@ -190,3 +190,19 @@ Se añadieron inventario-lab/007_disposable_v2_receipt.sql y tests/sql/inventa07
 **Límites importantes:** las cuentas y sesiones son fixtures psql, no JWT ni tokens verificados realmente. Los restantes caminos experimentales de provisionales e incidencias requieren el mismo control transaccional. Aún faltan migración aditiva revisada, API real, cliente PWA, cola offline y E2E de dispositivos reales. No confundir protección de laboratorio con seguridad aplicada en producción.
 
 **Siguiente tarea segura:** preservar evidencia real de escáner de códigos alternativos utilizados y controles transaccionales de equipo para provisionales e incidencias, de forma aislada. Mantener PR borrador; no fusionar, no aplicar SQL a Supabase real, no desplegar y no consultar API Business Central.
+
+
+## Continuación de escáner y provisionales — 28/10/2026 (PostgreSQL aislado)
+
+**Ficheros añadidos en la rama de INVENTA 07:**
+- inventory-lab/009_disposable_verified_scans.sql
+- tests/sql/inventa07_lab_verified_scans.sql
+- docs/VISURA_INVENTA_07_ESCANEOS.md
+
+El ensayo ahora exige dos eventos de lectura sintéticos previamente inscritos por el propietario de la base, distintos y no consumidos, del mismo código, campaña, ubicación, sesión y terminal activo; descarta dispositivos ajenos, lecturas caducadas y datos inventados por el cliente. Inserciones de provisionales e incidencias verifican la concesión de equipo y conservan A/B originales y cuenta/sesión autenticadas en el laboratorio. Administración puede resolver sin alterar evidencia física. Las pruebas anteriores se ejecutan antes de este módulo, sin modificar sus datos históricos.
+
+**GitHub Actions PostgreSQL temporal PASS:** run 40609298803, commit a03e339f9b05e5566199e2386578f047596c37af. Suite general INVENTA también PASS para ese commit. La prueba de concurrencia de activación y protección de terminal PASS en run 40608869419, commit 45659993586d4bc9a0e0d9b1f5ed12b7efaba6f0.
+
+**Límite de seguridad innegociable:** los eventos supuestamente confiables son fixtures inventados por PostgreSQL y los claims de sesión son simulados; NO prueban que un dispositivo o cámara real haya producido las lecturas. Antes de integrar hay que implementar captura verificada, sesiones JWT reales, RLS, token de terminal seguro y asociación de lectura con el evento de recuento efectivo y versión del catálogo de códigos alternativos.
+
+**Siguiente tarea independiente segura:** contractar evento de escaneo verificado + versión de código alternativo + evento de confirmación en PostgreSQL temporal, para impedir incidencias por asociaciones nunca usadas. No migrar Supabase, no tocar PWA, no fusionar/desplegar y no conectar BC directamente.
