@@ -38,3 +38,10 @@ NO MERGE, NO DEPLOY, NO DDL EN SUPABASE REAL, NO API DIRECTA BC, NO CAMBIOS EN P
 Archivos: inventory-lab/006_disposable_lot_contract.sql y tests/sql/inventa07_lab_lot_contract.sql. Una tabla de prueba separada conserva como clave (campaign_id, location_code, product_code, lot). Un borrador guarda desglose y cantidad recalculada por servidor, con revisión CAS y cero expreso. Confirmar crea evento histórico inmutable con lote, cantidad, desglose, usuario autenticado y sesión de ensayo. Se deniegan modificaciones directas a operarios y el ensayo no concede SELECT general sobre los eventos históricos. Los tests verifican mismo artículo con dos lotes distintos y referencia sin lote, además de rechazar subtotales client-side falsificados.
 
 Este ensayo, por sí solo, NO implementa el protocolo V2 completo: faltan RLS de pareja y terminal, protección de revocación de Auth real, recibos compatibles con las nuevas colas y las operaciones de corrección por lote. La PWA y Supabase real no han sido modificadas.
+
+
+## Recepción idempotente por UUID (laboratorio, no producción)
+
+inventory-lab/007_disposable_v2_receipt.sql expone únicamente en el entorno ficticio una consulta para el autor autenticado de la mutación, con UUID, solicitud lógica V2, lote, desglose, cero expreso, revisión y resultado; no permite recuperar recibos de otra cuenta ni de cuentas deshabilitadas. tests/sql/inventa07_lab_v2_receipts.sql comprueba recuperación de borrador, confirmación sin nuevos valores físicos, conservación de lotes, inexistencia de recibo inventado y aislamiento por identidad.
+
+Este recibo NO es una firma criptográfica; su confianza depende de un canal de transporte y autenticación reales, pendientes. La nueva cola de navegador sigue DESACTIVADA. El prototipo no implementa terminal de pareja ni sesiones reales verificadas por Supabase. No reutilizar credenciales service_role ni convertir de forma automática las entradas V1.
