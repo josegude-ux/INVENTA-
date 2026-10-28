@@ -6,6 +6,7 @@ const key=(...v)=>JSON.stringify(v);
 const txt=v=>String(v??"").trim();
 function decimal(v){
  const s=txt(v);
+ if(s.length>100)throw Error("Cantidad BC fuera de límites de seguridad");
  if(!/^[+-]?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(s))throw Error("Cantidad BC decimal inválida");
  const negative=s[0]==="-",unsigned=s.replace(/^[+-]/,""),parts=unsigned.split(".");
  return {n:BigInt((negative?"-":"")+(parts[0]+(parts[1]||""))),scale:(parts[1]||"").length};
@@ -15,15 +16,6 @@ function add(a,b){
  const s=Math.max(a.scale,b.scale);
  return {n:a.n*10n**BigInt(s-a.scale)+b.n*10n**BigInt(s-b.scale),scale:s};
 }
-function format(x){
- if(!x)return null;
- const neg=x.n<0n;
- let digits=(neg?-x.n:x.n).toString().padStart(x.scale+1,"0");
- if(x.scale)digits=digits.slice(0,-x.scale)+"."+digits.slice(-x.scale);
- digits=digits.replace(/\.?0+$/,""); // solo auxiliar, no usado en el contrato
- if(!digits||digits==="-")digits="0";
- return (neg?"-":"")+digits;
-}
 function decimalText(x){
  if(!x)return null;
  const negative=x.n<0n;let s=(negative?-x.n:x.n).toString().padStart(x.scale+1,"0");
@@ -31,21 +23,66 @@ function decimalText(x){
  if(s.endsWith("."))s=s.slice(0,-1);
  return (negative?"-":"")+s;
 }
-function checkSource(meta,stock){
+function checkSource(meta,products,locations,fixed,stock){
  const issues=[];
- if(!meta||!meta.verifiedByServer||!meta.authorized||!meta.stockComplete||!meta.positionsComplete||!meta.catalogComplete||!meta.locationsComplete||meta.truncated||meta.stale)issues.push("Origen sin certificación completa, autorizado y vigente");
- if(!txt(meta?.warehouse)||!txt(meta?.publishedBatchId)||!txt(meta?.snapshotId)||!txt(meta?.sourceFile)||!txt(meta?.importedAt)||!txt(meta?.publishedAt))issues.push("Faltan ámbito, lote, instantánea o procedencia");
+ const wh=txt(meta?.warehouse),batch=txt(meta?.publishedBatchId);
+ if(!meta||!meta.verifiedByServer||!meta.authorized||!meta.stockComplete||
+    !meta.positionsComplete||!meta.catalogComplete||!meta.locationsComplete||
+    meta.truncated||meta.stale)
+  issues.push("Origen sin certificación completa, autorizado y vigente");
+ if(!wh||!batch||!txt(meta?.snapshotId)||!txt(meta?.sourceFile)||
+    !txt(meta?.importedAt)||!txt(meta?.publishedAt))
+  issues.push("Faltan ámbito, lote, instantánea o procedencia");
  if(!meta?.positionsVersion)issues.push("Falta versión coherente de asociaciones fijas");
+ // Las cifras de control solo son válidas si el servidor las certificó.
+ // Un reporte truncado o paginado no debe aparentar una suma total válida.
+ for(const [field,length] of [["expectedStockRows",stock.length],
+                               ["expectedProducts",products.length],
+                               ["expectedLocations",locations.length]]){
+  if(meta&&Object.prototype.hasOwnProperty.call(meta,field)&&
+     (!Number.isSafeInteger(meta[field])||meta[field]<0||meta[field]!==length))
+   issues.push("Control de integridad "+field+" no coincide con los registros recibidos");
+ }
+ const productUnits=new Map();
+ for(const p of products){
+  const code=txt(p?.code),unit=txt(p?.unit);
+  if(!code||!unit||productUnits.has(code))
+   issues.push("Maestro de artículos incompleto, duplicado o sin unidad");
+  if(code)productUnits.set(code,unit);
+ }
+ const bins=new Set();
+ for(const l of locations){
+  const code=txt(l?.code),warehouse=txt(l?.warehouse),identity=key(warehouse,code);
+  if(!code||!warehouse||warehouse!==wh||bins.has(identity))
+   issues.push("Ubicación duplicada, sin identidad o ajena al almacén");
+  bins.add(identity);
+ }
+ const fixedCount=fixed.filter(f=>f?.active===true&&txt(f?.warehouse)===wh).length;
+ if(meta&&Object.prototype.hasOwnProperty.call(meta,"expectedFixedRows")&&
+    (!Number.isSafeInteger(meta.expectedFixedRows)||meta.expectedFixedRows<0||
+      meta.expectedFixedRows!==fixedCount))
+  issues.push("Control de integridad de posiciones activas incompleto");
  for(const line of stock){
-  if(txt(line.warehouse)!==txt(meta?.warehouse)||txt(line.importId)!==txt(meta?.publishedBatchId)||!txt(line.product_code)||!txt(line.location_code))issues.push("Línea BC sin ámbito, lote o artículo coherente");
-  try{decimal(line.quantity)}catch{issues.push("Cantidad BC inválida");}
+  const code=txt(line?.product_code);
+  if(txt(line?.warehouse)!==wh||txt(line?.importId)!==batch||
+     !code||!txt(line?.location_code))
+   issues.push("Línea BC sin ámbito, lote o artículo coherente");
+  // Las cantidades tienen que recibirse como cadenas decimales canónicas:
+  // convertir primero a Number puede perder precisión antes de acumular.
+  if(typeof line?.quantity!=="string")
+   issues.push("Cantidad BC no es texto decimal exacto");
+  try{decimal(line?.quantity)}catch{issues.push("Cantidad BC inválida")}
+  if(!productUnits.has(code))
+   issues.push("Línea BC de artículo ausente del catálogo certificado");
+  if(line?.unit!=null&&txt(line.unit)!==productUnits.get(code))
+   issues.push("Unidad de stock distinta del artículo sin conversión certificada");
  }
  return [...new Set(issues)];
 }
 export function buildFixedStockReport({meta,products=[],locations=[],fixed=[],stock=[],filters={},generatedAt=new Date().toISOString()}={}){
  if(![products,locations,fixed,stock].every(Array.isArray))throw Error("Colecciones inválidas");
  const warehouse=txt(meta?.warehouse);
- const issues=checkSource(meta,stock);
+ const issues=checkSource(meta,products,locations,fixed,stock);
  const catalog=new Map(products.map(p=>[txt(p.code),p]));
  const locationMap=new Map(locations.map(l=>[key(txt(l.warehouse),txt(l.code)),l]));
  const totals=new Map(),seen=new Set(),active=[];
