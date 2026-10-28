@@ -152,3 +152,12 @@ jobs:
           test -n "$PG_CONTAINER"
           docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_inventa08_association_v1_UNAPPLIED.sql
           docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/140_verify_inventa08_association_pg16.sql
+
+      - name: Verify CAS state transition and inseparable event audit in disposable PG16
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_fixed_transition_cas_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/150_verify_fixed_transition_cas_pg16.sql
