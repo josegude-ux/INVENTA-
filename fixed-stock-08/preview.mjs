@@ -14,11 +14,11 @@ const products=[
  {code:"00300",description:"Artículo demostración C",unit:"UD"},
  {code:"00400",description:"Artículo sin líneas BC",unit:"UD"}];
 const positions=["K02","K10","A01","A10","B03"];
-const locations=positions.map(code=>({warehouse,code,aisle:code[0]}));
+const locations=[...positions,...["OTRA-1","OTRA-2","RESERVA","OTRA-3"]].map(code=>({warehouse,code,aisle:code[0]}));
 const fixed=[
  ["00100","K02"],["00100","K10"],["00200","K02"],
  ["00300","A10"],["00400","A01"],["00200","B03"]
-].map(([product_code,location_code],n)=>({associationId:"F"+(n+1),warehouse,product_code,location_code,active:true}));
+].map(([product_code,location_code],n)=>({associationId:"F"+(n+1),warehouse,product_code,location_code,active:true,revision:1}));
 const stock=[
  ["00100","OTRA-1","-8"],["00100","OTRA-2","8"],
  ["00200","RESERVA","-12.25"],["00300","OTRA-3","19"]
