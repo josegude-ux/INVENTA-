@@ -1,0 +1,41 @@
+name: VISURA 05 — auditoria cruzada INVENTA 08 (sin integracion)
+on:
+  push:
+    branches:
+      - audit/visura-05-snapshot-concurrente-20261027
+    paths:
+      - "architecture/audits/visura05/**"
+      - ".github/workflows/visura05-inventa08-audit.yml"
+  pull_request:
+    paths:
+      - "architecture/audits/visura05/**"
+      - ".github/workflows/visura05-inventa08-audit.yml"
+permissions:
+  contents: read
+jobs:
+  pinned-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Leer rama aislada VISURA05 sin token persistente
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Traer PR 25 en checkout aparte y SHA inmutable
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: josegude-ux/INVENTA-
+          ref: 18912ee42cc4464ed306fd73c700325d1dbc95f5
+          path: _inventa08_readonly
+          persist-credentials: false
+      - name: Verificar commit y blob de la fuente revisada
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C _inventa08_readonly rev-parse HEAD)" = "18912ee42cc4464ed306fd73c700325d1dbc95f5"
+          test "$(git -C _inventa08_readonly hash-object fixed-stock-08/report.mjs)" = "95fd71a6890a6287692b0fc34ca0ea9ed29ac768"
+          test ! -e _inventa08_readonly/.env
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Ejecutar contrato auditado sin servidor, credenciales ni datos reales
+        run: node --test architecture/audits/visura05/inventa08-boundary.test.mjs

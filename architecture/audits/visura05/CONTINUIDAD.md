@@ -37,3 +37,11 @@ En este chat se verificaron PR #22 y #76 OPEN/DRAFT/UNMERGED y no hay rama exist
 ## Ampliación de casos de contrato cruzado — 27/10/2026
 - Se añaden regresiones específicas de **misma ubicación en dos almacenes**, **artículo sin fija mostrando ubicaciones reales**, **suma precisa de lotes distintos**, **fija desconocida rechazada** y **caducidad opcional (sin inventar fecha)**, usando el mismo contrato fuente y consumidor reales.
 - Evidencia independiente y decisiones consolidadas: `architecture/audits/visura05/MATRIZ_ACEPTACION.md`. Las fechas de digest/caducidad de BC continúan pendientes de acreditar.
+
+## Auditoría independiente del chat 08 / INVENTA PR #25 — 28/10/2026
+- PR #25 HEAD `18912ee42cc4464ed306fd73c700325d1dbc95f5` (OPEN/DRAFT), 4 workflows SUCCESS en su HEAD. Se auditó código original, docs de continuidad, históricos 006/008 y consumidores. No se modifica la rama del chat 08.
+- Se detectó incompatibilidad directa entre el adaptador de PREPARA de PR22 y el contrato INVENTA08 (faltan `active`, `associationId`, `importId`, versiones y certificaciones reales). No inventar un puente sin servidor real.
+- Cinco casos de fail-open del motor puro reproducidos con fixtures: ausencia de `truncated` / `stale`, autorización/verifiedByServer como cadenas y ubicación de stock no acreditada. NO es evidencia de fuga productiva; falta el endpoint.
+- El inventario físico PR24 cambió DURANTE la auditoría (HEAD `88d7340` -> `4f21611` con cuatro commits nuevos). Reevaluar HEAD/CI posterior antes de afirmar compatibilidad runtime; no editar la rama chat07.
+- Informe y matriz: `architecture/audits/visura05/INVENTA08_AUDITORIA_2026-10-28.md`; prueba reproducible CI con checkout de #25 en `architecture/audits/visura05/inventa08-boundary.test.mjs` y workflow nuevo `visura05-inventa08-audit.yml`.
+- **Prohibido:** mezclar, desplegar, modificar migraciones 006/008 o RLS/credenciales, tocar recuentos, afirmar validación real de BC. El veredicto es `NECESITA ADAPTACIONES; PR25 AISLADA` hasta resolver las puertas.
