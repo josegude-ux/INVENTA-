@@ -206,3 +206,14 @@ El ensayo ahora exige dos eventos de lectura sintéticos previamente inscritos p
 **Límite de seguridad innegociable:** los eventos supuestamente confiables son fixtures inventados por PostgreSQL y los claims de sesión son simulados; NO prueban que un dispositivo o cámara real haya producido las lecturas. Antes de integrar hay que implementar captura verificada, sesiones JWT reales, RLS, token de terminal seguro y asociación de lectura con el evento de recuento efectivo y versión del catálogo de códigos alternativos.
 
 **Siguiente tarea independiente segura:** contractar evento de escaneo verificado + versión de código alternativo + evento de confirmación en PostgreSQL temporal, para impedir incidencias por asociaciones nunca usadas. No migrar Supabase, no tocar PWA, no fusionar/desplegar y no conectar BC directamente.
+
+
+## Continuidad 28/10/2026 — procedencia histórica de códigos alternativos (solo laboratorio)
+
+Se han añadido inventory-lab/010_disposable_actual_alias_use.sql, tests/sql/inventa07_lab_actual_alias_use.sql y docs/VISURA_INVENTA_07_CODIGOS_USADOS.md. El contrato experimental ya no permite crear una incidencia de alias atribuido incorrectamente únicamente por mencionar un recuento existente: exige un enlace privilegiado entre el evento de confirmación, la lectura original, el evento concreto de activación de la asociación y sus marcas temporales, verificando artículo, ubicación, campaña, cuenta, sesión y dispositivo de la lectura. Un evento de lectura distinto del artículo registrado o un recuento sin lectura acreditada son rechazados.
+
+**CI verificada:** la suite general INVENTA run 40609694176 PASS y PostgreSQL 16 temporal run 40609694200 PASS, commit 8247dcfcad1dd453163e2f9b741a25116ccba5a5. Se ejecutaron de nuevo las pruebas de recuento, lote, recibos idempotentes, pareja y terminal, provisionales, incidencias y procedencia de alias. El SQL no se ha aplicado fuera de inventa07_test.
+
+**Límite crítico:** tanto la procedencia del escáner como la identidad JWT son SIMULADAS por datos insertados por la cuenta privilegiada del ensayo. NO existe componente de captura/atestación real, no se han validado sesiones reales y los recibos no son garantías criptográficas. Las pruebas no constituyen una implementación desplegable.
+
+**Siguiente tarea segura:** integrar, solo en rama independiente y entorno aislado, el contrato de captura y confirmación física con sesiones reales verificables y versión de catálogo, validando dos dispositivos/usuarios reales antes de recomendar cualquier migración a Supabase. Mantener coordinación con otros responsables VISURA; NO MERGE, NO DEPLOY, NO CAMBIOS PROD, NO API BC.
