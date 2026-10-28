@@ -159,3 +159,25 @@ test('overlapping tramos, wrong team, bad location, or duplicate location are re
 test('empty pasillo never reports completed',()=>{
  assert.equal(hierarchy().aisle.completed,false);
 });
+
+test('pending correction in a confirmed row prevents a premature manual location close',()=>{
+ const review=physicalReview({references:[ref({correctionPending:true}),ref({
+  productCode:'SKU-002',lot:'',quantity:'1'})]});
+ assert.equal(review.pending,1);assert.equal(review.confirmed,1);
+ assert.equal(review.ready,false);
+ const s=counted();
+ assert.throws(()=>manualFinish(s,{references:[
+  ref({correctionPending:true}),ref({productCode:'SKU-002',lot:'',quantity:'1'})
+ ]},context(s)),/sin confirmar/);
+});
+test('zero decimal spellings are still explicit zeros, not blank or positive',()=>{
+ const a=physicalReview({references:[ref({quantity:'0.000',explicitZero:true})]});
+ assert.equal(a.ready,true);
+ assert.equal(a.explicitZeros,1);
+ const b=physicalReview({references:[ref({quantity:'0.00',explicitZero:false})]});
+ assert.equal(b.ready,false);
+});
+test('overflow beyond numeric 16,3 cannot be accepted as confirmed physical',()=>{
+ const a=physicalReview({references:[ref({quantity:'99999999999999.999'})]});
+ assert.equal(a.ready,false);assert.equal(a.invalidQuantities,1);
+});
