@@ -8,7 +8,33 @@ UPDATE inventa07_lab.assignments SET active=true
   AND location_code='K00-P01'
   AND actor_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 SET ROLE inventa07_lab_client;
+SELECT set_config('request.jwt.claim.sub','dddddddd-dddd-4ddd-8ddd-dddddddddddd',false);
+SELECT set_config('request.jwt.claim.session_id','33333333-3333-4333-8333-333333333333',false);
+DO $role_denial$
+DECLARE rejected boolean:=false;
+BEGIN
+ BEGIN
+  PERFORM inventa07_lab.apply_lot(
+   'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+   'K00-P01','SKU0001','LOT-A','draft',
+   '70000000-0000-4000-8000-000000000099',0,
+   '[{"type":"loose","units":"8"}]'::jsonb,false,NULL);
+ EXCEPTION WHEN OTHERS THEN rejected:=position('Assignment revoked' in SQLERRM)>0; END;
+ IF NOT rejected THEN RAISE EXCEPTION 'Unassigned admin inserted lot count'; END IF;
+ IF (SELECT count(*) FROM inventa07_lab.lot_states)<>0 THEN
+  RAISE EXCEPTION 'Unassigned admin could read physical lot states'; END IF;
+END $role_denial$;
 SELECT set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
+SELECT set_config('request.jwt.claim.session_id','11111111-1111-4111-8111-111111111111',false);
+DO $direct_write_denial$
+DECLARE rejected boolean:=false;
+BEGIN
+ BEGIN
+  EXECUTE 'UPDATE inventa07_lab.lot_states SET revision=999';
+ EXCEPTION WHEN insufficient_privilege THEN rejected:=true; END;
+ IF NOT rejected THEN RAISE EXCEPTION 'Direct lot update permission leaked'; END IF;
+END $direct_write_denial$;
+
 SELECT set_config('request.jwt.claim.session_id','11111111-1111-4111-8111-111111111111',false);
 DO $quantity$
 DECLARE v jsonb;
