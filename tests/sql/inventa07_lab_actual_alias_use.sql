@@ -127,4 +127,59 @@ BEGIN
    AND kind='confirmed')<>2 THEN
   RAISE EXCEPTION 'Reporting an alias incident modified earlier counts'; END IF;
 END $history$;
+-- An alias activated earlier and deactivated BEFORE the scan cannot be
+-- used as provenance for a later confirmation, even with a valid count and camera ID.
+INSERT INTO inventa07_lab.alternate_barcode_events(
+ barcode,old_product_code,new_product_code,operation,reason,
+ actor_id,session_id,mutation_id,at) VALUES
+ ('ALT-STALE',NULL,'SKU0002','activated','Versión histórica anterior',
+  'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+  '33333333-3333-4333-8333-333333333333',
+  '98000000-0000-4000-8000-000000000002',now()-interval '5 minutes'),
+ ('ALT-STALE','SKU0002',NULL,'deactivated','Alias retirado antes del recuento',
+  'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+  '33333333-3333-4333-8333-333333333333',
+  '98000000-0000-4000-8000-000000000003',now()-interval '3 minutes');
+INSERT INTO inventa07_lab.trusted_scan_events(
+ id,campaign_id,location_code,barcode,actor_id,session_id,device_id,source,captured_at)
+ VALUES('97000000-0000-4000-8000-000000000003',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01','ALT-STALE',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  '11111111-1111-4111-8111-111111111111',
+  'd0000000-0000-4000-8000-000000000001','camera',
+  now()-interval '2 minutes');
+INSERT INTO inventa07_lab.reference_events(
+ campaign_id,location_code,product_code,kind,quantity,explicit_zero,
+ actor_id,authenticated_session_id,mutation_id,recorded_at)
+ VALUES('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01','SKU0002',
+  'confirmed',11,false,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  '11111111-1111-4111-8111-111111111111',
+  '99000000-0000-4000-8000-000000000003',now()-interval '1 minute');
+INSERT INTO inventa07_lab.verified_alias_use(count_event_id,scan_event_id,activation_event_id)
+ SELECT counted.id,scan.id,activated.id FROM
+ inventa07_lab.reference_events counted,
+ inventa07_lab.trusted_scan_events scan,
+ inventa07_lab.alternate_barcode_events activated
+ WHERE counted.mutation_id='99000000-0000-4000-8000-000000000003'
+ AND scan.id='97000000-0000-4000-8000-000000000003'
+ AND activated.mutation_id='98000000-0000-4000-8000-000000000002';
+SET ROLE inventa07_lab_client;
+SELECT set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',false);
+SELECT set_config('request.jwt.claim.session_id','92000000-0000-4000-8000-000000000004',false);
+DO $stale_version$
+DECLARE wrong_count bigint;denied boolean:=false;
+BEGIN
+ SELECT id INTO wrong_count FROM inventa07_lab.reference_events
+ WHERE mutation_id='99000000-0000-4000-8000-000000000003';
+ BEGIN
+  PERFORM inventa07_lab.register_incident(
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01',
+  'used-alias-misattribution',
+  'El alias fue desactivado antes de la lectura, no puede servir como prueba',
+  NULL,false,wrong_count,'96000000-0000-4000-8000-000000000014');
+ EXCEPTION WHEN OTHERS THEN
+  denied:=position('Actual confirmed count with verified historical alternate scan required' in SQLERRM)>0; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Historically deactivated alias accepted after deactivation'; END IF;
+END $stale_version$;
+RESET ROLE;
 SELECT 'inventa07 real alias use attribution PASS' AS result;
