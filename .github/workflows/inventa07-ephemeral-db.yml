@@ -80,3 +80,5 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/008_disposable_team_terminal.sql
       - name: Validate original partners, handover, one terminal and revocations
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_team_terminal.sql
+      - name: Race two personal sessions for the same physical terminal
+        run: bash tests/sql/inventa07_lab_team_concurrency.sh
