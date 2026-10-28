@@ -12,13 +12,16 @@ function physicalReview({references=[],provisionals=[],blockingPhysicalIncidents
   ...provisionals.map(x=>({...x,kind:'provisional'}))];
  const confirmed=all.filter(x=>{
   const status=x.kind==='official'?x.status:(x.physicalStatus??x.status);
-  return status==='confirmed';
+  return status==='confirmed' && !(x.kind==='official' && x.correctionPending===true);
  });
  const pending=all.filter(x=>!confirmed.includes(x));
  const bad=confirmed.filter(x=>{
   const q=String(x.quantity??'');
   if(!/^[0-9]+(?:\.[0-9]{1,3})?$/.test(q))return true;
-  if(Number(q)===0)return x.explicitZero!==true;
+  const parts=q.split('.');
+  const milli=BigInt(parts[0])*1000n+BigInt(((parts[1]??'')+'000').slice(0,3));
+  if(milli>9999999999999999n)return true;
+  if(milli===0n)return x.explicitZero!==true;
   return x.explicitZero===true;
  });
  const keys=new Set();
@@ -37,7 +40,7 @@ function physicalReview({references=[],provisionals=[],blockingPhysicalIncidents
  return {ready:confirmed.length>0&&pending.length===0&&bad.length===0&&blockingPhysicalIncidents===0,
   confirmed:confirmed.length,pending:pending.length,invalidQuantities:bad.length,
   blockingPhysicalIncidents,administrativePending,
-  explicitZeros:confirmed.filter(x=>String(x.quantity)==='0'&&x.explicitZero===true).length,
+  explicitZeros:confirmed.filter(x=>Number(x.quantity)===0&&x.explicitZero===true).length,
   requiresEmptyLocationProcedure:all.length===0};
 }
 function baseLocation({campaignId,locationCode,teamId,countRevision=0}){
