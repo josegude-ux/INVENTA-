@@ -265,3 +265,15 @@ test("ausencia sin regla documentada no puede acreditarse como cero",()=>{
  assert.ok(report.issues.some(v=>v.includes("regla BC")));
  assert.ok(report.rows.every(r=>r.quantity===null&&r.state===ESTADOS.NO_FIABLE));
 });
+
+test("transiciones rechazadas si se salta la revisión o la hora UTC es inválida",()=>{
+ const association={...data().fixed[0],revision:1};
+ const actor={serverAuthorized:true,userId:"ADMIN",warehouseGrants:["COR_01_COR"]};
+ const args={association,actor,action:"RETIRAR",reason:"REUBICACION",at:"2026-10-28T12:00:00Z",revision:2};
+ assert.throws(()=>transitionFixedAssociation({...args,revision:100}),/revisión consecutiva/);
+ assert.throws(()=>transitionFixedAssociation({...args,at:"2026-02-30T12:00:00Z"}),/Fecha UTC/);
+ assert.throws(()=>transitionFixedAssociation({...args,at:"2026-10-28T12:00:00+02:00"}),/Fecha UTC/);
+ const valid=transitionFixedAssociation(args);
+ assert.equal(valid.event.revision,2);
+ assert.equal(association.revision,1);
+});
