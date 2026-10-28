@@ -82,3 +82,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_team_terminal.sql
       - name: Race two personal sessions for the same physical terminal
         run: bash tests/sql/inventa07_lab_team_concurrency.sh
+      - name: Install team-enforced synthetic camera evidence ledger
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/009_disposable_verified_scans.sql
+      - name: Validate two distinct scans, original team and administrative evidence
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_verified_scans.sql
