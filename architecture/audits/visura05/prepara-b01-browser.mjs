@@ -15,11 +15,13 @@ for(const name of ["admin-fixed-positions","fixed-position-report","fixed-positi
  modules.set("src/"+name+".mjs",readFileSync("_prepara76_readonly/src/"+name+".mjs","utf8"));
 }
 let upgrade=false;
+const down=new Set();
 const html='<html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main>VISURA 05 PWA fixture</main></body></html>';
 const server=http.createServer((req,res)=>{
  const url=new URL(req.url,"http://127.0.0.1"),parts=url.pathname.split("/").filter(Boolean);
  const scope=parts[0],path=parts.slice(1).join("/");
  if(!["bad","good","upgrade"].includes(scope)){res.writeHead(404);res.end();return;}
+ if(down.has(scope)){req.socket.destroy();return;}
  let data,type="text/plain";
  if(path==="sw.js"){data=scope==="good"||(scope==="upgrade"&&upgrade)?newSW:oldSW;type="text/javascript";}
  else if(path===""||path==="index.html"){data=html;type="text/html";}
@@ -55,6 +57,7 @@ test("Chromium install/offline and old-to-new SW update in disposable origin",{t
     await page.evaluate(()=>localStorage.setItem("visura-audit-pref","conservar"));
     await register(page);
     await context.setOffline(true);
+    down.add(scope);
     const result=await attempt(page);
     assert.ok(result.startsWith(expected),scope+": "+result);
     assert.equal(await page.evaluate(()=>localStorage.getItem("visura-audit-pref")),"conservar");
@@ -76,6 +79,7 @@ test("Chromium install/offline and old-to-new SW update in disposable origin",{t
        && !names.includes("kontrola-integral-visura-v074-fijas-ge-cierre");
    },{timeout:20000});
    await context.setOffline(true);
+   down.add("upgrade");
    assert.equal(await attempt(page),"ok");
    assert.equal(await page.evaluate(()=>localStorage.getItem("visura-audit-pref")),"guardada");
   }finally{await context.close();}
