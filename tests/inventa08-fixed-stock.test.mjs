@@ -55,6 +55,7 @@ test("sin líneas de stock no es cero",()=>{
 test("ausencia equivale a cero solo bajo certificación expresa",()=>{
  const x=data();x.stock=x.stock.filter(v=>v.product_code!=="00200");
  x.meta.absentStockIsZero=true;
+ x.meta.zeroOmissionRuleId="BC-CERTIFICADA-EXCLUYE-CEROS";
  assert.equal(buildFixedStockReport(x).rows.find(r=>r.code==="00200").quantity,"0");
 });
 test("lote mezclado invalida el origen completo",()=>{
@@ -255,4 +256,12 @@ test("referencia parcial y descripción independiente respetan el resultado y XL
  assert.equal(empty.rows.length,0);
  const xml=zipEntries(buildFixedStockXlsx({report})).get("xl/worksheets/sheet1.xml");
  assert.equal((xml.match(/<row r=/g)||[]).length,3);
+});
+
+test("ausencia sin regla documentada no puede acreditarse como cero",()=>{
+ const x=data();x.stock=x.stock.filter(v=>v.product_code!=="00200");
+ x.meta.absentStockIsZero=true;
+ const report=buildFixedStockReport({...x,filters:{view:"unreliable"}});
+ assert.ok(report.issues.some(v=>v.includes("regla BC")));
+ assert.ok(report.rows.every(r=>r.quantity===null&&r.state===ESTADOS.NO_FIABLE));
 });
