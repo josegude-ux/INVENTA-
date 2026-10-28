@@ -217,3 +217,6 @@ Se han añadido inventory-lab/010_disposable_actual_alias_use.sql, tests/sql/inv
 **Límite crítico:** tanto la procedencia del escáner como la identidad JWT son SIMULADAS por datos insertados por la cuenta privilegiada del ensayo. NO existe componente de captura/atestación real, no se han validado sesiones reales y los recibos no son garantías criptográficas. Las pruebas no constituyen una implementación desplegable.
 
 **Siguiente tarea segura:** integrar, solo en rama independiente y entorno aislado, el contrato de captura y confirmación física con sesiones reales verificables y versión de catálogo, validando dos dispositivos/usuarios reales antes de recomendar cualquier migración a Supabase. Mantener coordinación con otros responsables VISURA; NO MERGE, NO DEPLOY, NO CAMBIOS PROD, NO API BC.
+
+
+**Regresión adicional:** un alias con evento de activación histórico pero desactivado antes del escaneo real simulado no puede acreditar una incidencia por uso, aunque la lectura y el recuento existan. Verificado en PostgreSQL 16 run 40609901024 PASS, commit ba28a7039eeae627922410b6cd2b0d470ddecc6a. La comprobación se añadió sin cambiar el algoritmo productivo ni relajar permisos.
