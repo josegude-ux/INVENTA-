@@ -23,7 +23,7 @@ function proposal(){
     .replace('"./src/admin-fixed-positions.mjs",',
      '"./src/admin-fixed-positions.mjs","./src/fixed-position-contract-v1.mjs",');
 }
-function simulatedWorker(source,{available=true,failAsset="",shared=new Map()}={}){
+function simulatedWorker(source,{available=true,failAsset=null,shared=new Map()}={}){
  const handlers={},norm=v=>String(v?.url??v).replace(/^https?:\/\/[^/]+\//,"").replace(/^\.\//,"");
  let online=available;
  const reply=()=>({ok:true,clone(){return reply();}});
