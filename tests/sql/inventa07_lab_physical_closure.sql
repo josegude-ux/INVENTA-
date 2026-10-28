@@ -1,6 +1,13 @@
 -- VISURA INVENTA 07 — physical manual close + derived segments/aisle, disposable PG16 only.
 \set ON_ERROR_STOP on
 -- Fixture enrolment is administrator-owned and never exposed to operator clients.
+INSERT INTO inventa07_lab.team_terminals(team_id,campaign_id,location_code,device_id,
+ original_a,original_b) VALUES(
+ 'f0000000-0000-4000-8000-000000000055',
+ 'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P05',
+ 'd0000000-0000-4000-8000-000000000055',
+ 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+ 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
 INSERT INTO inventa07_lab.physical_locations(
  campaign_id,location_code,aisle,aisle_position,original_team) VALUES
  ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01','K00',1,
@@ -8,7 +15,7 @@ INSERT INTO inventa07_lab.physical_locations(
  ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P02','K00',2,
   'f0000000-0000-4000-8000-000000000002'),
  ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P05','K00',3,
-  'f0000000-0000-4000-8000-000000000005');
+  'f0000000-0000-4000-8000-000000000055');
 INSERT INTO inventa07_lab.physical_segments(
  campaign_id,aisle,team_id,first_position,last_position) VALUES
  ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00',
@@ -16,7 +23,7 @@ INSERT INTO inventa07_lab.physical_segments(
  ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00',
   'f0000000-0000-4000-8000-000000000002',2,2),
  ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00',
-  'f0000000-0000-4000-8000-000000000005',3,3);
+  'f0000000-0000-4000-8000-000000000055',3,3);
 UPDATE inventa07_lab.assignments SET active=true
  WHERE campaign_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
  AND location_code='K00-P02'
@@ -31,19 +38,6 @@ INSERT INTO inventa07_lab.device_sessions(id,actor_id,device_id) VALUES(
  '92000000-0000-4000-8000-000000000055',
  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
  'd0000000-0000-4000-8000-000000000055');
-INSERT INTO inventa07_lab.team_terminals(team_id,campaign_id,location_code,device_id,
- original_a,original_b) VALUES(
- 'f0000000-0000-4000-8000-000000000055',
- 'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P05',
- 'd0000000-0000-4000-8000-000000000055',
- 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
- 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
-UPDATE inventa07_lab.physical_locations SET original_team=
- 'f0000000-0000-4000-8000-000000000055'
- WHERE location_code='K00-P05';
-UPDATE inventa07_lab.physical_segments SET team_id=
- 'f0000000-0000-4000-8000-000000000055'
- WHERE aisle='K00' AND first_position=3;
 
 SET ROLE inventa07_lab_client;
 SELECT set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',false);
