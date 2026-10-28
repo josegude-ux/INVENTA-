@@ -10,10 +10,12 @@ const snapshot=warehouse=>({
  stockLines:[{warehouse_code:warehouse,product_code:"0000123",
   location_code:"A-01",lot:"",stock_calculated:"0",unit:"UD"}],
  batch:{id:"x",warehouse_code:warehouse,state:"published",source:"bc_excel_manual",
-   expected_rows:1,validated_rows:1,file_name:"BC.xlsx",published_at:now},
+   expected_rows:1,validated_rows:1,file_name:"BC.xlsx",exported_at:"2026-10-27T16:00:00Z",
+   imported_at:"2026-10-27T17:00:00Z",published_at:now},
  coverage:{stock:true,catalog:true,catalogScopeVerified:true,positions:true,
   positionsReconciled:true,locations:true,locationsScoped:true},
- sourceCertification:{fileAndRowsAttested:true,parserApproved:true},
+ sourceCertification:{fileAndRowsAttested:true,parserApproved:true,
+  exportDateAttested:true,importDateAttested:true},
  freshness:{maxAgeHours:24,forcedStale:false}
 });
 const grant=warehouse=>({active:true,sessionValid:true,enabled:true,approved:true,
