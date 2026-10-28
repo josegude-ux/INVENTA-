@@ -90,3 +90,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/010_disposable_actual_alias_use.sql
       - name: Deny false attribution of unused or mismatched alternate codes
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_actual_alias_use.sql
+      - name: Install manual physical close and automatic aisle status contract
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/011_disposable_physical_closure.sql
+      - name: Verify manual review, closure, reopen and derived aisle completion
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_physical_closure.sql
