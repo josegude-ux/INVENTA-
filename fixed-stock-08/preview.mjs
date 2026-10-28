@@ -6,6 +6,7 @@ const warehouse="COR_01_COR",batchId="SYNTHETIC";
 const meta={warehouse,verifiedByServer:true,authorized:true,stockComplete:true,
  positionsComplete:true,catalogComplete:true,locationsComplete:true,truncated:false,stale:false,
  publishedBatchId:batchId,snapshotId:"SYNTHETIC-S1",positionsVersion:"SYNTHETIC-P1",
+ contractVersion:"visura-inventa08-fixed-stock-v1",
  sourceFile:"EJEMPLO_FICTICIO.xlsx",exportedAt:"2026-10-27T08:00:00Z",
  importedAt:"2026-10-27T09:00:00Z",publishedAt:"2026-10-27T10:00:00Z",absentStockIsZero:false};
 const products=[
