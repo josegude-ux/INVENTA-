@@ -1,0 +1,54 @@
+name: VISURA 05 - PR24 PR25 cross boundary disposable
+on:
+  push:
+    branches:
+      - audit/visura-05-snapshot-concurrente-20261027
+    paths:
+      - "architecture/audits/visura05/**"
+      - ".github/workflows/visura05-07-08-cross.yml"
+  pull_request:
+    paths:
+      - "architecture/audits/visura05/**"
+      - ".github/workflows/visura05-07-08-cross.yml"
+permissions:
+  contents: read
+jobs:
+  cross-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: josegude-ux/INVENTA-
+          ref: aace927c20ba642a9d915a574e9f07c7c1221a9d
+          path: _inventa07_readonly
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: josegude-ux/INVENTA-
+          ref: 18912ee42cc4464ed306fd73c700325d1dbc95f5
+          path: _inventa08_readonly
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: josegude-ux/INVENTA-
+          ref: ac2aa7c1accfefd30cfed295bc136c8cc13affc4
+          path: _inventa18_readonly
+          persist-credentials: false
+      - name: Pin source revisions and known blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C _inventa07_readonly rev-parse HEAD)" = aace927c20ba642a9d915a574e9f07c7c1221a9d
+          test "$(git -C _inventa08_readonly rev-parse HEAD)" = 18912ee42cc4464ed306fd73c700325d1dbc95f5
+          test "$(git -C _inventa07_readonly hash-object inventory-ui/location-view.js)" = ed667b26f69948f37bccc9e9370ec7e08c55a89f
+          test "$(git -C _inventa08_readonly hash-object fixed-stock-08/report.mjs)" = 95fd71a6890a6287692b0fc34ca0ea9ed29ac768
+          test "$(git -C _inventa18_readonly rev-parse HEAD)" = ac2aa7c1accfefd30cfed295bc136c8cc13affc4
+          test "$(git -C _inventa18_readonly hash-object bc-excel-import.js)" = 41d71998e755e443d0c7a0c304f5f17c7f3a0596
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Run real modules with fictional fixture only
+        run: node --test architecture/audits/visura05/cross-07-08.test.mjs

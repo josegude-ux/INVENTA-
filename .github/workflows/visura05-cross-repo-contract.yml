@@ -1,0 +1,42 @@
+name: VISURA 05 - contrato cruzado INVENTA PREPARA (datos ficticios)
+on:
+  push:
+    branches:
+      - audit/visura-05-snapshot-concurrente-20261027
+    paths:
+      - "architecture/audits/visura05/**"
+      - ".github/workflows/visura05-cross-repo-contract.yml"
+  pull_request:
+    paths:
+      - "architecture/audits/visura05/**"
+      - ".github/workflows/visura05-cross-repo-contract.yml"
+permissions:
+  contents: read
+jobs:
+  consumer-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read pinned VISURA architecture checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Read pinned PREPARA integrated B01 in separate folder
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: josegude-ux/KONTROLA
+          ref: 65a9ddc343921f6be8844476903748a493881a8f
+          path: _prepara_readonly
+          persist-credentials: false
+      - name: Pin source and prohibit unnoticed consumer drift
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C _prepara_readonly rev-parse HEAD)" = "65a9ddc343921f6be8844476903748a493881a8f"
+          test "$(git -C _prepara_readonly hash-object src/fixed-position-report.mjs)" = "db7e0ffebf804751f9461f12c996866354b190ab"
+          test ! -e _prepara_readonly/.env
+      - name: Install pinned Node runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Run actual cross-repo pure module tests with synthetic snapshots
+        run: node --test architecture/audits/visura05/cross-repo-contract.test.mjs

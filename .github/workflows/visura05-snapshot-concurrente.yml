@@ -1,0 +1,101 @@
+name: VISURA 05 - snapshot de lectura concurrente (PG16 ficticio)
+on:
+  push:
+    branches:
+      - audit/visura-05-snapshot-concurrente-20261027
+    paths:
+      - "architecture/audits/visura05/**"
+      - ".github/workflows/visura05-snapshot-concurrente.yml"
+permissions:
+  contents: read
+jobs:
+  read-race:
+    runs-on: ubuntu-latest
+    services:
+      pg:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: visura_test
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar solo datos y SQL sintéticos de PR 22
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          for sql in \
+            architecture/tests/sql/00_bootstrap_pg16.sql \
+            architecture/drafts/visura_shared_schema_UNAPPLIED.sql \
+            architecture/tests/sql/20_verify_pg16.sql \
+            architecture/drafts/visura_shared_read_contracts_UNAPPLIED.sql \
+            architecture/tests/sql/30_verify_read_contract_pg16.sql \
+            architecture/drafts/visura_shared_internal_publish_UNAPPLIED.sql \
+            architecture/tests/sql/40_verify_publication_pg16.sql \
+            architecture/drafts/visura_shared_prepara_projection_UNAPPLIED.sql \
+            architecture/tests/sql/130_verify_prepara_projection_pg16.sql; do
+              docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < "$sql"
+          done
+      - name: Intercalar lector REPEATABLE READ y publicación posterior en otra sesión
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec "$PG_CONTAINER" rm -f /tmp/visura05_reader_ready /tmp/visura05_writer_published
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
+            < architecture/audits/visura05/10_reader_repeatable_read.sql \
+            > /tmp/visura05-reader.log 2>&1 &
+          READER_PID=$!
+          trap 'kill "$READER_PID" 2>/dev/null || true; cat /tmp/visura05-reader.log 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 150); do
+            if docker exec "$PG_CONTAINER" test -f /tmp/visura05_reader_ready; then ready=1; break; fi
+            if ! kill -0 "$READER_PID" 2>/dev/null; then cat /tmp/visura05-reader.log; exit 1; fi
+            sleep 0.1
+          done
+          if [ "$ready" -ne 1 ]; then echo 'Reader never established RR snapshot' >&2; exit 1; fi
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
+            < architecture/audits/visura05/20_writer_publish.sql
+          wait "$READER_PID"
+          trap - EXIT
+          cat /tmp/visura05-reader.log
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
+            < architecture/audits/visura05/30_post_commit_fresh_read.sql
+          echo VISURA05_READER_PUBLISHER_RR_ISOLATED_OK
+      - name: Control negativo - READ COMMITTED cambia entre SELECT de la misma transacción
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec "$PG_CONTAINER" rm -f /tmp/visura05_rc_ready /tmp/visura05_rc_published
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
+            < architecture/audits/visura05/40_prepare_rc_fixture.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
+            < architecture/audits/visura05/50_reader_read_committed.sql \
+            > /tmp/visura05-rc-reader.log 2>&1 &
+          READER_PID=$!
+          trap 'kill "$READER_PID" 2>/dev/null || true; cat /tmp/visura05-rc-reader.log 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 150); do
+            if docker exec "$PG_CONTAINER" test -f /tmp/visura05_rc_ready; then ready=1; break; fi
+            if ! kill -0 "$READER_PID" 2>/dev/null; then cat /tmp/visura05-rc-reader.log; exit 1; fi
+            sleep 0.1
+          done
+          if [ "$ready" -ne 1 ]; then echo 'READ COMMITTED reader did not start' >&2; exit 1; fi
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
+            < architecture/audits/visura05/60_writer_publish_rc.sql
+          wait "$READER_PID"
+          trap - EXIT
+          cat /tmp/visura05-rc-reader.log
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 \
+            < architecture/audits/visura05/70_verify_rc_negative_control.sql
+          echo VISURA05_READ_COMMITTED_NEGATIVE_CONTROL_OK
