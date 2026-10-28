@@ -92,3 +92,16 @@ No hay enlace a `index.html` ni autorización real de servidor; existe un riesgo
 - Última modificación funcional incluida en `afab702ee2310943c46e7de6708ca5ea3dbedcc2`. CI verificada para el commit `8a3adbeef9c0a13ad668bd6698fb19bf0ac60f45`: motor Node SUCCESS (40608696278), INVENTA checks SUCCESS (40608696277), Chromium responsive SUCCESS (40608696290); sin validación empresarial ni iOS físico.
 
 **Pendientes fuera del alcance autónomo:** la semántica real de la exportación BC debe acreditarse con archivo auténtico, los permisos/almacenes deben certificarse en servidor y la migración de historia/estado requiere autorización explícita. No se ha conectado a Supabase, fusionado ni desplegado.
+
+## Hito 6 — PostgreSQL 16 descartable, roles y concurrencia (28/10/2026)
+- Nueva suite SQL en `fixed-stock-08/lab/001..008`, ejecutada automáticamente en `inventa08_test` mediante `.github/workflows/inventa08-ephemeral-db.yml`. Un control previo obliga a abortar ante una base de datos con nombre diferente.
+- Ensayos sintéticos: múltiples artículos/posiciones, unicidad de asociaciones activas, retirada y reactivación lógica con motivo y actor, historial append-only, conflictos de revisión, rollback, colisión con otra asociación activa, dos sesiones que compiten por la misma revisión, almacenes con K02 coincidente.
+- Ensayos BC ficticios: -8 +8 = 0 en ubicaciones no fijas, total negativo -12.125, ausencia de líneas = NULL; lectura `REPEATABLE READ READ ONLY` estable durante la publicación concurrente de otro lote.
+- Ensayos de permisos simulados mediante `SET ROLE`: operador sin acceso a teoría/historia; lector administrativo sin autorización de escritura sobre publicación BC. **No equivalen a seguridad Auth/RLS real ni a pruebas empresariales**.
+- Corrección funcional a `fixed-stock-08/associations.mjs`: revisión obligatoriamente consecutiva y fecha UTC válida (incluida comprobación del día real de calendario). Se detectó una prueba fallida transitoria para 30 de febrero y se corrigió; no atribuir PASS al commit que falló.
+- Pruebas JS del motor: **32** con datos sintéticos. No se modifican el maestro ni RPC productivos.
+- **CI comprobada en HEAD de código `9077818e321e702fa7d20d340aac03a714839d44`:** pruebas Node `40610143179` SUCCESS, regresión general `40610143244` SUCCESS, responsive Chromium `40610143138` SUCCESS, PostgreSQL efímero `40610143121` SUCCESS.
+- Detalle, archivos y bloqueos: `docs/VISURA_INVENTA_08_LAB_POSTGRES.md`. La PR #25 continúa en borrador, aislada y sin fusión ni despliegue.
+
+## Próximo frente tras el laboratorio
+Los ensayos aislados han validado el contrato, pero no pueden certificar identidad real, permisos efectivos, esquema final compartido, estructura Excel BC auténtica ni compatibilidad de migraciones antiguas. Cualquier adaptación de `warehouse-management.js`, `fixed-positions-import.js`, `consultation-ui.js`, cambios de RLS/migraciones, interfaz publicada o despliegue requiere coordinación con PR #22/#23 y autorización específica. Siguiente tarea segura eventual: revisar la correspondencia exacta del Excel BC auténtico cuando se facilite y completar pruebas de integración con un backend descartable que reproduzca el esquema compartido ya acordado, sin copiar ni duplicar los maestros de otro responsable.
