@@ -233,3 +233,16 @@ test("dos lotes distintos de una ubicación sí se acumulan con exactitud",()=>{
  const report=buildFixedStockReport(x);
  assert.equal(report.rows.find(r=>r.code==="00200").quantity,"-12.125");
 });
+
+test("XLSX conserva decimal de más de 15 cifras como texto exacto",()=>{
+ const x=data();
+ const precision="0.000000123456789012345678901";
+ x.stock[0].quantity=precision;
+ x.stock[1].quantity="0";
+ const report=buildFixedStockReport({...x,filters:{view:"all"}});
+ assert.equal(report.rows.find(v=>v.code==="00100").quantity,precision);
+ const xml=zipEntries(buildFixedStockXlsx({report})).get("xl/worksheets/sheet1.xml");
+ assert.ok(xml.includes(precision));
+ assert.match(xml,/<c r="E\d+" t="inlineStr"><is><t xml:space="preserve">0\.000000123456789012345678901<\/t>/);
+ assert.ok(!xml.includes("<f>"));
+});
