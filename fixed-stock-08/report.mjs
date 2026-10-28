@@ -137,7 +137,8 @@ export function buildFixedStockReport({meta,products=[],locations=[],fixed=[],st
   if(states&&!states.includes(r.state))return false;
   if(txt(filters.aisle)&&r.aisle!==txt(filters.aisle))return false;
   if(txt(filters.location)&&r.location!==txt(filters.location))return false;
-  if(txt(filters.code)&&r.code!==txt(filters.code))return false;
+  if(txt(filters.code)&&!r.code.toLocaleLowerCase("es").includes(txt(filters.code).toLocaleLowerCase("es")))return false;
+  if(txt(filters.description)&&!r.description.toLocaleLowerCase("es").includes(txt(filters.description).toLocaleLowerCase("es")))return false;
   if(txt(filters.state)&&r.state!==txt(filters.state))return false;
   if(query&&![r.code,r.description,r.location,r.aisle].some(v=>v.toLocaleLowerCase("es").includes(query)))return false;
   return true;
