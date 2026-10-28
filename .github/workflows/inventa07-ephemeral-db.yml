@@ -72,3 +72,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/006_disposable_lot_contract.sql
       - name: Validate separate lots and server recomputation of physical breakdown
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_lot_contract.sql
+      - name: Install synthetic authenticated V2 receipt lookup
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/007_disposable_v2_receipt.sql
+      - name: Validate V2 loss-recovery receipts by owner, lot and payload
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_v2_receipts.sql
