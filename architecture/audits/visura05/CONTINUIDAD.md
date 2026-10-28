@@ -45,3 +45,11 @@ En este chat se verificaron PR #22 y #76 OPEN/DRAFT/UNMERGED y no hay rama exist
 - El inventario físico PR24 cambió DURANTE la auditoría (HEAD `88d7340` -> `4f21611` con cuatro commits nuevos). Reevaluar HEAD/CI posterior antes de afirmar compatibilidad runtime; no editar la rama chat07.
 - Informe y matriz: `architecture/audits/visura05/INVENTA08_AUDITORIA_2026-10-28.md`; prueba reproducible CI con checkout de #25 en `architecture/audits/visura05/inventa08-boundary.test.mjs` y workflow nuevo `visura05-inventa08-audit.yml`.
 - **Prohibido:** mezclar, desplegar, modificar migraciones 006/008 o RLS/credenciales, tocar recuentos, afirmar validación real de BC. El veredicto es `NECESITA ADAPTACIONES; PR25 AISLADA` hasta resolver las puertas.
+
+## 28/10/2026 — Auditoría conjunta y pruebas originales de PR #24 + #25
+- PR24 congelada para test: aace927c20ba642a9d915a574e9f07c7c1221a9d; PR25: 18912ee42cc4464ed306fd73c700325d1dbc95f5. Ambas OPEN/DRAFT/UNMERGED, CI respectivas SUCCESS según informes exactos. PR22 a6691f7 sigue sin aplicarse.
+- Archivos propios creados: .github/workflows/visura05-07-08-cross.yml y architecture/audits/visura05/cross-07-08.test.mjs. Los dos checkouts son de solo lectura, fijados al SHA y a hashes Git del código original.
+- [CI conjunta 40613434738](https://github.com/josegude-ux/INVENTA-/actions/runs/40613434738): SUCCESS, 14 PASS, 0 FAIL, 6 TODO. Los TODO no se ejecutaron; los datos físicos/BC son exclusivamente sintéticos. No acredita Auth/RLS real.
+- Cobertura: no mezcla teoría BC y cantidad física, proyección física no refleja stock BC, cierre histórico independiente, estado de provisional, separación almacenes, V1 y 401/403, pareja, XLSX 1 hoja y dependencias sin acoplamiento.
+- Matriz, riesgos, contratos de físico/teoría, fases y reversión en architecture/audits/visura05/INTEGRACION_07_08_2026-10-28.md.
+- Siguiente tarea: revisión de responsables 04/07/08 del contrato y adaptador real de servidor; VISURA05 validará nuevos commits sin cambiar ramas ajenas. NO desplegar, fusionar, aplicar SQL, permisos productivos o BC.
