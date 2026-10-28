@@ -59,3 +59,10 @@ Debe producir UNA instantánea atómica y autorizada que incluya:
 
 ### Límites pendientes antes de conexión empresarial
 No hay enlace a `index.html` ni autorización real de servidor; existe un riesgo histórico no resuelto en las migraciones 006/008. No activar botones de edición ni datos teóricos de producción hasta auditar Auth/RLS, crear un adaptador read-only con una instantánea transaccional, resolver ámbito inequívoco del almacén y migrar retirada lógica con copia/respaldo y reversión autorizados.
+
+
+## Hito 3 — contrato de lectura y no filtración entre almacenes (28/10/2026)
+- Corrección en `fixed-stock-08/report.mjs`: una asociación activa cuyo almacén no coincide con el certificado **nunca se devuelve** al usuario, ni en vista completa o no fiable. El lote se marca NO FIABLE.
+- Regresión añadida a `tests/inventa08-fixed-stock.test.mjs` con código reservado del almacén ajeno; no prueba por sí sola que RLS real esté protegido.
+- Contrato de lectura `docs/VISURA_INVENTA_08_CONTRATO_LECTURA_Y_RETIRADA.md`: propuesta no aplicada para autorización en servidor, instantánea REPEATABLE READ, lectura BC por todas las ubicaciones y retirada lógica reversible.
+- Pendiente CI del HEAD posterior a estos cambios. No hay adaptador de red, integración real ni modificaciones de otras ramas.
