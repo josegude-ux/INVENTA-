@@ -175,3 +175,18 @@ Se añadieron inventario-lab/007_disposable_v2_receipt.sql y tests/sql/inventa07
 **Limitaciones:** la devolución del laboratorio no constituye todavía una API real, una sesión Supabase validada ni garantía criptográfica del recibo. No hay reescritura automática de la cola V1, despliegue, migraciones o cambios en datos reales. La integración debe seguir bloqueada hasta obtener una autorización e implementar el backend de personas/parejas, permisos, lotes y recibos con E2E reales.
 
 **Siguiente tarea independiente:** probar en un entorno desechable la concesión única del terminal y los integrantes originales de pareja, así como revocación de sesión/ubicación con eventos inmutables; posteriormente diseño de migración aditiva y revisión de PR abiertas, sin modificar la PWA activa.
+
+
+## Hito de parejas / terminal — 28/10/2026 (contrato de servidor descartable)
+
+**Continuación verificada:** PR #24, rama feature/visura-inventa-07-domain-20261027. El main sigue siendo a0f76ab1b1a6515ac647facbadca84cfe838d8ac. Este chat es responsable exclusivamente del inventario físico (07), no del módulo administrativo 08 ni de PREPARA.
+
+**Archivos nuevos:** inventory-lab/008_disposable_team_terminal.sql; tests/sql/inventa07_lab_team_terminal.sql; tests/sql/inventa07_lab_team_concurrency.sh; docs/VISURA_INVENTA_07_PAREJA_TERMINAL.md. La CI PostgreSQL temporal instala la barrera al final de los contratos antiguos y la valida sin acceso a ningún dato real.
+
+**Implementación y pruebas:** miembros originales individuales o pareja (máximo 2), una concesión activa por dispositivo y un único titular de sesión, relevo A→B con sesión propia en el mismo terminal, no incorporación de terceros, rechazo de sesión en otro dispositivo, caducidad, renovación, release, revocación de cuenta/asignación de cualquiera de los miembros en modo pareja, revisión CAS y eventos históricos inmutables. Una confirmación conserva ambos miembros originales y el actor/sesión autenticados. Se deniegan los accesos directos antiguos a apply_lot, lot_v2_receipt, apply_reference y apply_correction tras instalar la nueva barrera; los caminos de equipo requieren la concesión vigente. Un ensayo con dos conexiones PostgreSQL simultáneas solo admite una activación.
+
+**CI PASS verificada:** commit 45659993586d4bc9a0e0d9b1f5ed12b7efaba6f0, workflow general 40608869350 y PostgreSQL temporal 40608869419. Los cambios documentales posteriores no alteran los tests.
+
+**Límites importantes:** las cuentas y sesiones son fixtures psql, no JWT ni tokens verificados realmente. Los restantes caminos experimentales de provisionales e incidencias requieren el mismo control transaccional. Aún faltan migración aditiva revisada, API real, cliente PWA, cola offline y E2E de dispositivos reales. No confundir protección de laboratorio con seguridad aplicada en producción.
+
+**Siguiente tarea segura:** preservar evidencia real de escáner de códigos alternativos utilizados y controles transaccionales de equipo para provisionales e incidencias, de forma aislada. Mantener PR borrador; no fusionar, no aplicar SQL a Supabase real, no desplegar y no consultar API Business Central.
