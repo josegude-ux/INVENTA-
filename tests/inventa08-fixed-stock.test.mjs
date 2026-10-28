@@ -277,3 +277,45 @@ test("transiciones rechazadas si se salta la revisión o la hora UTC es inválid
  assert.equal(valid.event.revision,2);
  assert.equal(association.revision,1);
 });
+
+test("AUDIT 05: metadatos de fiabilidad son booleanos explícitos",()=>{
+ for(const patch of [
+  {truncated:undefined},{stale:undefined},{truncated:"false"},{stale:"false"},
+  {authorized:"false"},{verifiedByServer:"false"},{stockComplete:"true"},
+  {catalogComplete:"true"},{positionsComplete:"true"},{locationsComplete:"true"}]){
+  const x=data();Object.assign(x.meta,patch);
+  const result=buildFixedStockReport({...x,filters:{view:"all"}});
+  assert.ok(result.issues.length>0,"metadatos no seguros aceptados: "+JSON.stringify(patch));
+  assert.ok(result.rows.every(row=>row.state===ESTADOS.NO_FIABLE&&row.quantity===null));
+ }
+});
+test("AUDIT 05: stock de ubicación no certificada nunca produce total fiable",()=>{
+ const x=data();x.stock[0].location_code="POSICION_BC_DESCONOCIDA";
+ const result=buildFixedStockReport({...x,filters:{view:"all"}});
+ assert.ok(result.issues.some(s=>s.includes("ubicación")));
+ assert.ok(result.rows.every(row=>row.state===ESTADOS.NO_FIABLE));
+});
+test("PR22: asociación requiere active booleano y revisión monotónica acreditada",()=>{
+ for(const mutate of [
+  f=>{delete f.active;},f=>{f.active="false";},f=>{f.revision=0;},
+  f=>{f.revision="1";},f=>{delete f.revision;} ]){
+  const x=data();mutate(x.fixed[0]);
+  const r=buildFixedStockReport({...x,filters:{view:"all"}});
+  assert.ok(r.issues.length>0,"fija mal tipada sin incidente");
+  assert.ok(r.rows.every(row=>row.state===ESTADOS.NO_FIABLE));
+ }
+});
+test("PR22: asociaciónId duplicado, aunque se encuentre retirado, invalida origen",()=>{
+ const x=data();x.fixed.push({...x.fixed[0],active:false,location_code:"K02"});
+ const r=buildFixedStockReport({...x,filters:{view:"all"}});
+ assert.ok(r.issues.some(msg=>msg.includes("associationId")));
+ assert.ok(r.rows.every(row=>row.state===ESTADOS.NO_FIABLE));
+});
+test("PR22: versionado de contrato y fechas de procedencia incoherentes se bloquean",()=>{
+ const x=data();x.meta.contractVersion="incompatible-v2";
+ const r=buildFixedStockReport({...x,filters:{view:"all"}});
+ assert.ok(r.issues.some(msg=>msg.includes("contrato")));
+ const y=data();y.meta.exportedAt="2026-10-28T13:00:00Z";
+ y.meta.importedAt="2026-10-27T08:00:00Z";
+ assert.ok(buildFixedStockReport({...y,filters:{view:"all"}}).issues.some(msg=>msg.includes("fecha")));
+});
