@@ -1,0 +1,48 @@
+name: VISURA 05 - PREPARA B01 PWA update Chromium disposable
+on:
+  push:
+    branches:
+      - audit/visura-05-snapshot-concurrente-20261027
+    paths:
+      - "architecture/audits/visura05/prepara-b01-browser.mjs"
+      - ".github/workflows/visura05-prepara-b01-browser.yml"
+  pull_request:
+    paths:
+      - "architecture/audits/visura05/prepara-b01-browser.mjs"
+      - ".github/workflows/visura05-prepara-b01-browser.yml"
+permissions:
+  contents: read
+jobs:
+  isolated-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: josegude-ux/KONTROLA
+          ref: 154555fe9990d5347679d23967848c3fc14e6eb4
+          path: _prepara76_readonly
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: josegude-ux/KONTROLA
+          ref: 65a9ddc343921f6be8844476903748a493881a8f
+          path: _prepara80_readonly
+          persist-credentials: false
+      - name: Verify pinned report and service worker
+        run: |
+          test "$(git -C _prepara76_readonly rev-parse HEAD)" = "154555fe9990d5347679d23967848c3fc14e6eb4"
+          test "$(git -C _prepara80_readonly rev-parse HEAD)" = "65a9ddc343921f6be8844476903748a493881a8f"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Install Chromium in disposable runner only
+        run: |
+          npm init -y >/dev/null
+          npm install --no-save playwright@1.56.0
+          npx playwright install --with-deps chromium
+      - name: Real browser SW install, offline, upgrade, rollback and preferences
+        run: node --test architecture/audits/visura05/prepara-b01-browser.mjs
