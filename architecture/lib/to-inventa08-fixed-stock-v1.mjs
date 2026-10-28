@@ -85,6 +85,7 @@ export function toInventa08FixedStockV1({snapshot,serverContext,now}={}){
  fail(clock!==null,"Trusted clock not supplied");
  const age=snapshot.freshness?.maxAgeHours;
  const stale=snapshot.freshness?.forcedStale!==false||
+  proof.exportDateAttested!==true||proof.importDateAttested!==true||
   !Number.isSafeInteger(age)||age<=0||age>8760||exported===null||
   exported>clock||clock-exported>age*3600000||
   imported===null||published===null||imported>published||published>clock;
