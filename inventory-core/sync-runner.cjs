@@ -49,6 +49,9 @@ async function drainV2({
       ownerUserId:initialUser});
    }catch(error){
     const policy=failurePolicy(error);
+    // A revoked/expired identity must not trigger an additional lookup request.
+    if(error?.status===401||error?.status===403)
+      return {status:policy.action,reason:policy.reason,sent};
     // After lost response or a 409, the operation might already have committed.
     // Never create a new mutation ID; request a receipt by the SAME ID.
     try{receipt=await lookupV2Receipt({mutationId:head.mutationId,
@@ -64,7 +67,8 @@ async function drainV2({
    try{next=acknowledgeV2(queue,receipt,{trustedAuthenticatedResponse:true});}
    catch(_e){return {status:'hold',reason:'unverified-receipt-preserved',sent};}
    const latest=await loadV2(initialUser);
-   if(!Array.isArray(latest)||!sameHead(latest[0],head))
+   if(!Array.isArray(latest)||!sameHead(latest[0],head)
+     ||latest.some(item=>item?.ownerUserId!==initialUser))
     return {status:'hold',reason:'queue-changed-during-sync',sent};
    // Preserve commands appended by another UI interaction while request was in flight.
    next=latest.slice(1);
