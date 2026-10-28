@@ -240,3 +240,18 @@ Se han añadido inventory-lab/010_disposable_actual_alias_use.sql, tests/sql/inv
 **Siguiente tarea segura:** preparar un modelo de pantalla para ubicación: referencias sin confirmar arriba, referencias confirmadas agrupadas al final, contadores y estados de provisionales sin revelar stock teórico, con pruebas sintéticas y diseño responsive aislado. No tocar UI principal sin coordinación con los otros responsables.
 
 **Restricciones:** PR borrador; NO MERGE, NO DEPLOY, NO MIGRACIONES EN SUPABASE REAL, NO API BC, NO CAMBIOS PRODUCTIVOS.
+
+
+## Segundo hito de la reanudación 28/10/2026 — pantalla física con confirmadas al final
+
+**Archivos nuevos exclusivamente de chat 07:** inventory-ui/location-view.js, location-layout.css, location-layout.html; tests/inventa07-location-view.test.cjs, tests/inventa07-location-layout.test.cjs; docs/VISURA_INVENTA_07_VISTA_UBICACION.md. Son aditivos y no están vinculados a la PWA real. La demostración utiliza datos ficticios, sin operaciones ni persistencia.
+
+La vista física agrupa arriba todas las referencias todavía sin confirmar, incluidas correcciones en revisión, y coloca siempre al final las confirmadas en un desplegable cerrado inicialmente. Conserva códigos y lotes con ceros iniciales, cantidades exactas y cero expreso, y distingue provisionales físicamente confirmados de los que esperan Administración. El render utiliza textContent y lista blanca de campos para NO mostrar existencias teóricas BC, diferencias, costes ni secretos. No activa permiso de cierre; requiere servidor autenticado.
+
+**Refuerzo del cierre físico:** inventory-core/physical-closure.cjs ahora trata una corrección física pendiente como bloqueante y reconoce 0.000 como cero expreso, manteniendo límite numérico 16,3. Nuevas regresiones en tests/inventa07-physical-closure.test.cjs.
+
+**Pruebas verificadas:** INVENTA checks run 40611967138 PASS y PostgreSQL 16 run 40611967216 PASS, sobre commit 7c7cbc9ef5c9aa00403af53ebb8d8c9ee3e24f7e. La primera ejecución de la nueva prueba de DOM falló únicamente porque el código mostrado conservaba correctamente el lote; se corrigió la aserción y se comprobó CI general PASS en run 40611843620, sin suprimir el lote. Los archivos posteriores de documentación no alteran el comportamiento del módulo.
+
+**Bloqueos:** ninguna pantalla o servidor reales integrados, sin Auth JWT ni permisos definitivos, sin validación visual física iPhone/tablet/escritorio, sin Excel oficial auténtico, y pendiente el procedimiento expresamente aprobado de ubicación vacía. El chat 08 sigue siendo único responsable del stock teórico/posiciones fijas; este chat no tocó su módulo.
+
+**Próximo trabajo seguro:** contrato aislado y probado de respuesta de lectura de ubicación desde RPC autenticada, con lista blanca y sin stock BC; posterior revisión con integración/arquitectura antes de modificar rutas PWA, sin aplicar migraciones.
