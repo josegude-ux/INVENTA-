@@ -24,7 +24,7 @@ const stock=[
  ["00200","RESERVA","-12.25"],["00300","OTRA-3","19"]
 ].map(([product_code,location_code,quantity])=>({warehouse,importId:batchId,product_code,location_code,quantity}));
 const snapshot={meta,products,locations,fixed,stock};
-const controls=["search","aisle","location","state","view"];
+const controls=["search","code","description","aisle","location","state","view"];
 let currentReport=null;
 const mk=(tag,text,classname)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text??"");if(classname)n.className=classname;return n;};
 function addButton(container,row){
@@ -44,7 +44,8 @@ function openDetail(row){
  $("back").focus();
 }
 function render(){
- const filters={search:$("search").value,aisle:$("aisle").value.trim().toUpperCase(),
+ const filters={search:$("search").value,code:$("code").value,description:$("description").value,
+  aisle:$("aisle").value.trim().toUpperCase(),
   location:$("location").value.trim().toUpperCase(),state:$("state").value,view:$("view").value};
  const report=buildFixedStockReport({...snapshot,filters});currentReport=report;
  const m=report.indicators;
@@ -71,7 +72,7 @@ function render(){
   card.append(detail);addButton(card,row);$("reportCards").append(card);
  }
 }
-for(const id of controls)$(id).addEventListener(id==="search"||id==="aisle"||id==="location"?"input":"change",render);
+for(const id of controls)$(id).addEventListener(id==="search"||id==="code"||id==="description"||id==="aisle"||id==="location"?"input":"change",render);
 $("back").addEventListener("click",()=>{
  $("detail").classList.add("hidden");$("listing").classList.remove("hidden");
  $("search").focus();
