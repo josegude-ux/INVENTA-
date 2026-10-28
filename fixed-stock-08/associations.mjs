@@ -13,8 +13,11 @@ export function transitionFixedAssociation({association,actor,action,reason,othe
  if(!prior)throw Error("Estado anterior no acreditado");
  if((action==="RETIRAR"&&prior!=="ACTIVA")||(action==="REACTIVAR"&&prior!=="RETIRADA"))
   throw Error("Transición de estado inválida");
- if(!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/.test(String(at||""))||!Number.isSafeInteger(revision)||revision<1)
-  throw Error("Fecha de servidor o revisión inválidas");
+ if(!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z$/.test(String(at||""))||
+    !Number.isFinite(Date.parse(at))||
+    !Number.isSafeInteger(association.revision)||association.revision<1||
+    !Number.isSafeInteger(revision)||revision!==association.revision+1)
+  throw Error("Fecha UTC de servidor o revisión consecutiva inválidas");
  const active=action==="REACTIVAR";
  return {
   association:{...association,active,revision},
