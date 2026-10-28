@@ -86,3 +86,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/009_disposable_verified_scans.sql
       - name: Validate two distinct scans, original team and administrative evidence
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_verified_scans.sql
+      - name: Install historic alternate-barcode use provenance
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/010_disposable_actual_alias_use.sql
+      - name: Deny false attribution of unused or mismatched alternate codes
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_actual_alias_use.sql
