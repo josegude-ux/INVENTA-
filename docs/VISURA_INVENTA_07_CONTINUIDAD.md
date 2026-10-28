@@ -164,3 +164,14 @@ Nuevos archivos aislados:
 **Siguiente tarea independiente autorizada:** unificar la devolución de recibos idempotentes entre el contrato PostgreSQL de lotes y el adaptador V2, añadir control de autor original/pareja y verificar permisos con sesiones realmente autenticadas en entorno de pruebas separado antes de integrar PWA. No alterar real-counts.js mientras PR #20 y #22/#23 sigan en curso sin verificar integración.
 
 **Prohibiciones preservadas:** NO MERGE, NO DEPLOY, NO MIGRACIONES A SUPABASE ACTIVA, NO CAMBIAR DATOS NI PERMISOS REALES, NO API DE BUSINESS CENTRAL, NO CONVERSION AUTOMATICA DE COLAS.
+
+
+## Hito adicional 28/10/2026 — acuses de recibo V2 por lote (solo laboratorio)
+
+Se añadieron inventario-lab/007_disposable_v2_receipt.sql y tests/sql/inventa07_lab_v2_receipts.sql. El nombre exacto en repositorio es inventory-lab (no inventario-lab). Son únicamente ficheros de PostgreSQL 16 descartable: reconstruyen el recibo de una mutación identificada por UUID en la forma lógica esperada por la cola V2, incluyendo operación, lote, desglose de borrador, cero expreso, autor y revisión confirmada. Un usuario distinto no puede recuperar la mutación y una cuenta deshabilitada pierde acceso.
+
+**CI comprobada:** INVEnTA checks PASS ejecución 40607250717 y PostgreSQL 16 PASS ejecución 40607250735, ambas en el commit fdd0c2723900a81569b820787dc5144a4df62244. La suite comprueba además que el recuento por lote se recalcula en servidor, que dos lotes de un artículo no se fusionan y que no se concede actualización directa a operarios.
+
+**Limitaciones:** la devolución del laboratorio no constituye todavía una API real, una sesión Supabase validada ni garantía criptográfica del recibo. No hay reescritura automática de la cola V1, despliegue, migraciones o cambios en datos reales. La integración debe seguir bloqueada hasta obtener una autorización e implementar el backend de personas/parejas, permisos, lotes y recibos con E2E reales.
+
+**Siguiente tarea independiente:** probar en un entorno desechable la concesión única del terminal y los integrantes originales de pareja, así como revocación de sesión/ubicación con eventos inmutables; posteriormente diseño de migración aditiva y revisión de PR abiertas, sin modificar la PWA activa.
