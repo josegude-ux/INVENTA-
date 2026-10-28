@@ -57,3 +57,7 @@ En este chat se verificaron PR #22 y #76 OPEN/DRAFT/UNMERGED y no hay rama exist
 ## 28/10/2026 — Auditoría adicional del importador PR18
 - PR15 y PR16 MERGED; PR18 OPEN, PR19 OPEN/DRAFT. Reproducción directa en código PR18: cantidad original 99999999999.123456 se parsea como Number 99999999999.12346 sin error. No reutilizar este parser como garantía de decimal BC exacto sin corrección de su propietario; no tocar la rama PR18.
 - El test cruzado 07/08 incorpora chequeo negativo pinned de PR18 y un TODO explícito de precisión; no se considera PASS de integridad. Ver INTEGRACION_07_08_2026-10-28.md, sección 8.
+
+## Resultado definitivo de esta iteración de auditoría de importador, 28/10/2026
+- Test fuente PR18 añadido en branch VISURA05 y ejecutado con PR07/08 original; tras corregir orden del checkout, [CI #40614114479](https://github.com/josegude-ux/INVENTA-/actions/runs/40614114479) SUCCESS: **15 PASS, 0 FAIL, 7 TODO**. De los PASS, uno reproduce un defecto de precisión de PR18 y NO valida el parser.
+- CI previa #40614045642 FAILED por orden de checkout de auditoría; se corrigió en commit 4a65dc7a8cc99742044bea6ab1f6a4ba01b8e447 sin tocar fuentes 07/08/18. Ver sección 9 del informe conjunto.
