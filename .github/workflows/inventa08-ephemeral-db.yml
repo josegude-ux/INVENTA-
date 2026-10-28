@@ -53,3 +53,7 @@ jobs:
         run: bash fixed-stock-08/lab/003_concurrent_transition.sh
       - name: Rechazar reactivación cuando existe ya otra asociación idéntica activa
         run: psql -X -v ON_ERROR_STOP=1 -f fixed-stock-08/lab/004_reactivation_collision.sql
+      - name: Crear lotes BC ficticios y comprobar cero por compensación
+        run: psql -X -v ON_ERROR_STOP=1 -f fixed-stock-08/lab/005_disposable_bc_snapshot.sql
+      - name: Publicación BC concurrente sin mezcla de instantáneas
+        run: bash fixed-stock-08/lab/006_disposable_bc_concurrency.sh
