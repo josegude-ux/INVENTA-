@@ -155,7 +155,7 @@ test('render creates text nodes, leaves confirmed section last and collapsed by 
   assert.equal(details.className,'vi07-location-confirmed');
   assert.equal(details.open,undefined);
   const articles=details.children[1].children.filter(x=>x.tagName==='article');
-  assert.equal(articles[0].children[0].textContent,'<img src=x onerror=evil()>');
+  assert.equal(articles[0].children[0].textContent,'<img src=x onerror=evil()> · Lote L0007');
   assert.equal(rendered.children.indexOf(details),rendered.children.length-2);
  }finally{global.document=previous;}
 });
