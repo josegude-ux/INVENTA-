@@ -34,6 +34,8 @@ function checkSource(meta,products,locations,fixed,stock){
     !txt(meta?.importedAt)||!txt(meta?.publishedAt))
   issues.push("Faltan ámbito, lote, instantánea o procedencia");
  if(!meta?.positionsVersion)issues.push("Falta versión coherente de asociaciones fijas");
+ if(meta?.absentStockIsZero===true&&!txt(meta?.zeroOmissionRuleId))
+  issues.push("Ausencia igual a cero sin regla BC de omisión certificada");
  // Las cifras de control solo son válidas si el servidor las certificó.
  // Un reporte truncado o paginado no debe aparentar una suma total válida.
  for(const [field,length] of [["expectedStockRows",stock.length],
