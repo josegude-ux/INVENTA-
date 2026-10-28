@@ -246,3 +246,13 @@ test("XLSX conserva decimal de más de 15 cifras como texto exacto",()=>{
  assert.match(xml,/<c r="E\d+" t="inlineStr"><is><t xml:space="preserve">0\.000000123456789012345678901<\/t>/);
  assert.ok(!xml.includes("<f>"));
 });
+
+test("referencia parcial y descripción independiente respetan el resultado y XLSX",()=>{
+ const report=buildFixedStockReport({...data(),filters:{code:"001",description:"100",view:"all"}});
+ assert.equal(report.rows.length,2);
+ assert.ok(report.rows.every(r=>r.code==="00100"));
+ const empty=buildFixedStockReport({...data(),filters:{code:"001",description:"200",view:"all"}});
+ assert.equal(empty.rows.length,0);
+ const xml=zipEntries(buildFixedStockXlsx({report})).get("xl/worksheets/sheet1.xml");
+ assert.equal((xml.match(/<row r=/g)||[]).length,3);
+});
