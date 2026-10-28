@@ -14,11 +14,13 @@ const snap=(warehouse="COR_01_COR")=>({
    lot:"L1",stock_calculated:"-2,5000",unit:"UD",expiry_date:"2027-08-01"}],
  batch:{id:"a",warehouse_code:warehouse,state:"published",source:"bc_excel_manual",
    expected_rows:1,validated_rows:1,total_import_rows:7,file_name:"BC.xlsx",
+   exported_at:"2026-10-27T08:00:00Z",imported_at:"2026-10-27T09:00:00Z",
    published_at:"2026-10-27T10:00:00Z"},
  coverage:{stock:true,catalog:true,catalogScopeVerified:true,
   positions:true,positionsReconciled:true,locations:true,locationsScoped:true,
   zeroOmissionCertified:false},
  sourceCertification:{fileAndRowsAttested:true,parserApproved:true,
+  exportDateAttested:true,importDateAttested:true,
   zeroOmissionPolicyApproved:false},
  freshness:{forcedStale:false,maxAgeHours:24}
 });
@@ -120,4 +122,16 @@ test("a validated historical batch cannot impersonate the warehouse's current po
  assert.equal(adapt(s).meta.stockComplete,true);
  delete s.currentBatchId;
  assert.throws(()=>adapt(s),/current warehouse pointer/);
+});
+
+test("an old BC export remains stale even after recent publication",()=>{
+ const s=snap();s.batch.exported_at="2026-10-01T10:00:00Z";
+ s.batch.imported_at="2026-10-27T09:00:00Z";
+ s.batch.published_at="2026-10-27T10:00:00Z";
+ assert.equal(adapt(s).meta.stale,true);
+ s.batch.exported_at="2026-10-27T08:00:00Z";
+ assert.equal(adapt(s).meta.stale,false);
+ s.sourceCertification.exportDateAttested=false;
+ assert.equal(adapt(s).meta.stale,true);
+ assert.equal(adapt(s).meta.stockComplete,false);
 });
