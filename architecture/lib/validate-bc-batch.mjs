@@ -4,9 +4,11 @@ const code = s => typeof s === "string" && /^[A-Za-z0-9][A-Za-z0-9_.\/-]{0,79}$/
 const locationCode = s => typeof s === "string" && /^[A-Za-z0-9][A-Za-z0-9_.\/ -]{0,79}$/.test(s.trim()) && !/(^|[\\/])\\.\\.(?:[\\/]|$)/.test(s.trim()) ? s.trim() : null;
 const text = (v,max=500) => typeof v==="string" && v.trim().length && v.trim().length<=max && !/[\x00-\x1f\x7f]/.test(v) ? v.trim() : null;
 export function decimalBC(value) {
-  if (typeof value!=="string" && typeof value!=="number") return null;
-  if (typeof value==="number" && !Number.isFinite(value)) return null;
-  const s=String(value).trim();
+  // Excel/JavaScript Number may already have irreversibly rounded the BC
+  // amount. Require a parser-provided lexical decimal string at the trust
+  // boundary: never mint an integrity receipt from an unverified Number.
+  if (typeof value!=="string") return null;
+  const s=value.trim();
   if (!/^-?(?:0|[1-9]\d{0,13})(?:[.,]\d{1,6})?$/.test(s)) return null;
   const a=s.replace(",",".").split(".");
   const fraction=(a[1]||"").replace(/0+$/,"");
