@@ -17,11 +17,12 @@ function data(){
   {code:"00200",description:"Artículo 200",unit:"UD"},
   {code:"00300",description:"Artículo 300",unit:"UD"}],
  locations:[{warehouse:"COR_01_COR",code:"K02",aisle:"K"},
- {warehouse:"COR_01_COR",code:"K10",aisle:"K"}],
- fixed:[{associationId:"F1",warehouse:"COR_01_COR",product_code:"00100",location_code:"K10",active:true},
- {associationId:"F2",warehouse:"COR_01_COR",product_code:"00100",location_code:"K02",active:true},
- {associationId:"F3",warehouse:"COR_01_COR",product_code:"00200",location_code:"K02",active:true},
- {associationId:"F4",warehouse:"COR_01_COR",product_code:"00300",location_code:"K10",active:true}],
+ {warehouse:"COR_01_COR",code:"K10",aisle:"K"},
+ ...["L01","L99","RESERVA"].map(code=>({warehouse:"COR_01_COR",code,aisle:"BC"}))],
+ fixed:[{associationId:"F1",warehouse:"COR_01_COR",product_code:"00100",location_code:"K10",active:true,revision:1},
+ {associationId:"F2",warehouse:"COR_01_COR",product_code:"00100",location_code:"K02",active:true,revision:1},
+ {associationId:"F3",warehouse:"COR_01_COR",product_code:"00200",location_code:"K02",active:true,revision:1},
+ {associationId:"F4",warehouse:"COR_01_COR",product_code:"00300",location_code:"K10",active:true,revision:1}],
  stock:[record("00100","L01","-8"),record("00100","L99","8"),
  record("00200","RESERVA","-12.125"),record("00300","L99","2")]};
 }
@@ -35,7 +36,7 @@ test("cero por compensación en todas las ubicaciones, dos filas y una referenci
  assert.deepEqual(r.rows.filter(x=>x.code==="00100").map(x=>x.quantity),["0","0"]);
 });
 test("stock negativo total sin multiplicar por posiciones",()=>{
- const x=data();x.fixed.push({associationId:"F5",warehouse:"COR_01_COR",product_code:"00200",location_code:"K10",active:true});
+ const x=data();x.fixed.push({associationId:"F5",warehouse:"COR_01_COR",product_code:"00200",location_code:"K10",active:true,revision:1});
  const r=buildFixedStockReport(x);
  assert.equal(r.indicators.negativeReferences,1);
  assert.equal(r.rows.filter(v=>v.code==="00200").length,2);
@@ -137,8 +138,9 @@ test("XLSX una hoja; Excel sin fórmulas y sin ceros iniciales perdidos",()=>{
 test("XLSX incluye todas las filas, no solo una página visual",()=>{
  const x=data();x.fixed=[];
  for(let i=0;i<1208;i++)x.fixed.push({associationId:"F"+i,warehouse:"COR_01_COR",
-  product_code:"00100",location_code:"K"+String(i).padStart(4,"0"),active:true});
- x.locations=x.fixed.map(v=>({warehouse:"COR_01_COR",code:v.location_code,aisle:"K"}));
+  product_code:"00100",location_code:"K"+String(i).padStart(4,"0"),active:true,revision:1});
+ x.locations=[...x.fixed.map(v=>({warehouse:"COR_01_COR",code:v.location_code,aisle:"K"})),
+  ...["L01","L99","RESERVA"].map(code=>({warehouse:"COR_01_COR",code,aisle:"BC"}))];
  const r=buildFixedStockReport(x),z=zipEntries(buildFixedStockXlsx({report:r}));
  const xml=z.get("xl/worksheets/sheet1.xml");
  assert.equal((xml.match(/<row r=/g)||[]).length,1209);
@@ -148,7 +150,7 @@ test("XLSX incluye todas las filas, no solo una página visual",()=>{
 test("fail closed: nunca se muestra asociación fija de otro almacén, ni como NO FIABLE",()=>{
  const x=data();
  x.fixed.push({associationId:"EXTERNA",warehouse:"COR_02_NAR",
-  product_code:"CODIGO_RESERVADO",location_code:"Z99",active:true});
+  product_code:"CODIGO_RESERVADO",location_code:"Z99",active:true,revision:1});
  x.products.push({code:"CODIGO_RESERVADO",description:"Solo otro almacén",unit:"UD"});
  const r=buildFixedStockReport({...x,filters:{view:"all"}});
  assert.equal(r.rows.length,4);
