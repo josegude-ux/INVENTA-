@@ -68,3 +68,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/005_disposable_incidents.sql
       - name: Verify blocking incidents, authorizations and verified corrections
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_incidents.sql
+      - name: Install isolated lot-aware reference contract
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/006_disposable_lot_contract.sql
+      - name: Validate separate lots and server recomputation of physical breakdown
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_lot_contract.sql
