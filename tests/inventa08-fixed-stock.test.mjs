@@ -155,3 +155,52 @@ test("fail closed: nunca se muestra asociación fija de otro almacén, ni como N
  assert.ok(r.issues.some(issue=>issue.includes("almacén ajeno")));
  assert.ok(r.rows.every(row=>row.state===ESTADOS.NO_FIABLE));
 });
+
+test("control de filas BC detecta lote truncado y jamás declara cero acreditado",()=>{
+ const x=data();x.meta.expectedStockRows=x.stock.length+1;
+ const report=buildFixedStockReport({...x,filters:{view:"unreliable"}});
+ assert.equal(report.rows.length,4);
+ assert.ok(report.rows.every(r=>r.state===ESTADOS.NO_FIABLE&&r.quantity===null));
+ assert.ok(report.issues.some(e=>e.includes("expectedStockRows")));
+});
+test("control de posiciones activas detecta importación parcial",()=>{
+ const x=data();x.meta.expectedFixedRows=5;
+ const report=buildFixedStockReport({...x,filters:{view:"unreliable"}});
+ assert.ok(report.issues.some(e=>e.includes("posiciones activas")));
+ assert.equal(report.indicators.unreliableAssociations,4);
+});
+test("cantidades convertidas por cliente a Number no pueden acreditarse",()=>{
+ const x=data();x.stock[1].quantity=0.1;
+ const report=buildFixedStockReport({...x,filters:{view:"unreliable"}});
+ assert.ok(report.issues.some(e=>e.includes("texto decimal exacto")));
+ assert.ok(report.rows.every(r=>r.state===ESTADOS.NO_FIABLE));
+});
+test("unidad de stock diferente de la del artículo requiere conversión certificada",()=>{
+ const x=data();x.stock[0].unit="CJ";
+ const report=buildFixedStockReport({...x,filters:{view:"unreliable"}});
+ assert.ok(report.issues.some(e=>e.includes("Unidad de stock distinta")));
+ assert.ok(report.rows.every(r=>r.quantity===null));
+});
+test("maestro duplicado no reemplaza silenciosamente unidades o descripciones",()=>{
+ const x=data();x.products.push({...x.products[0],unit:"CAJA"});
+ const report=buildFixedStockReport({...x,filters:{view:"unreliable"}});
+ assert.ok(report.issues.some(e=>e.includes("duplicado")));
+ assert.equal(report.rows.length,4);
+});
+test("ubicaciones ambiguas en el mismo almacén hacen no fiable la fuente",()=>{
+ const x=data();x.locations.push({...x.locations[0],aisle:"Z"});
+ const report=buildFixedStockReport({...x,filters:{view:"unreliable"}});
+ assert.ok(report.issues.some(e=>e.includes("Ubicación duplicada")));
+});
+test("stock exacto con 24 decimales se compensa sin redondeos",()=>{
+ const x=data();
+ x.stock[0].quantity="-0.000000000000123456789012";
+ x.stock[1].quantity="0.000000000000123456789012";
+ assert.equal(buildFixedStockReport(x).rows.find(r=>r.code==="00100").quantity,"0");
+});
+test("no se crean ceros si falta la unidad de catálogo",()=>{
+ const x=data();x.products[0].unit="";
+ const report=buildFixedStockReport({...x,filters:{view:"unreliable"}});
+ assert.equal(report.rows.length,4);
+ assert.ok(report.issues.some(e=>e.includes("sin unidad")));
+});
