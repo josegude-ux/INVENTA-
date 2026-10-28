@@ -57,7 +57,13 @@ function checkSource(meta,products,locations,fixed,stock){
    issues.push("Ubicación duplicada, sin identidad o ajena al almacén");
   bins.add(identity);
  }
- const fixedCount=fixed.filter(f=>f?.active===true&&txt(f?.warehouse)===wh).length;
+ const activeFixed=fixed.filter(f=>f?.active===true&&txt(f?.warehouse)===wh);
+ const fixedCount=activeFixed.length;
+ for(const f of activeFixed){
+  if(!productUnits.has(txt(f.product_code))||
+     !bins.has(key(wh,txt(f.location_code))))
+   issues.push("Posición fija sin artículo o ubicación del catálogo certificado");
+ }
  if(meta&&Object.prototype.hasOwnProperty.call(meta,"expectedFixedRows")&&
     (!Number.isSafeInteger(meta.expectedFixedRows)||meta.expectedFixedRows<0||
       meta.expectedFixedRows!==fixedCount))
