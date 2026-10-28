@@ -128,7 +128,7 @@ test('sync requires exclusive lock contract; it cannot transmit without a lock',
 });
 test('sync rechecks authentication on every item, not only once on open',async()=>{
  const h=harness();h.append(mutation(next));
- let calls=0;h.deps.refreshIdentity=async()=>{calls++;if(calls>=3)h.setAuthenticated(false);};
+ let calls=0;h.deps.refreshIdentity=async()=>{calls++;if(calls>=5)h.setAuthenticated(false);};
  const r=await drainV2(h.deps);
  assert.equal(r.reason,'account-or-session-changed');
  assert.equal(h.queue.length,1);
@@ -143,4 +143,42 @@ test('sync never trusts an ACK missing exact request/actor or server revision',a
  const r=await drainV2(h.deps);
  assert.equal(r.reason,'unverified-receipt-preserved');
  assert.equal(h.written,0);assert.equal(h.queue.length,1);
+});
+
+test('new sync shares legacy browser lock name to prevent concurrent drainers',async()=>{
+ const h=harness();
+ let observed='';
+ h.deps.withExclusiveLock=async(key,fn)=>{observed=key;return fn();};
+ await drainV2(h.deps);
+ assert.equal(observed,'inventa-count-sync:'+OWNER);
+});
+test('expired session must stop immediately without an extra receipt query',async()=>{
+ const h=harness({backend:{
+  submit:async()=>{throw Object.assign(Error('forbidden'),{status:403});},
+  lookup:async()=>{throw Error('Do not call lookup after 403');}
+ }});
+ const result=await drainV2(h.deps);
+ assert.equal(result.reason,'authentication-or-permission');
+ assert.equal(h.lookups,0);assert.equal(h.written,0);
+ assert.equal(h.queue.length,1);
+});
+test('a new legacy item created during transport prevents V2 queue deletion',async()=>{
+ const h=harness({backend:{
+  submit:async(job,{validReceipt})=>{
+   h.setOld([{body:{campaign_id:'camp',location_code:'K00',
+    product_code:'P01',lot:'000L',quantity:1,actor_id:OWNER,
+    client_mutation_id:next,entries:[]}}]);
+   return validReceipt(job);
+  }
+ }});
+ const result=await drainV2(h.deps);
+ assert.equal(result.reason,'legacy-queue-changed-during-sync');
+ assert.equal(h.queue.length,1);assert.equal(h.written,0);
+});
+test('account changed while awaiting server capabilities does not submit',async()=>{
+ const h=harness();
+ h.deps.getCapabilities=async()=>{h.setAccount('operator-B');return caps;};
+ const result=await drainV2(h.deps);
+ assert.equal(result.reason,'account-or-session-changed');
+ assert.equal(h.submitted,0);assert.equal(h.queue.length,1);
 });
