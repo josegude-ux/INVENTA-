@@ -269,4 +269,72 @@ BEGIN
  IF (SELECT count(*) FROM inventa07_lab.lot_states WHERE lot='LOT-THIRD')<>0 THEN
   RAISE EXCEPTION 'Third operator contaminated count states'; END IF;
 END $audit$;
+-- Negative integration case: B holds pair, then A loses assignment.
+-- This is different from revoking the authenticated holder's own assignment.
+INSERT INTO inventa07_lab.assignments(campaign_id,location_code,actor_id,active)
+ VALUES
+ ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P02','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true),
+ ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P03','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true),
+ ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P03','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',true);
+INSERT INTO inventa07_lab.device_sessions(id,actor_id,device_id) VALUES
+ ('92000000-0000-4000-8000-000000000022',
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  'd0000000-0000-4000-8000-000000000002');
+INSERT INTO inventa07_lab.team_terminals(team_id,campaign_id,location_code,device_id,
+ original_a,original_b) VALUES
+ ('f0000000-0000-4000-8000-000000000002',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P02',
+  'd0000000-0000-4000-8000-000000000002',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+ ('f0000000-0000-4000-8000-000000000003',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P03',
+  'd0000000-0000-4000-8000-000000000002',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+SET ROLE inventa07_lab_client;
+SELECT set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',false);
+SELECT set_config('request.jwt.claim.session_id','92000000-0000-4000-8000-000000000022',false);
+DO $second_pair$
+DECLARE denied boolean:=false; r jsonb;
+BEGIN
+ r:=inventa07_lab.team_operate('f0000000-0000-4000-8000-000000000002',
+  'activate','pair',0,'80000000-0000-4000-8000-000000000022');
+ IF r->>'mode'<>'pair' THEN RAISE EXCEPTION 'Second pair not activated'; END IF;
+ BEGIN
+  PERFORM inventa07_lab.team_operate('f0000000-0000-4000-8000-000000000003',
+   'activate','pair',0,'80000000-0000-4000-8000-000000000023');
+ EXCEPTION WHEN unique_violation THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'One terminal leased to two teams simultaneously'; END IF;
+END $second_pair$;
+RESET ROLE;
+UPDATE inventa07_lab.assignments SET active=false
+ WHERE campaign_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+  AND location_code='K00-P02'
+  AND actor_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+SET ROLE inventa07_lab_client;
+DO $other_partner_revoked$
+DECLARE denied boolean:=false;
+BEGIN
+ IF inventa07_lab.team_authorized(
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P02') THEN
+  RAISE EXCEPTION 'B can count as pair after A lost assignment'; END IF;
+ BEGIN
+  PERFORM inventa07_lab.team_apply_lot(
+   'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P02',
+   'SKU0001','LOT-PAIR-REVOKED','draft',
+   '81000000-0000-4000-8000-000000000022',0,
+   '[{"type":"loose","units":"4"}]'::jsonb,false,NULL);
+ EXCEPTION WHEN OTHERS THEN denied:=position('Team terminal lease' in SQLERRM)>0; END;
+ IF NOT denied THEN RAISE EXCEPTION 'B counted for revoked A'; END IF;
+ denied:=false;
+ BEGIN
+  PERFORM inventa07_lab.team_operate(
+   'f0000000-0000-4000-8000-000000000002',
+   'renew',NULL,1,'80000000-0000-4000-8000-000000000024');
+ EXCEPTION WHEN OTHERS THEN
+  denied:=position('Original pair assignment revoked' in SQLERRM)>0; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Pair renewed with revoked original member'; END IF;
+END $other_partner_revoked$;
+RESET ROLE;
 SELECT 'inventa07 original team and one-terminal session lease PASS' AS result;
