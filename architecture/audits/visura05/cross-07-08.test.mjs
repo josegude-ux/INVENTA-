@@ -179,6 +179,23 @@ test("No hay importacion directa de teoria en la proyeccion fisica",()=>{
  assert.doesNotMatch(physicalSource,/stock_snapshot|stockCalculated|theoreticalStock|bc_import_lines|supabase\.co|fetch\(/i);
  assert.doesNotMatch(adminSource,/stock_snapshot|real-counts\.js|inventory-core\/counting/);
 });
+// Historical PR18 is a separate checkout, never a source of certified stock.
+const historicalImporter=require("../../../_inventa18_readonly/bc-excel-import.js");
+test("AUDIT REPRODUCTION: PR18 legacy decimal Number rounds valid six-decimal quantity",()=>{
+ const raw="99999999999.123456";
+ const parsed=historicalImporter.parseRows([
+  ["Nº producto","Cód. ubicación","Descripción","Nº lote",
+   "Stock calculado","Cód. unidad medida","Cód. almacén","Cant. (stock físico)","Cantidad"],
+  ["00001234","K02","Ficticio","L0007",raw,"UD",wh,"7","-999"]
+ ],"sintetico.xlsx");
+ assert.deepEqual(parsed.errors,[]);
+ assert.equal(parsed.rows.length,1);
+ assert.equal(typeof parsed.rows[0].quantity,"number");
+ assert.equal(String(parsed.rows[0].quantity),"99999999999.12346");
+ assert.notEqual(String(parsed.rows[0].quantity),raw);
+ assert.ok(parsed.warnings.some(x=>x.includes("ignora")));
+});
+test.todo("PR18 BC parser must retain exact decimals without Number before certified publication");
 test.todo("Gateway Auth debe verificar modulo, almacen y sesion en servidor");
 test.todo("RLS efectiva debe negar teoria a un operario revocado");
 test.todo("Almacen de la campana fisica debe estar vinculado al contexto Auth");

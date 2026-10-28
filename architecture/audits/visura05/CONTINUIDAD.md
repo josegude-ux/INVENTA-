@@ -53,3 +53,7 @@ En este chat se verificaron PR #22 y #76 OPEN/DRAFT/UNMERGED y no hay rama exist
 - Cobertura: no mezcla teoría BC y cantidad física, proyección física no refleja stock BC, cierre histórico independiente, estado de provisional, separación almacenes, V1 y 401/403, pareja, XLSX 1 hoja y dependencias sin acoplamiento.
 - Matriz, riesgos, contratos de físico/teoría, fases y reversión en architecture/audits/visura05/INTEGRACION_07_08_2026-10-28.md.
 - Siguiente tarea: revisión de responsables 04/07/08 del contrato y adaptador real de servidor; VISURA05 validará nuevos commits sin cambiar ramas ajenas. NO desplegar, fusionar, aplicar SQL, permisos productivos o BC.
+
+## 28/10/2026 — Auditoría adicional del importador PR18
+- PR15 y PR16 MERGED; PR18 OPEN, PR19 OPEN/DRAFT. Reproducción directa en código PR18: cantidad original 99999999999.123456 se parsea como Number 99999999999.12346 sin error. No reutilizar este parser como garantía de decimal BC exacto sin corrección de su propietario; no tocar la rama PR18.
+- El test cruzado 07/08 incorpora chequeo negativo pinned de PR18 y un TODO explícito de precisión; no se considera PASS de integridad. Ver INTEGRACION_07_08_2026-10-28.md, sección 8.
