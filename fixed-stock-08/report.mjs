@@ -26,14 +26,29 @@ function decimalText(x){
 function checkSource(meta,products,locations,fixed,stock){
  const issues=[];
  const wh=txt(meta?.warehouse),batch=txt(meta?.publishedBatchId);
- if(!meta||!meta.verifiedByServer||!meta.authorized||!meta.stockComplete||
-    !meta.positionsComplete||!meta.catalogComplete||!meta.locationsComplete||
-    meta.truncated||meta.stale)
-  issues.push("Origen sin certificación completa, autorizado y vigente");
+ if(meta?.verifiedByServer!==true||meta?.authorized!==true||
+    meta?.stockComplete!==true||meta?.positionsComplete!==true||
+    meta?.catalogComplete!==true||meta?.locationsComplete!==true||
+    meta?.truncated!==false||meta?.stale!==false)
+  issues.push("Origen sin certificación completa, autorizado y vigente: banderas booleanas explícitas obligatorias");
+ if(typeof meta?.absentStockIsZero!=="boolean")
+  issues.push("Política de ausencia de stock debe ser booleana explícita");
+ if(meta?.contractVersion!=null&&meta.contractVersion!=="visura-inventa08-fixed-stock-v1")
+  issues.push("Versión del contrato de arquitectura incompatibile");
  if(!wh||!batch||!txt(meta?.snapshotId)||!txt(meta?.sourceFile)||
     !txt(meta?.importedAt)||!txt(meta?.publishedAt))
   issues.push("Faltan ámbito, lote, instantánea o procedencia");
- if(!meta?.positionsVersion)issues.push("Falta versión coherente de asociaciones fijas");
+ if(typeof meta?.positionsVersion!=="string"||!meta.positionsVersion.trim()||
+    typeof meta?.snapshotId!=="string"||!meta.snapshotId.trim()||
+    typeof meta?.publishedBatchId!=="string"||!meta.publishedBatchId.trim())
+  issues.push("Falta versión coherente de asociaciones fijas o instantánea/lote");
+ // Las tres marcas expresan hechos diferentes; un Excel antiguo no se
+ // vuelve vigente simplemente por publicarlo hoy.
+ const iso=x=>typeof x==="string"&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?Z$/.test(x)&&Number.isFinite(Date.parse(x));
+ if(meta?.stale===false&&(!iso(meta?.exportedAt)||!iso(meta?.importedAt)||
+    !iso(meta?.publishedAt)||Date.parse(meta.exportedAt)>Date.parse(meta.importedAt)||
+    Date.parse(meta.importedAt)>Date.parse(meta.publishedAt)))
+  issues.push("Fechas BC de exportación, importación o publicación incoherentes");
  if(meta?.absentStockIsZero===true&&!txt(meta?.zeroOmissionRuleId))
   issues.push("Ausencia igual a cero sin regla BC de omisión certificada");
  // Las cifras de control solo son válidas si el servidor las certificó.
@@ -58,6 +73,17 @@ function checkSource(meta,products,locations,fixed,stock){
   if(!code||!warehouse||warehouse!==wh||bins.has(identity))
    issues.push("Ubicación duplicada, sin identidad o ajena al almacén");
   bins.add(identity);
+ }
+ // La identidad y la revisión deben ser inequívocas, incluso para
+ // asociaciones retiradas; no fabricar IDs desde pares legacy.
+ const identities=new Set();
+ for(const f of fixed){
+  const id=f?.associationId;
+  if(typeof id!=="string"||!id.trim()||identities.has(id))
+   issues.push("associationId ausente, duplicado o mal tipado");
+  else identities.add(id);
+  if(typeof f?.active!=="boolean"||!Number.isSafeInteger(f?.revision)||f.revision<1)
+   issues.push("Asociación sin estado booleano o revisión monotónica acreditada");
  }
  const activeFixed=fixed.filter(f=>f?.active===true&&txt(f?.warehouse)===wh);
  const fixedCount=activeFixed.length;
@@ -86,6 +112,8 @@ function checkSource(meta,products,locations,fixed,stock){
   if(typeof line?.quantity!=="string")
    issues.push("Cantidad BC no es texto decimal exacto");
   try{decimal(line?.quantity)}catch{issues.push("Cantidad BC inválida")}
+  if(!bins.has(key(wh,txt(line?.location_code))))
+   issues.push("Línea BC en ubicación desconocida del almacén certificado");
   if(!productUnits.has(code))
    issues.push("Línea BC de artículo ausente del catálogo certificado");
   if(line?.unit!=null&&txt(line.unit)!==productUnits.get(code))
