@@ -1,0 +1,20 @@
+name: VISURA INVENTA 08 — stock fijo aislado
+on:
+  pull_request:
+    paths:
+      - 'fixed-stock-08/**'
+      - 'tests/inventa08-fixed-stock.test.mjs'
+      - '.github/workflows/inventa08-fixed-stock.yml'
+  workflow_dispatch:
+jobs:
+  pure-module:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Contratos sintéticos sin Supabase ni BC
+        run: node --test tests/inventa08-fixed-stock.test.mjs
