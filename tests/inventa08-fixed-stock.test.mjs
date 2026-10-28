@@ -321,3 +321,10 @@ test("PR22: versionado de contrato y fechas de procedencia incoherentes se bloqu
  y.meta.importedAt="2026-10-27T08:00:00Z";
  assert.ok(buildFixedStockReport({...y,filters:{view:"all"}}).issues.some(msg=>msg.toLowerCase().includes("fecha")));
 });
+
+test("PR22: un sobre sin contractVersion v1 no acredita un informe autorizado",()=>{
+ const x=data();delete x.meta.contractVersion;
+ const result=buildFixedStockReport({...x,filters:{view:"all"}});
+ assert.ok(result.issues.some(m=>m.includes("contrato")));
+ assert.ok(result.rows.every(v=>v.state===ESTADOS.NO_FIABLE&&v.quantity===null));
+});
