@@ -80,12 +80,16 @@ BEGIN
  OR NOT EXISTS(SELECT 1 FROM inventa07_lab.assignments
    WHERE campaign_id=p_campaign AND location_code=p_location
     AND actor_id=v_actor AND active) THEN RETURN false; END IF;
- IF v_team.mode='pair' AND NOT EXISTS(
-  SELECT 1 FROM inventa07_lab.assignments x
-   JOIN inventa07_lab.actors a ON a.id=x.actor_id AND a.active
-   WHERE x.campaign_id=p_campaign AND x.location_code=p_location
-      AND x.actor_id=v_team.original_b AND x.active)
- THEN RETURN false; END IF;
+ IF v_team.mode='pair' AND (
+   NOT EXISTS(SELECT 1 FROM inventa07_lab.assignments x
+     JOIN inventa07_lab.actors a ON a.id=x.actor_id AND a.active
+     WHERE x.campaign_id=p_campaign AND x.location_code=p_location
+       AND x.actor_id=v_team.original_a AND x.active)
+   OR NOT EXISTS(SELECT 1 FROM inventa07_lab.assignments x
+     JOIN inventa07_lab.actors a ON a.id=x.actor_id AND a.active
+     WHERE x.campaign_id=p_campaign AND x.location_code=p_location
+       AND x.actor_id=v_team.original_b AND x.active)
+ ) THEN RETURN false; END IF;
  RETURN true;
 END $authz$;
 REVOKE ALL ON FUNCTION inventa07_lab.team_authorized(uuid,text) FROM PUBLIC;
