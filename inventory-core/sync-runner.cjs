@@ -24,7 +24,9 @@ async function drainV2({
   throw Error('Límite de sincronización inválido.');
  const initialUser=getAuthenticatedUserId();
  if(!initialUser||!isAuthenticated())return {status:'hold',reason:'session-unavailable',sent:0};
- const lockName='inventa-v2:'+initialUser;
+ // Use the SAME lock as the currently published legacy flush when available.
+ // This does not enable V2; it only prevents competing sends during migration.
+ const lockName='inventa-count-sync:'+initialUser;
  return withExclusiveLock(lockName,async()=>{
   let sent=0;
   for(let step=0;step<maxSteps;step++){
@@ -42,6 +44,10 @@ async function drainV2({
     authenticated:true,capabilities,legacyPending:audit.total});
    if(plan.action==='idle')return {status:'done',reason:'empty',sent};
    if(plan.action==='hold')return {status:'hold',reason:plan.reason,sent};
+   // Capability negotiation is asynchronous: the account can change meanwhile.
+   await refreshIdentity();
+   if(!isAuthenticated()||getAuthenticatedUserId()!==initialUser)
+    return {status:'hold',reason:'account-or-session-changed',sent};
    const head=queue[0];
    let receipt;
    try{
@@ -63,6 +69,10 @@ async function drainV2({
    await refreshIdentity();
    if(!isAuthenticated()||getAuthenticatedUserId()!==initialUser)
     return {status:'hold',reason:'account-or-session-changed',sent};
+   // A legacy entry added during the transport must not be silently bypassed.
+   const lateLegacy=auditLegacyQueue({userId:initialUser,rows:await loadLegacy(initialUser)});
+   if(lateLegacy.total>0)
+    return {status:'hold',reason:'legacy-queue-changed-during-sync',sent};
    let next;
    try{next=acknowledgeV2(queue,receipt,{trustedAuthenticatedResponse:true});}
    catch(_e){return {status:'hold',reason:'unverified-receipt-preserved',sent};}
