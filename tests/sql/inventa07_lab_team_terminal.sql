@@ -33,11 +33,27 @@ INSERT INTO inventa07_lab.team_terminals(team_id,campaign_id,location_code,devic
 SET ROLE inventa07_lab_client;
 SELECT set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
 SELECT set_config('request.jwt.claim.session_id','91000000-0000-4000-8000-000000000001',false);
+DO $old_rpc_closed$
+DECLARE denied boolean:=false;
+BEGIN
+ BEGIN
+  PERFORM inventa07_lab.apply_lot('cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+   'K00-P01','SKU0002','LOT-OLD-ROUTE','draft',
+   '81000000-0000-4000-8000-000000000090',0,
+   '[{"type":"loose","units":"20"}]'::jsonb,false,NULL);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Old lot RPC still executable'; END IF;
+ denied:=false;
+ BEGIN
+  PERFORM inventa07_lab.lot_v2_receipt('70000000-0000-4000-8000-000000000001');
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Direct V2 receipt route still executable'; END IF;
+END $old_rpc_closed$;
 DO $initial$
 DECLARE rejected boolean:=false;r jsonb;again jsonb;
 BEGIN
  BEGIN
-  PERFORM inventa07_lab.apply_lot(
+  PERFORM inventa07_lab.team_apply_lot(
    'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
    'K00-P01','SKU0002','LOT-TEAM','draft',
    '81000000-0000-4000-8000-000000000001',0,
@@ -53,7 +69,7 @@ BEGIN
   RAISE EXCEPTION 'Original pair activation/idempotent retry failed: %',r; END IF;
  IF NOT inventa07_lab.team_authorized('cccccccc-cccc-4ccc-8ccc-cccccccccccc',
    'K00-P01') THEN RAISE EXCEPTION 'Original active holder not authorized'; END IF;
- r:=inventa07_lab.apply_lot('cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+ r:=inventa07_lab.team_apply_lot('cccccccc-cccc-4ccc-8ccc-cccccccccccc',
    'K00-P01','SKU0002','LOT-TEAM','draft',
    '81000000-0000-4000-8000-000000000001',0,
    '[{"type":"loose","units":"5"}]'::jsonb,false,NULL);
@@ -95,7 +111,7 @@ BEGIN
  IF NOT denied THEN RAISE EXCEPTION 'Assigned third person joined original team'; END IF;
  denied:=false;
  BEGIN
-  PERFORM inventa07_lab.apply_lot('cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  PERFORM inventa07_lab.team_apply_lot('cccccccc-cccc-4ccc-8ccc-cccccccccccc',
    'K00-P01','SKU0002','LOT-THIRD','draft',
    '81000000-0000-4000-8000-000000000004',0,
    '[{"type":"loose","units":"100"}]'::jsonb,false,NULL);
@@ -115,7 +131,11 @@ BEGIN
   RAISE EXCEPTION 'Handover B failed'; END IF;
  IF NOT inventa07_lab.team_authorized('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01')
  THEN RAISE EXCEPTION 'B cannot continue initial physical draft'; END IF;
- r:=inventa07_lab.apply_lot('cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+ IF inventa07_lab.team_lot_v2_receipt(
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01',
+  '70000000-0000-4000-8000-000000000001') IS NOT NULL
+ THEN RAISE EXCEPTION 'B accessed old A receipt'; END IF;
+ r:=inventa07_lab.team_apply_lot('cccccccc-cccc-4ccc-8ccc-cccccccccccc',
   'K00-P01','SKU0002','LOT-TEAM','confirm',
   '81000000-0000-4000-8000-000000000002',1,NULL,false,1);
  IF r->>'operation'<>'confirmed' OR (r->>'quantity')::numeric<>5 THEN
@@ -129,12 +149,19 @@ BEGIN
  IF inventa07_lab.team_authorized('cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01')
  THEN RAISE EXCEPTION 'A old session remains count holder after B handover'; END IF;
  BEGIN
-  PERFORM inventa07_lab.apply_lot('cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  PERFORM inventa07_lab.team_apply_lot('cccccccc-cccc-4ccc-8ccc-cccccccccccc',
    'K00-P01','SKU0002','LOT-STALE-A','draft',
    '81000000-0000-4000-8000-000000000003',0,
    '[{"type":"loose","units":"7"}]'::jsonb,false,NULL);
  EXCEPTION WHEN OTHERS THEN denied:=position('Team terminal lease' in SQLERRM)>0; END;
  IF NOT denied THEN RAISE EXCEPTION 'Old session wrote after handover'; END IF;
+ denied:=false;
+ BEGIN
+  PERFORM inventa07_lab.team_lot_v2_receipt(
+    'cccccccc-cccc-4ccc-8ccc-cccccccccccc','K00-P01',
+    '70000000-0000-4000-8000-000000000001');
+ EXCEPTION WHEN OTHERS THEN denied:=position('Team terminal lease' in SQLERRM)>0; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Old session read receipt after handover'; END IF;
 END $old_holder$;
 -- Only B currently holds the terminal, may renew or release.
 SELECT set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',false);
