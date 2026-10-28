@@ -14,7 +14,7 @@ El ensayo inventory-lab/010_disposable_actual_alias_use.sql añade una tabla de 
 - Orden cronológico activación → lectura → confirmación y ausencia de una desactivación o reasignación intermedia anterior a la lectura.
 - La persona que notifica la incidencia debe tener actualmente un equipo y sesión autorizados para esa ubicación. La identidad del operario que contó previamente se conserva por separado.
 
-tests/sql/inventa07_lab_actual_alias_use.sql simula un uso verdadero y dos casos fraudulentos: recuento sin evidencia de escaneo y recuento de otra referencia vinculado a la misma asociación. Valida que el operario no puede insertar su propia procedencia verificada y que abrir una incidencia no altera el recuento confirmado anterior.
+tests/sql/inventa07_lab_actual_alias_use.sql simula un uso verdadero y tres casos fraudulentos: recuento sin evidencia de escaneo, recuento de otra referencia vinculado a la misma asociación y alias desactivado antes de la lectura aunque anteriormente estuviera activo. Valida que el operario no puede insertar su propia procedencia verificada y que abrir una incidencia no altera el recuento confirmado anterior.
 
 ## Seguridad y limitaciones
 
