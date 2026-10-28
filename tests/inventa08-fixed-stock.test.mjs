@@ -319,5 +319,5 @@ test("PR22: versionado de contrato y fechas de procedencia incoherentes se bloqu
  assert.ok(r.issues.some(msg=>msg.includes("contrato")));
  const y=data();y.meta.exportedAt="2026-10-28T13:00:00Z";
  y.meta.importedAt="2026-10-27T08:00:00Z";
- assert.ok(buildFixedStockReport({...y,filters:{view:"all"}}).issues.some(msg=>msg.includes("fecha")));
+ assert.ok(buildFixedStockReport({...y,filters:{view:"all"}}).issues.some(msg=>msg.toLowerCase().includes("fecha")));
 });
