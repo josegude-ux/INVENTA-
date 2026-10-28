@@ -31,6 +31,12 @@ jobs:
           ref: 18912ee42cc4464ed306fd73c700325d1dbc95f5
           path: _inventa08_readonly
           persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: josegude-ux/INVENTA-
+          ref: ac2aa7c1accfefd30cfed295bc136c8cc13affc4
+          path: _inventa18_readonly
+          persist-credentials: false
       - name: Pin source revisions and known blobs
         shell: bash
         run: |
@@ -41,12 +47,6 @@ jobs:
           test "$(git -C _inventa08_readonly hash-object fixed-stock-08/report.mjs)" = 95fd71a6890a6287692b0fc34ca0ea9ed29ac768
           test "$(git -C _inventa18_readonly rev-parse HEAD)" = ac2aa7c1accfefd30cfed295bc136c8cc13affc4
           test "$(git -C _inventa18_readonly hash-object bc-excel-import.js)" = 41d71998e755e443d0c7a0c304f5f17c7f3a0596
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          repository: josegude-ux/INVENTA-
-          ref: ac2aa7c1accfefd30cfed295bc136c8cc13affc4
-          path: _inventa18_readonly
-          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "22"
