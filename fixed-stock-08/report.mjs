@@ -33,8 +33,8 @@ function checkSource(meta,products,locations,fixed,stock){
   issues.push("Origen sin certificación completa, autorizado y vigente: banderas booleanas explícitas obligatorias");
  if(typeof meta?.absentStockIsZero!=="boolean")
   issues.push("Política de ausencia de stock debe ser booleana explícita");
- if(meta?.contractVersion!=null&&meta.contractVersion!=="visura-inventa08-fixed-stock-v1")
-  issues.push("Versión del contrato de arquitectura incompatibile");
+ if(meta?.contractVersion!=="visura-inventa08-fixed-stock-v1")
+  issues.push("Versión del contrato de arquitectura ausente o incompatible");
  if(!wh||!batch||!txt(meta?.snapshotId)||!txt(meta?.sourceFile)||
     !txt(meta?.importedAt)||!txt(meta?.publishedAt))
   issues.push("Faltan ámbito, lote, instantánea o procedencia");
