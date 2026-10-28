@@ -45,3 +45,17 @@ Debe producir UNA instantánea atómica y autorizada que incluya:
 5. Antes de habilitar resultados productivos: prueba de concurrencia y roles reales, prueba iOS/desktop y revisión de compatibilidad de importación #16.
 
 **ESTADO:** fase aislada; ninguna habilitación productiva, despliegue, fusión ni operación en Business Central/Supabase.
+
+## Hito 2 — prototipo responsive y resultados CI (28/10/2026)
+- `fixed-stock-08/preview.html`, `preview.css`, `preview.mjs`: pantalla de DEMOSTRACIÓN con menú lateral y cinco indicadores en escritorio; reajuste para tableta; tarjetas táctiles y filtros a una columna en móvil. Nunca llama a Supabase y utiliza referencias/stock totalmente inventados.
+- La ficha de la asociación se abre en **solo lectura**. Al volver se conservan filtros, orden y estado de la tabla; exporta las filas filtradas a XLSX de una sola hoja.
+- `tests/inventa08-visual.spec.mjs`: pruebas Chromium reales con 1440, 820 y 390 px; comprueban filtros, apertura de ficha, vuelta sin pérdida de filtros, ausencia de desbordamiento horizontal y descarga XLSX ZIP con una sola hoja. No equivalen a una validación física de Safari/iPhone.
+- Workflow aislado `.github/workflows/inventa08-responsive.yml`, sin deploy ni claves.
+- **CI de HEAD `2f2b307c526d02ce8c93a20d494e1dff12f559ac`:**
+  - `40606928555` — motor sintético Node: SUCCESS.
+  - `40606928742` — regresión general INVENTA: SUCCESS.
+  - `40606928683` — Chromium responsive: SUCCESS.
+- PR propio: https://github.com/josegude-ux/INVENTA-/pull/25 (BORRADOR, sin fusión).
+
+### Límites pendientes antes de conexión empresarial
+No hay enlace a `index.html` ni autorización real de servidor; existe un riesgo histórico no resuelto en las migraciones 006/008. No activar botones de edición ni datos teóricos de producción hasta auditar Auth/RLS, crear un adaptador read-only con una instantánea transaccional, resolver ámbito inequívoco del almacén y migrar retirada lógica con copia/respaldo y reversión autorizados.
