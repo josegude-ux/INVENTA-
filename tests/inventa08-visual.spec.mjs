@@ -34,3 +34,15 @@ for(const [name,width] of [["escritorio",1440],["tableta",820],["móvil",390]]){
   await context.close();
  });
 }
+
+test("filtros independientes de referencia y descripción en escritorio",async({browser})=>{
+ const ctx=await browser.newContext({viewport:{width:1440,height:850}});
+ const page=await ctx.newPage();await page.goto(url);
+ await page.locator("#code").fill("001");
+ await expect(page.locator("#resultCount")).toContainText("2 asociaciones");
+ await page.locator("#description").fill("sin líneas");
+ await expect(page.locator("#resultCount")).toContainText("0 asociaciones");
+ await page.locator("#description").fill("demostración");
+ await expect(page.locator("#resultCount")).toContainText("2 asociaciones");
+ await ctx.close();
+});
