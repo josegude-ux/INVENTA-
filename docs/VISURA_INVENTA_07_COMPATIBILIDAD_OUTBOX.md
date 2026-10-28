@@ -17,7 +17,7 @@ PROHIBIDO convertir o eliminar automáticamente entradas V1, colapsar duplicados
 
 ## Barreras que impiden la activación en producción
 
-1. El laboratorio SQL actual NO incluye todavía lote en todas las claves de referencia y evento; no puede anunciar lotPreserved=true.
+1. Los contratos iniciales del laboratorio SQL no incluían el lote en las claves de referencia y evento. Se ha añadido el ensayo V2 independiente inventory-lab/006_disposable_lot_contract.sql, con clave completa por campaña, ubicación, referencia y lote, sin modificar las tablas de prueba previas. Esto NO significa que el servidor real tenga todavía capacidades V2 ni que pueda anunciarse un handshake operativo.
 2. La identidad del laboratorio es simulada mediante claims de psql, no autenticación Supabase verificada. La autoridad se debe comprobar EN SERVIDOR con JWT, sesión, equipo original, asignación, versión y campaña dentro de la misma transacción.
 3. No existe todavía una RPC productiva que devuelva el recibo firmado por transporte autenticado, con protocolo V2, mutación, usuario, solicitud completa y revisión.
 4. El handshake de capacidades del cliente no acredita permisos: cada RPC debe denegar por defecto, y una bandera local no sustituye RLS/validación.
@@ -31,3 +31,10 @@ Comprobar pérdida de respuesta tras escritura, revocación de permisos durante 
 Próximo paso independiente: ensayar en PostgreSQL 16 descartable una clave completa por campaña, ubicación, referencia y lote, además de un recibo persistente con la solicitud completa y desglose. No tocar tablas reales hasta aprobación.
 
 NO MERGE, NO DEPLOY, NO DDL EN SUPABASE REAL, NO API DIRECTA BC, NO CAMBIOS EN PRODUCCIÓN.
+
+
+## Nuevo ensayo de claves por lote y recálculo en servidor
+
+Archivos: inventory-lab/006_disposable_lot_contract.sql y tests/sql/inventa07_lab_lot_contract.sql. Una tabla de prueba separada conserva como clave (campaign_id, location_code, product_code, lot). Un borrador guarda desglose y cantidad recalculada por servidor, con revisión CAS y cero expreso. Confirmar crea evento histórico inmutable con lote, cantidad, desglose, usuario autenticado y sesión de ensayo. Se deniegan modificaciones directas a operarios y el ensayo no concede SELECT general sobre los eventos históricos. Los tests verifican mismo artículo con dos lotes distintos y referencia sin lote, además de rechazar subtotales client-side falsificados.
+
+Este ensayo, por sí solo, NO implementa el protocolo V2 completo: faltan RLS de pareja y terminal, protección de revocación de Auth real, recibos compatibles con las nuevas colas y las operaciones de corrección por lote. La PWA y Supabase real no han sido modificadas.
