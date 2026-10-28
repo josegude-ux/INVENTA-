@@ -50,7 +50,7 @@ test('legacy mutation identity reused with different payload is a conflict, not 
 });
 test('legacy queue damaged or mixed accounts causes error, not destructive repair',()=>{
  assert.throws(()=>auditLegacyQueue({userId:user,rows:'bad'}),/dañada/);
- assert.throws(()=>auditLegacyQueue({userId:user,rows:[legacy(ID,7,'other')]}),/conservar/);
+ assert.throws(()=>auditLegacyQueue({userId:user,rows:[legacy(ID,7,'other')]}),/No modificar ni descartar/);
 });
 test('new draft retains lot and uses exact new counting formula without pallet-count factor',()=>{
  const v=draft();
