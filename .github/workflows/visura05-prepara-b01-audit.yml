@@ -1,0 +1,59 @@
+name: VISURA 05 - PREPARA 02 B01 SW and quantity compatibility
+on:
+  push:
+    branches:
+      - audit/visura-05-snapshot-concurrente-20261027
+    paths:
+      - "architecture/audits/visura05/**"
+      - ".github/workflows/visura05-prepara-b01-audit.yml"
+  pull_request:
+    paths:
+      - "architecture/audits/visura05/**"
+      - ".github/workflows/visura05-prepara-b01-audit.yml"
+permissions:
+  contents: read
+jobs:
+  b01-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: josegude-ux/KONTROLA
+          ref: 861dce15ea8dceba94e2f370fad8f0155c34e215
+          path: _prepara75_readonly
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: josegude-ux/KONTROLA
+          ref: 154555fe9990d5347679d23967848c3fc14e6eb4
+          path: _prepara76_readonly
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: josegude-ux/KONTROLA
+          ref: 65a9ddc343921f6be8844476903748a493881a8f
+          path: _prepara80_readonly
+          persist-credentials: false
+      - name: Verify pinned sources (not branch tips)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C _prepara75_readonly rev-parse HEAD)" = 861dce15ea8dceba94e2f370fad8f0155c34e215
+          test "$(git -C _prepara76_readonly rev-parse HEAD)" = 154555fe9990d5347679d23967848c3fc14e6eb4
+          test "$(git -C _prepara80_readonly rev-parse HEAD)" = 65a9ddc343921f6be8844476903748a493881a8f
+          test "$(git -C _prepara76_readonly hash-object src/fixed-position-contract-v1.mjs)" = deba1f55c2db678bae1db85c0e2bba0a01e16fe8
+          test "$(git -C _prepara80_readonly hash-object sw.js)" = 31345e6298f9623ec63e738784338d73cd63cdbf
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Simulated SW install upgrade offline and contracts
+        run: node --test architecture/audits/visura05/prepara-b01-sw-contract.test.mjs
+      - name: B01 original net-zero regression
+        run: node --test _prepara75_readonly/tests/quantity-zero-net.test.mjs
+      - name: Updated PREPARA report original contract, XLSX and PDF regressions
+        run: node --test _prepara76_readonly/tests/fixed-position-contract-v1.test.mjs _prepara76_readonly/tests/fixed-position-report.test.mjs _prepara76_readonly/tests/fixed-position-xlsx.test.mjs _prepara76_readonly/tests/fixed-position-print.test.mjs
+      - name: B01 original integration baseline
+        run: node --test _prepara80_readonly/tests/fixed-position-b01-integration.test.mjs
