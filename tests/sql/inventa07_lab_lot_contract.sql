@@ -11,7 +11,7 @@ SET ROLE inventa07_lab_client;
 SELECT set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
 SELECT set_config('request.jwt.claim.session_id','11111111-1111-4111-8111-111111111111',false);
 DO $quantity$
-DECLARE v numeric;failed boolean:=false;
+DECLARE v jsonb;
 BEGIN
  v:=inventa07_lab.apply_lot('cccccccc-cccc-4ccc-8ccc-cccccccccccc',
   'K00-P01','SKU0001','LOT-A','draft',
@@ -19,7 +19,9 @@ BEGIN
   '[{"type":"loose","units":"1.125"},
     {"type":"boxes","boxes":"2","unitsPerBox":"8","subtotal":"16"},
     {"type":"pallet-group","layers":"5","boxesPerBase":"4",
-     "unitsPerBox":"6","subtotal":"120"}]'::jsonb,false,NULL)::text::numeric;
+     "unitsPerBox":"6","subtotal":"120"}]'::jsonb,false,NULL);
+ IF (v->>'quantity')::numeric<>137.125 THEN
+  RAISE EXCEPTION 'Server total should be exactly 137.125'; END IF;
 EXCEPTION WHEN OTHERS THEN
  RAISE EXCEPTION 'Unexpected lot draft error: %',SQLERRM;
 END $quantity$;
