@@ -1,0 +1,51 @@
+name: INVENTA 08 — historial SQL descartable
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'fixed-stock-08/lab/**'
+      - '.github/workflows/inventa08-ephemeral-db.yml'
+permissions:
+  contents: read
+jobs:
+  disposable-db:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: inventa08_ephemeral_not_a_secret
+          POSTGRES_DB: inventa08_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: inventa08_test
+      PGPASSWORD: inventa08_ephemeral_not_a_secret
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar cliente PostgreSQL en runner desechable
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+      - name: Comprobar protección frente a bases equivocadas
+        env:
+          PGDATABASE: postgres
+        run: |
+          if psql -X -v ON_ERROR_STOP=1 -f fixed-stock-08/lab/001_disposable_associations.sql >/tmp/inv08-reject.log 2>&1; then
+            echo "ERROR: SQL ejecutado fuera de inventa08_test"
+            exit 1
+          fi
+          grep -q 'INVENTA08 LAB ONLY' /tmp/inv08-reject.log
+      - name: Crear esquema ficticio con restricciones e historia
+        run: psql -X -v ON_ERROR_STOP=1 -f fixed-stock-08/lab/001_disposable_associations.sql
+      - name: Probar asociaciones múltiples, bajas lógicas y rollback
+        run: psql -X -v ON_ERROR_STOP=1 -f fixed-stock-08/lab/002_disposable_associations_tests.sql
