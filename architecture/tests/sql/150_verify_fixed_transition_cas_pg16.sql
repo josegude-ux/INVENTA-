@@ -4,7 +4,11 @@ INSERT INTO visura_shared.user_module_warehouses
  (user_id,module,warehouse_code,module_role,enabled,approved_by,approved_at)
  VALUES ('11111111-1111-4111-8111-111111111111',
  'inventa','COR_01_COR','admin',true,
- '11111111-1111-4111-8111-111111111111',now());
+ '11111111-1111-4111-8111-111111111111',now())
+ ON CONFLICT (user_id,module,warehouse_code)
+ DO UPDATE SET module_role=excluded.module_role,
+ enabled=excluded.enabled,approved_by=excluded.approved_by,
+ approved_at=excluded.approved_at;
 
 DO $test$
 DECLARE v_id uuid;
