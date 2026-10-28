@@ -1,0 +1,27 @@
+name: VISURA INVENTA 08 — responsive ficticio
+on:
+  pull_request:
+    paths:
+      - 'fixed-stock-08/**'
+      - 'tests/inventa08-visual.spec.mjs'
+      - '.github/workflows/inventa08-responsive.yml'
+  workflow_dispatch:
+jobs:
+  chromium:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar Playwright de forma temporal
+        run: npm install --no-save @playwright/test@1.56.1
+      - name: Instalar Chromium para laboratorio
+        run: npx playwright install --with-deps chromium
+      - name: Verificar escritorio tableta móvil y XLSX con datos sintéticos
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/inventa08-preview.log 2>&1 &
+          sleep 2
+          npx playwright test tests/inventa08-visual.spec.mjs --reporter=line --workers=1
