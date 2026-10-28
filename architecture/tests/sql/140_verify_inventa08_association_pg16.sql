@@ -1,11 +1,8 @@
 -- VISURA 04: test only PG16, no business data, no Auth/JWT or RPC.
 \set ON_ERROR_STOP on
-INSERT INTO visura_shared.warehouse_fixed_positions
- (warehouse_code,location_code,product_code,origin,assigned_by)
- VALUES ('COR_01_COR','A-01','0000123','admin',
-         '11111111-1111-4111-8111-111111111111'),
-        ('COR_02_NAR','A-01','0000123','admin',
-         '11111111-1111-4111-8111-111111111111');
+-- Reuse the two synthetic warehouse-specific rows inserted by
+-- architecture/tests/sql/70_verify_reference_contract_pg16.sql.
+-- The additive schema draft assigns each a stable association ID.
 DO $test$
 DECLARE n integer;
 DECLARE corid uuid;
