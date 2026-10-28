@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <title>VISURA INVENTA 07 · ubicación física · demo aislada</title>
+ <link rel="stylesheet" href="responsive.css">
+ <link rel="stylesheet" href="location-layout.css">
+</head>
+<body style="margin:0">
+ <div class="vi07-shell">
+  <header class="vi07-head">
+   <div>
+    <h1>VISURA INVENTA · Inventario físico</h1>
+    <small>PROTOTIPO VISUAL · DATOS FICTICIOS · NO OPERATIVO</small>
+   </div>
+   <span class="vi07-status">07 / Ubicación</span>
+  </header>
+  <nav class="vi07-nav" aria-label="Navegación de demostración">
+   <a href="#fisico" aria-current="page">Recuento de ubicación</a>
+   <a href="preview.html#locations">Vista general de prototipo</a>
+  </nav>
+  <main class="vi07-main" id="fisico">
+   <section class="vi07-screen">
+    <div class="vi07-pane">
+     <div id="vi07-location-content" aria-live="polite"></div>
+    </div>
+    <aside class="vi07-panel vi07-stack" aria-labelledby="vi07-location-summary-title">
+     <h2 id="vi07-location-summary-title">Estado físico de la ubicación</h2>
+     <div class="vi07-cards">
+      <div class="vi07-card"><strong id="vi07-total">0</strong><p>Referencias capturadas</p></div>
+      <div class="vi07-card"><strong id="vi07-pending">0</strong><p>Pendientes físicos</p></div>
+      <div class="vi07-card"><strong id="vi07-confirmed">0</strong><p>Confirmadas</p></div>
+     </div>
+     <p class="vi07-secondary">El cero exige confirmación expresa. La revisión administrativa de un provisional es independiente de su cantidad física.</p>
+     <p class="vi07-secondary">Este prototipo no guarda, sincroniza ni confirma recuentos. La finalización manual requiere un servidor autenticado.</p>
+    </aside>
+   </section>
+  </main>
+ </div>
+ <script src="location-view.js"></script>
+ <script>
+ (function(){
+   'use strict';
+   // Fake physical data ONLY. The published PWA never imports this page.
+   const sample={
+     locationCode:'K00-P01',locationStatus:'in_progress',
+     references:[
+       {productCode:'00007890',lot:'000A',description:'Abrazaderas de prueba',status:'draft',quantity:'4',explicitZero:false},
+       {productCode:'00001234',lot:'L0007',description:'Tornillería de prueba',status:'uncounted',quantity:null},
+       {productCode:'00004567',lot:'',description:'Cajas de prueba',status:'confirmed',quantity:'12'},
+       {productCode:'00006666',lot:'0000',description:'Ubicación cero expresamente confirmado',status:'confirmed',quantity:'0',explicitZero:true}
+     ],
+     provisionals:[{barcode:'TEMP-008',description:'Sin referencia oficial asignada',status:'pending',physicalStatus:'confirmed',quantity:'2'}]
+   };
+   const view=window.VISURA_INVENTA07_LOCATION.buildLocationView(sample);
+   window.VISURA_INVENTA07_LOCATION.renderLocationView(
+     document.getElementById('vi07-location-content'),view);
+   document.getElementById('vi07-total').textContent=String(view.summary.total);
+   document.getElementById('vi07-pending').textContent=String(view.summary.pending);
+   document.getElementById('vi07-confirmed').textContent=String(view.summary.confirmed);
+ })();
+ </script>
+</body>
+</html>
