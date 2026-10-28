@@ -76,3 +76,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/007_disposable_v2_receipt.sql
       - name: Validate V2 loss-recovery receipts by owner, lot and payload
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_v2_receipts.sql
+      - name: Install isolated team and terminal session lease
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/008_disposable_team_terminal.sql
+      - name: Validate original partners, handover, one terminal and revocations
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_team_terminal.sql
