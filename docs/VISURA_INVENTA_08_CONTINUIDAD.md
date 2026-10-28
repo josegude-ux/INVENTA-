@@ -82,3 +82,13 @@ No hay enlace a `index.html` ni autorización real de servidor; existe un riesgo
 **Advertencia de integración:** todos los indicadores de completitud son una propuesta de contrato, no un permiso ni una prueba real por sí solos. Únicamente el servidor, tras comprobar la importación y permisos por almacén, puede certificarlos. El módulo 08 no puede habilitarse en producción hasta aprobar el modelo multialmacén de PR #22/#23, las autorizaciones efectivas y la sustitución reversible de los comportamientos destructivos de las migraciones 006/008.
 
 **Siguiente tarea independiente segura:** pruebas adicionales de límites y documentación del plan de compatibilidad con los consumidores históricos del RPC sin crear endpoints ni alterar datos reales.
+
+## Hito 5 — compatibilidad, filtros completos y ceros ausentes (28/10/2026)
+- Auditoría de consumidores reales en el código histórico: `docs/VISURA_INVENTA_08_COMPATIBILIDAD_HISTORICA.md` identifica el DELETE directo desde Gestión/Consulta, el `p_replace` destructivo del importador, la RPC antigua que calcula por ubicación y el CSV que no respeta filtros. **No se modifican esos flujos** hasta contar con la coordinación y autorizaciones necesarias.
+- Confirmado el fallback histórico de Consulta a `stock_snapshot` de campaña si no existe importación BC publicada: el **módulo 08 no lo reutilizará** como fuente de stock total.
+- Los filtros del motor y de la vista aislada admiten ahora **referencia y descripción independientes**, además de búsqueda general, pasillo, posición y estado. La exportación XLSX se genera a partir del resultado filtrado y mantiene la hoja única.
+- Una ausencia de líneas BC solo puede clasificarse como CERO cuando `absentStockIsZero=true` viene de un backend certificado **y** existe identificador no vacío de regla documentada `zeroOmissionRuleId`. Sin regla, el informe se marca NO FIABLE, sin inferir cero.
+- Pruebas sintéticas ampliadas a **31** en `tests/inventa08-fixed-stock.test.mjs`; prueba visual adicional para filtros independientes en `tests/inventa08-visual.spec.mjs`.
+- Última modificación funcional incluida en `afab702ee2310943c46e7de6708ca5ea3dbedcc2`. En la comprobación inicial, `INVENTA checks` SUCCESS (run 40608638284); pruebas aisladas de motor y Chromium aún en curso. Verificar CI después de terminar; no declarar PASS anticipado.
+
+**Pendientes fuera del alcance autónomo:** la semántica real de la exportación BC debe acreditarse con archivo auténtico, los permisos/almacenes deben certificarse en servidor y la migración de historia/estado requiere autorización explícita. No se ha conectado a Supabase, fusionado ni desplegado.
