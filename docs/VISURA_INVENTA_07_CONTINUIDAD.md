@@ -220,3 +220,23 @@ Se han añadido inventory-lab/010_disposable_actual_alias_use.sql, tests/sql/inv
 
 
 **Regresión adicional:** un alias con evento de activación histórico pero desactivado antes del escaneo real simulado no puede acreditar una incidencia por uso, aunque la lectura y el recuento existan. Verificado en PostgreSQL 16 run 40609901024 PASS, commit ba28a7039eeae627922410b6cd2b0d470ddecc6a. La comprobación se añadió sin cambiar el algoritmo productivo ni relajar permisos.
+
+
+## Reanudación segura 28/10/2026 — cierre físico y pasillos
+
+**Causa de la parada:** finalización normal del turno previo; no se han hallado errores técnicos, pérdida de trabajo ni conflictos de rama. Estado antes de reanudar: PR #24, HEAD c6a21f32a4ad50c48a5523250f5634d80682b693, main a0f76ab1b1a6515ac647facbadca84cfe838d8ac. Ambos workflows PASS sobre aquel HEAD.
+
+**Desarrollo real nuevo:**
+- inventory-core/physical-closure.cjs y tests/inventa07-physical-closure.test.cjs: validación física de recuentos oficiales, provisional físicamente confirmado, cero explícito, cierre manual individual, versión de revisión, identidad/equipo original y reapertura auditada; tramos/pasillos completos SOLO si todas sus ubicaciones están finalizadas.
+- inventory-lab/011_disposable_physical_closure.sql y tests/sql/inventa07_lab_physical_closure.sql: contrato transaccional de PostgreSQL 16 de cierre, snapshot físico sin teórico BC, revisión contra versión actual, mutación idempotente, guardas que impiden nuevos registros físicos en ubicación cerrada y reapertura exclusivamente administrativa con motivo.
+- docs/VISURA_INVENTA_07_CIERRE_TRANSACCIONAL.md: reglas, pruebas, límites y dependencias.
+
+**Conservación de datos ya registrados:** se detectó en CI que K00-P02 ya contenía un provisional contado físicamente en un ensayo anterior. NO se borró ni reconstruyó: se validó que la ubicación pueda cerrarse físicamente mientras la conciliación administrativa siga pendiente. Para comprobar una ubicación verdaderamente no iniciada, se añadió una ubicación ficticia NUEVA K00-P05 y se verificó que el cierre se rechaza hasta registrar y confirmar un cero explícito. La primera prueba sintética falló por la suposición errónea sobre P02; luego se corrigió el fixture y se verificó.
+
+**CI verificada:** suite general INVENTA run 40611331531 PASS y PostgreSQL 16 descartable run 40611331387 PASS, ambas en commit 077f4bd55ef0d05001e22fd411156d648f88ac68. La nueva prueba conserva los tres cierres manuales y un evento de reapertura sin borrar históricos, y prueba el cálculo de los segmentos y pasillo.
+
+**Pendiente:** no se ha creado un protocolo para verificar una ubicación realmente vacía sin artículos: continúa necesitando aprobación específica. Las sesiones de PostgreSQL son simuladas, no Auth real, y todavía falta integrar con PWA, permisos de servidor, sincronización de cola, Excel real y pantallas móviles. No se ha modificado el stock teórico ni el trabajo del chat 08.
+
+**Siguiente tarea segura:** preparar un modelo de pantalla para ubicación: referencias sin confirmar arriba, referencias confirmadas agrupadas al final, contadores y estados de provisionales sin revelar stock teórico, con pruebas sintéticas y diseño responsive aislado. No tocar UI principal sin coordinación con los otros responsables.
+
+**Restricciones:** PR borrador; NO MERGE, NO DEPLOY, NO MIGRACIONES EN SUPABASE REAL, NO API BC, NO CAMBIOS PRODUCTIVOS.
