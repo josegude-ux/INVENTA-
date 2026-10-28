@@ -30,7 +30,8 @@ const fixture=()=>({
   imported_at:"2026-10-28T04:15:00Z",published_at:"2026-10-28T04:30:00Z"},
  coverage:{stock:true,catalog:true,catalogScopeVerified:true,
   locations:true,locationsScoped:true,positions:true,positionsReconciled:true},
- sourceCertification:{fileAndRowsAttested:true,parserApproved:true},
+ sourceCertification:{fileAndRowsAttested:true,parserApproved:true,
+  exportDateAttested:true,importDateAttested:true},
  freshness:{maxAgeHours:24,forcedStale:false}
 });
 const run=(snapshot=fixture(),ctx=scope())=>
@@ -102,4 +103,13 @@ test("only canonical stock quantity strings, never JS Number",()=>{
  assert.throws(()=>run(a),/exact text/);
  const b=fixture();b.stockLines[0].stock_calculated="99999999999.123456";
  assert.equal(run(b).stock[0].quantity,"99999999999.123456");
+});
+
+test("INVENTA08 refuses to declare an export fresh without trusted date attestation",()=>{
+ const s=fixture();s.sourceCertification.exportDateAttested=false;
+ assert.equal(run(s).meta.stale,true);
+ s.sourceCertification.exportDateAttested=true;
+ s.batch.exported_at="2026-10-01T04:00:00Z";
+ s.batch.published_at="2026-10-28T04:30:00Z";
+ assert.equal(run(s).meta.stale,true);
 });
