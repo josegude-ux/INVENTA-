@@ -189,3 +189,25 @@ Prueba de regresión del lote histórico y ausencia de puntero añadida. Acción
 **Estado / próximas tareas de cada responsable:** 04 deja propuestas y tests aislados; 07 valida formato/campañas/terminal, 08 confirma contrato de asociación/versiones y mantiene su XLSX de una hoja, PREPARA confirma política del informe/flags, 05 repite solo suites afectadas con SHAs nuevos y revisa la convivencia. **No** modificar ramas 05/07/08/PREPARA desde 04.
 
 **Bloqueos de autorización:** equivalencia de Auth/RLS, sesión real con revocación, campaña/permisos, parser XLSX exacto, atribución de fijos legacy, backup y restauración, migración con reversión sin borrar historia, pruebas E2E y dispositivos, aprobación de producción. **NO FUSIONAR, NO DESPLEGAR, NO EJECUTAR SQL SOBRE SUPABASE REAL, NO ACTIVAR RPC, NO TOCAR BUSINESS CENTRAL NI TANQUES/CONTROL DE CARGAS.**
+
+
+## Continuidad 28/10 — CAS atómico, precisión BC y revisión de consumidores
+
+**Rama exclusiva y PR:** `architecture/visura-shared-core-20261027`, [INVENTA #22](https://github.com/josegude-ux/INVENTA-/pull/22), OPEN/DRAFT/UNMERGED. Sin fusiones ni despliegues. Último HEAD anterior a la iteración: `7e35f1a748343604166a63388d10fd4c415b8c61`.
+
+**Versiones de terceros COMPROBADAS antes de intervenir:** #23/05 `977885f0105ef782228a781ff2e18093b80c6e78`, #24/07 `aace927c20ba642a9d915a574e9f07c7c1221a9d`, #25/08 **nuevo** `c98b86b41cddb9a68458613c9f583e7b0bb65612`, KONTROLA #76/PREPARA **nuevo** `3ec761c6e5cac52154846bda17737406499f479d`. Todos OPEN/DRAFT y checks de cada HEAD verificados SUCCESS. #25 ha corregido los hallazgos de booleanos, estado de importación, ubicaciones no fijas y revisiones, y ha probado su motor con adaptador original #22; #76 ha añadido `src/fixed-position-contract-v1.mjs` y guardias estrictas de datos y fechas. No repetir sus motores.
+
+**Implementado exclusivo en #22:**
+1. `architecture/drafts/visura_shared_fixed_transition_cas_UNAPPLIED.sql` propone **una operación privada** de retirada/reactivación sobre `warehouse_fixed_positions` con CAS por asociación+almacén+revisión+estado previo e inserción de evento en el mismo acto transaccional. ACL simulada, función `SECURITY INVOKER`, sin GRANTS `anon/authenticated`. **No** autentica sesión: `p_actor` sigue siendo insumo sintético no seguro para producción.
+2. `architecture/tests/sql/150_verify_fixed_transition_cas_pg16.sql`: ensayos de privilegios, rechazo de almacén y revisión obsoleta, rollback de UPDATE al fallar INSERT de evento, rollback explícito, revocación de actor, inmutabilidad del registro de auditoría.
+3. `architecture/tests/sql/151_hold_fixed_cas_pg16.sql`, `152_conflicting_fixed_cas_pg16.sql`, `153_verify_fixed_cas_concurrency_pg16.sql`: **dos sesiones** compiten por misma revisión; exactamente **una** nueva versión y un evento, Ferrol independiente. Workflow aislado ampliado.
+4. `architecture/lib/validate-bc-batch.mjs`: `decimalBC` solo acepta **cadena decimal fuente** y rechaza `Number` ya potencialmente redondeado. `99999999999.123456` se conserva literal; `Number('99999999999.123456')` ya no puede obtener atestación. Tests de `validate-bc-batch.test.mjs` y `attest-bc-manual-upload.test.mjs` ampliados. No se ha modificado PR #18.
+5. Informe de entrega y matriz de compatibilidad `architecture/reports/2026-10-28-compatibility-refresh-cas-decimal.md` con bloqueos, roles y plan reversible.
+
+**Evidencia CI sobre el último commit ejecutable `9be7a4afd4b92572ade6df2fa341d92f219d90b0`:** [VISURA shared-core isolated #40637686658](https://github.com/josegude-ux/INVENTA-/actions/runs/40637686658) **SUCCESS**; [INVENTA checks #40637686790](https://github.com/josegude-ux/INVENTA-/actions/runs/40637686790) **SUCCESS**. Los commits posteriores se limitan a documentación.
+
+**Pendientes reales:** actor/Auth servidor no suplantable, privilegios y RLS reales; prohibición de cambios directos de maestro/eventos por rutas históricas 006/008; reconciliación de ubicaciones y fijos sin almacén; hoja Excel auténtica y parser que conserve string antes de digest; `expiry_date` del SQL fuera de SHA V2; instantánea de lectura productiva en RR; permisos y datos empresariales; pruebas E2E y autorización explícita para migración, merge y despliegue.
+
+**Responsables próximos:** 07 valida allowlist de físico con campañas/parejas, 08 certifica IDs/versiones y motor con nuevo HEAD, PREPARA certifica guard V1 con nuevo HEAD, 05 fija SHAs de todos y repite **solo** suites cruzadas afectadas. 04 conserva esquema y pasarela privados sin activar.
+
+**Prohibiciones cumplidas:** no tocar ramas 05/07/08/PREPARA, no ejecutar SQL real, no modificar Auth/RLS productivas, credenciales, Business Central, Tanques o Control de Cargas. Todos los cambios son de laboratorio/documentación exclusiva de PR #22.
