@@ -15,8 +15,9 @@ const fixedImport=require('../fixed-positions-import.js');
 
 test('archivos JavaScript válidos y versión de caché coherente',()=>{
  assert.doesNotThrow(()=>new Function(code));
- assert.match(index,/APP_VERSION='0\.30\.5'/);
- assert.match(worker,/inventa-demo-v0305-01/);
+ const version=/APP_VERSION='(\d+\.\d+\.\d+)'/.exec(index)?.[1];
+ assert.ok(version,'Debe existir APP_VERSION en index.html');
+ assert.ok(worker.includes('inventa-demo-v'+version.replace(/\./g,'')+'-01'),'La caché debe corresponder a la versión de la app');
  assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.5'/);
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
