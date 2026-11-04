@@ -1,7 +1,7 @@
 /* INVENTA: authenticated individual counts. Demo data never enters this queue. */
 (function(root){
 'use strict';
-var visible=false,busy=false,serial=0,assignments=[],counts=[],message='',lastRead='';
+var visible=false,busy=false,serial=0,assignments=[],counts=[],message='',lastRead='',diagnostic='',diagnosticBusy=false,diagnosticSerial=0;
 function m(){return root.INVENTA_MGMT;}
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function value(id){var el=document.getElementById(id);return el?el.value.trim():'';}
@@ -41,15 +41,18 @@ async function flush(){
 }
 function status(){
  if(!visible)return;
- var e=document.getElementById('realSyncStatus'),uid=m().getUserId();
- if(e)e.textContent=(uid?read(uid).length:0)+' pendientes en este dispositivo · '+message;
+ var e=document.getElementById('realSyncStatus'),d=document.getElementById('realDiagStatus'),uid=m().getUserId(),pending=0;
+ try{pending=uid?read(uid).length:0;}
+ catch(error){pending='?';message='Cola local inaccesible. No se ha borrado ningún registro.';}
+ if(e)e.textContent=pending+' pendientes en este dispositivo · '+message;
+ if(d)d.textContent=diagnostic||'Comprobación de acceso pendiente.';
 }
 function option(v,t){return '<option value="'+esc(v)+'">'+esc(t)+'</option>';}
 function draw(){
  if(!visible)return;
  var uid=m().getUserId(),latest=counts.filter(function(c){return !counts.some(function(n){return n.previous_id===c.id;});});
  var html='<div class="title"><div class="overline">CUENTA REAL · RECUENTO INDIVIDUAL</div><h1>Mis recuentos</h1><p class="muted">'+esc(m().profile.display_name)+' · Stock teórico oculto</p></div>'
- +'<div class="card"><p id="realSyncStatus" role="status" aria-live="polite"></p><button class="btn-outline" onclick="INVENTA_REAL.sync()">Sincronizar y comprobar servidor</button><button class="btn-outline" onclick="INVENTA_REAL.reload()">Actualizar lecturas</button></div>'
+ +'<div class="card"><p id="realSyncStatus" role="status" aria-live="polite"></p><button class="btn-outline" onclick="INVENTA_REAL.sync()">Sincronizar y comprobar servidor</button><button class="btn-outline" onclick="INVENTA_REAL.reload()">Actualizar lecturas</button><hr><button class="btn-outline" onclick="INVENTA_REAL.diagnose()">Comprobar acceso REAL · solo lectura</button><p id="realDiagStatus" role="status" aria-live="polite"></p><p class="muted">Esta comprobación no guarda recuentos ni modifica la base de datos.</p></div>'
  +'<div class="card"><h2>Registrar recuento</h2><p class="muted">Selecciona una asignación activa. El registro es individual; la pareja continúa en demostración.</p>'
  +'<label for="realAssignment">Ubicación asignada</label><select class="input" id="realAssignment">'+option('','Seleccionar…')+assignments.map(function(a){return option(a.id,a.location_code+' · '+a.campaigns.name);}).join('')+'</select>'
  +'<label for="realProduct">Código del artículo del catálogo</label><input id="realProduct" class="input" autocomplete="off">'
@@ -63,6 +66,27 @@ function draw(){
  +'<div class="card"><h2>Últimos registros del servidor</h2><p class="muted">Leídos: '+esc(lastRead||'Sin lectura confirmada')+'. Hasta 100 registros; pulsa Actualizar en el otro dispositivo.</p>'
  +counts.map(function(c){return '<div class="real-count-row"><b>'+esc(c.location_code+' · '+c.product_code)+'</b><p>'+esc(c.quantity)+' unidades · '+esc(new Date(c.created_at).toLocaleString('es-ES'))+'</p><small>'+esc(c.actor_id)+' · '+esc(c.client_mutation_id)+'</small>'+(c.previous_id?'<p>Corrección: '+esc(c.correction_reason)+'</p>':'')+'</div>';}).join('')+'</div>';
  place(html,'<button class="back" onclick="INVENTA_REAL.close()">← Menú principal</button>');status();
+}
+async function diagnose(){
+ if(diagnosticBusy)return false;
+ var uid=m().getUserId(),ticket=++diagnosticSerial;
+ if(!uid||!m().isAuthenticated()){diagnostic='Acceso no disponible: inicia sesión con una cuenta habilitada.';status();return false;}
+ diagnosticBusy=true;diagnostic='Comprobando la conexión de solo lectura…';status();
+ try{
+  await m().refreshProfile();
+  if(ticket!==diagnosticSerial||uid!==m().getUserId()||!m().isAuthenticated())throw Error('La sesión cambió o fue revocada.');
+  var active=await m().realApi('assignments','select=id,campaigns!inner(status)&campaigns.status=eq.active&operator_id=eq.'+encodeURIComponent(uid)+'&limit=500');
+  if(ticket!==diagnosticSerial||uid!==m().getUserId()||!m().isAuthenticated())return false;
+  var history=await m().realApi('counts','select=id&limit=1');
+  if(ticket!==diagnosticSerial||uid!==m().getUserId()||!m().isAuthenticated())return false;
+  if(!Array.isArray(active)||!Array.isArray(history))throw Error('Respuesta del servidor no reconocida.');
+  diagnostic='INVENTA real: sesión y lecturas autorizadas. '+active.length+' asignación(es) activas visibles.'+(active.length?' Ya puedes elegir una ubicación asignada.':' No hay asignaciones activas para esta cuenta. Solicita al supervisor activar campaña y asignar ubicación.');
+  status();return true;
+ }catch(error){
+  if(ticket!==diagnosticSerial||uid!==m().getUserId())return false;
+  diagnostic='No se pudo verificar el acceso: '+String(error&&error.message||'error de conexión').slice(0,160);
+  status();return false;
+ }finally{diagnosticBusy=false;}
 }
 async function reload(){
  var ticket=++serial,uid=m().getUserId();
@@ -101,8 +125,8 @@ async function save(){
   message='Guardado en este dispositivo; pendiente de confirmación.';draw();await sync();
  }catch(e){message=e.message;status();}
 }
-root.INVENTA_REAL={isBusy:function(){return busy;},leave:function(){visible=false;serial++;},open:function(){visible=true;assignments=[];counts=[];lastRead='';draw();return reload();},close:function(){visible=false;serial++;go('home');},reload:reload,sync:sync,save:save,flush:flush,payloadEqual:payloadEqual};
+root.INVENTA_REAL={isBusy:function(){return busy;},leave:function(){visible=false;serial++;diagnosticSerial++;diagnostic='';},open:function(){visible=true;assignments=[];counts=[];lastRead='';diagnostic='';draw();return reload();},close:function(){visible=false;serial++;diagnosticSerial++;diagnostic='';go('home');},reload:reload,sync:sync,diagnose:diagnose,save:save,flush:flush,payloadEqual:payloadEqual};
 root.addEventListener('online',function(){if(m().isAuthenticated())sync();});
-root.addEventListener('storage',function(e){if(e.key==='inventa-real-auth-v1'){visible=false;serial++;assignments=[];counts=[];}else status();});
+root.addEventListener('storage',function(e){if(e.key==='inventa-real-auth-v1'){visible=false;serial++;diagnosticSerial++;diagnostic='';assignments=[];counts=[];}else status();});
 })(window);
 
