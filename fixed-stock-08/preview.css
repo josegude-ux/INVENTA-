@@ -1,0 +1,48 @@
+/* VISURA INVENTA 08 — demostrador aislado; sin estilos globales de INVENTA */
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#172f3b;background:#f4f7fa}
+*{box-sizing:border-box}
+body{margin:0}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{min-height:100vh;display:grid;grid-template-columns:272px minmax(0,1fr)}
+.sidebar{background:#173542;color:#fff;padding:28px 22px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.brand{font-size:1.4rem;letter-spacing:.07em;font-weight:900}
+.sidebar .sub{opacity:.75;font-size:.82rem}
+.navItem{padding:14px 16px;border:1px solid #7893a2;border-radius:12px;background:#214857;color:white;text-align:left;font-weight:650}
+.navItem.active{background:#dbeefa;color:#143443}
+.main{min-width:0;padding:24px clamp(18px,3vw,64px) 50px}
+.topline{display:flex;align-items:center;justify-content:space-between;gap:16px}
+h1{font-size:clamp(1.55rem,2.5vw,2.6rem);line-height:1.18;margin:10px 0}
+h2{font-size:1.17rem}
+.muted{color:#52707e}
+.disclaimer{border:1px solid #d5b96a;background:#fff8e5;border-radius:12px;padding:12px 16px;font-size:.9rem}
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px;margin:22px 0}
+.metric{background:white;padding:17px;border-radius:14px;border:1px solid #dce5ea;min-width:0}
+.metric strong{display:block;font-size:clamp(1.25rem,2vw,2rem);margin-top:7px}
+.metric span{font-size:.83rem;color:#42606c}
+.panel{background:white;border:1px solid #dce5ea;border-radius:16px;padding:20px;margin-top:16px}
+.filters{display:grid;grid-template-columns:minmax(200px,2fr) repeat(3,minmax(130px,1fr));gap:12px;align-items:end}
+label{display:grid;gap:5px;font-size:.83rem;font-weight:700}
+input,select{width:100%;min-width:0;border:1px solid #b8cbd4;border-radius:9px;padding:12px;background:white;color:#172f3b}
+button.primary,button.secondary{border-radius:10px;padding:11px 15px;font-weight:700;min-height:44px}
+button.primary{border:0;background:#1b5973;color:white}
+button.secondary{border:1px solid #b2ccd9;background:white;color:#1b5973}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:18px 0}
+.tableWrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th,td{text-align:left;border-bottom:1px solid #e2eaf0;padding:13px 10px;vertical-align:middle}
+th{font-size:.75rem;text-transform:uppercase;color:#46616d;white-space:nowrap}
+td{font-size:.9rem}
+.num{font-variant-numeric:tabular-nums;font-weight:750}
+.negative{color:#a12732}
+.zero{color:#775900}
+.cards{display:none}
+.card{border:1px solid #dce5ea;border-radius:13px;padding:14px;background:white}
+.cardHead{display:flex;justify-content:space-between;gap:8px;font-weight:700}
+.cardLine{display:flex;justify-content:space-between;gap:12px;margin:10px 0}
+.pill{border-radius:99px;padding:4px 9px;background:#e8f0f4;font-size:.78rem}
+.detail{max-width:780px}
+.hidden{display:none!important}
+@media(max-width:1180px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.app{grid-template-columns:210px minmax(0,1fr)}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:860px){.app{display:block}.sidebar{padding:16px;flex-direction:row;flex-wrap:wrap;align-items:center}.brand{font-size:1.1rem}.sidebar .sub{display:none}.navItem{padding:9px 13px}.main{padding:18px 20px 38px}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.main{padding:16px 12px 32px}h1{font-size:1.55rem}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.metric{padding:13px}.metric strong{font-size:1.6rem}.panel{padding:13px}.filters{grid-template-columns:1fr}.tableWrap{display:none}.cards{display:grid;gap:10px}.actions{align-items:stretch}.actions button{flex:1}.topline{display:block}.sidebar{gap:7px}}

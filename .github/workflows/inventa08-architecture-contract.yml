@@ -1,0 +1,32 @@
+name: VISURA INVENTA 08 — contrato real compartido v1 (solo laboratorio)
+on:
+  pull_request:
+    paths:
+      - 'fixed-stock-08/**'
+      - 'tests/inventa08-architecture-v1.test.mjs'
+      - '.github/workflows/inventa08-architecture-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-shared-adapter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exclusivamente PR25
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout SOLO LECTURA del contrato PR22 exacto
+        uses: actions/checkout@v4
+        with:
+          repository: josegude-ux/INVENTA-
+          ref: 7e35f1a748343604166a63388d10fd4c415b8c61
+          path: _visura04_readonly
+          persist-credentials: false
+      - name: Bloquear deriva de arquitectura no revisada
+        run: test "$(git -C _visura04_readonly rev-parse HEAD)" = "7e35f1a748343604166a63388d10fd4c415b8c61"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compatibilidad real adaptador 04 → motor 08 + XLSX
+        run: node --test tests/inventa08-architecture-v1.test.mjs
