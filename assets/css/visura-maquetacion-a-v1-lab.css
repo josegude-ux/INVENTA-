@@ -1,0 +1,97 @@
+/* VISURA 13 | MAQUETACION A V1.0 | R1/L1 | PROTOTIPO LAB 2026-11-05.
+   Contrato VISURA 02: SOLO menus y submenus; inventario operativo, scanner y tablas intactos.
+   Fotos: el original de INVENTA, sin sustituciones generadas.
+   Rutas, políticas, roles, eventos y SW del original permanecen iguales. */
+:root{--visura-a-radius:22px;--visura-a-gap:15px}
+#app.landing{max-width:1160px;background:#f6fafd}
+#app.landing main{padding:clamp(11px,2.5vw,28px);background:linear-gradient(117deg,#f9fcfff2,#edf6fced),url('../brand/inventa-warehouse.webp') center/cover}
+#app.landing .visura-b-top{margin-bottom:11px;border-radius:20px}
+#app.landing .visura-b-source-image{height:clamp(82px,13vw,122px)}
+#app.landing .visura-b-source-image img{object-position:center 17%}
+#app.landing .visura-b-titlebar{min-height:65px}
+#app.landing .landing-person{margin:7px 0 6px;padding:0 5px}
+#app.landing .landing-tagline{font-size:clamp(17px,2.4vw,22px);margin:5px 3px 13px}
+#app.landing .landing-cards{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--visura-a-gap)}
+#app.landing .landing-card,
+#app .visura-a-demo-menu .visura-a-demo-card{
+ position:relative;isolation:isolate;width:100%;overflow:hidden;display:flex;align-items:stretch;
+ min-height:197px;padding:18px;border:1px solid rgba(255,255,255,.25);
+ border-radius:var(--visura-a-radius);box-shadow:0 6px 0 #b8cad9,0 12px 22px #102f4e29;
+ text-align:left;touch-action:manipulation;color:#fff;
+ transition:transform .16s ease,box-shadow .16s ease;
+ background-size:cover,cover;background-repeat:no-repeat;
+ background-position:center,center 91%;background-color:#162f49;
+}
+#app.landing .landing-card.inventory,
+#app .visura-a-demo-menu .visura-a-demo-card.inventory{
+ background-image:linear-gradient(90deg,rgba(121,5,18,.99) 0%,rgba(121,5,18,.96) 35%,rgba(121,5,18,.68) 64%,rgba(60,0,11,.08) 100%),url('../maquetacion-a/inventory-photo-approved-crop.webp');
+}
+#app.landing .landing-card.consultation,
+#app .visura-a-demo-menu .visura-a-demo-card.consultation{
+ background-image:linear-gradient(90deg,rgba(7,44,91,.99) 0%,rgba(7,44,91,.96) 33%,rgba(7,60,114,.68) 66%,rgba(4,26,49,.07) 100%),url('../maquetacion-a/consultation-photo-approved-crop.webp');
+ background-position:center,center 82%;
+}
+#app.landing .landing-card.management{
+ background-image:linear-gradient(90deg,rgba(63,21,92,.99) 0%,rgba(63,21,92,.96) 34%,rgba(75,31,106,.70) 65%,rgba(39,16,57,.07) 100%),url('../maquetacion-a/management-photo-approved-crop.webp');
+ background-position:center,center 73%;
+}
+#app.landing .landing-card .copy,
+#app .visura-a-demo-menu .visura-a-demo-card .copy{
+ position:relative;z-index:2;display:flex;flex-direction:column;align-items:flex-start;
+ width:min(76%,540px);max-width:76%;min-height:157px;margin:0;gap:8px;
+}
+#app.landing .landing-card img,
+#app .visura-a-demo-menu .visura-a-demo-card img{
+ position:absolute;z-index:3;top:13px;left:15px;right:auto;bottom:auto;
+ width:61px;height:62px;object-fit:contain;pointer-events:none;
+ filter:drop-shadow(0 3px 2px rgba(2,12,25,.38));
+}
+#app.landing .landing-card strong,
+#app .visura-a-demo-menu .visura-a-demo-card strong{
+ margin-left:73px;min-height:52px;color:#fff;font-size:clamp(21px,4.7vw,29px);
+ line-height:1.02;letter-spacing:-.55px;font-weight:900;overflow-wrap:break-word;
+ text-shadow:0 2px 6px #09142670;
+}
+#app.landing .landing-card small,
+#app .visura-a-demo-menu .visura-a-demo-card small{
+ color:#fff;font-weight:520;font-size:clamp(13px,1.9vw,16px);line-height:1.35;
+ margin:2px 0 0;max-width:265px;text-shadow:0 1px 5px #10151fc0;
+}
+#app.landing .landing-card .arrow,
+#app .visura-a-demo-menu .visura-a-demo-card .arrow{
+ margin-top:auto;min-width:48px;width:48px;min-height:48px;height:48px;
+ border:2px solid #fff;border-radius:50%;background:rgba(145,5,27,.52);
+ color:white;font-size:28px;line-height:1;box-shadow:0 3px 9px #0006;
+}
+#app.landing .landing-card.consultation .arrow,
+#app .visura-a-demo-menu .visura-a-demo-card.consultation .arrow{background:rgba(17,95,165,.65)}
+#app.landing .landing-card.management .arrow{background:rgba(93,33,115,.67)}
+#app.landing .landing-card:hover,
+#app .visura-a-demo-menu .visura-a-demo-card:hover{transform:translateY(-2px);box-shadow:0 8px 0 #b8cad9,0 17px 27px #102f4e32}
+#app.landing .landing-card:active,
+#app .visura-a-demo-menu .visura-a-demo-card:active{transform:translateY(2px);box-shadow:0 3px 0 #b8cad9,0 8px 14px #102f4e29}
+#app.landing .landing-card:focus-visible,
+#app .visura-a-demo-menu .visura-a-demo-card:focus-visible{outline:4px solid #78dbff;outline-offset:4px}
+/* Solo submenú real de demostración; no convertir el flujo de recuento en menú */
+#app .visura-a-demo-menu{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--visura-a-gap);margin-top:14px}
+#app .visura-a-demo-menu .visura-a-demo-card{font:inherit;cursor:pointer}
+#app .visura-a-demo-menu .visura-a-demo-card .copy{max-width:76%}
+/* Contrato futuro: los nuevos accesos nav pueden optar por las clases anteriores; nada se añade automáticamente */
+@media(max-width:380px){
+ #app.landing .landing-card,#app .visura-a-demo-menu .visura-a-demo-card{min-height:204px;padding:14px}
+ #app.landing .landing-card .copy,#app .visura-a-demo-menu .visura-a-demo-card .copy{width:87%;max-width:87%}
+ #app.landing .landing-card strong,#app .visura-a-demo-menu .visura-a-demo-card strong{margin-left:64px;font-size:21px}
+ #app.landing .landing-card img,#app .visura-a-demo-menu .visura-a-demo-card img{top:10px;left:10px;width:56px;height:59px}
+}
+@media(min-width:700px){
+ #app.landing .landing-card,#app .visura-a-demo-menu .visura-a-demo-card{min-height:224px;padding:26px 30px;background-position:center,center 88%}
+ #app.landing .landing-card img,#app .visura-a-demo-menu .visura-a-demo-card img{top:23px;left:23px;width:78px;height:78px}
+ #app.landing .landing-card strong,#app .visura-a-demo-menu .visura-a-demo-card strong{margin-left:91px;min-height:67px;font-size:32px;max-width:430px}
+ #app.landing .landing-card small,#app .visura-a-demo-menu .visura-a-demo-card small{font-size:17px;max-width:440px}
+ #app.landing .landing-card .copy,#app .visura-a-demo-menu .visura-a-demo-card .copy{min-height:170px}
+}
+@media(min-width:1100px){
+ #app.landing .landing-card,#app .visura-a-demo-menu .visura-a-demo-card{min-height:240px;background-position:center,center 91%}
+ #app.landing .landing-card .copy,#app .visura-a-demo-menu .visura-a-demo-card .copy{min-height:184px}
+}
+@media(prefers-reduced-motion:reduce){#app.landing .landing-card,#app .visura-a-demo-menu .visura-a-demo-card{transition:none}}

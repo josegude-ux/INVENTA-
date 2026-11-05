@@ -256,7 +256,10 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 .settings-button img{width:40px;height:40px;object-fit:contain}.settings-button:focus-visible{outline:3px solid #d52835;outline-offset:3px}
 .landing-person{margin-bottom:15px}.landing-top{align-items:center}.welcome-card>img{max-width:320px;width:100%;height:auto;border-radius:22px}
 .welcome-art{display:flex;flex-direction:column;align-items:center;gap:14px;margin:0 auto 22px;width:100%}.welcome-image-access{display:block;width:min(100%,540px);padding:0;border:0;background:transparent;border-radius:26px;cursor:pointer}.welcome-image-access img{display:block;width:100%;height:auto;border-radius:26px;box-shadow:0 12px 35px #0b264718}.welcome-logo-access{display:flex;align-items:center;justify-content:center;width:min(82%,350px);min-height:70px;padding:18px 30px;border:1px solid #ded7d2;border-radius:18px;background:#fff;box-shadow:0 5px 16px #0b264716;cursor:pointer}.welcome-logo-access img{width:100%;height:auto}.welcome-hint{font-size:12px;color:#61758a}.welcome-image-access:focus-visible,.welcome-logo-access:focus-visible{outline:3px solid #d52835;outline-offset:5px}.welcome-logo-access:hover{background:#fff5f2}@media(min-width:1000px){.welcome-image-access{width:min(100%,52vh,560px)}}
-</style></head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
+</style><link rel="stylesheet" href="./assets/css/visura-operativo-3d-lab.css" data-visura-r1l1="visual-only">
+<link rel="stylesheet" href="./assets/css/visura-maquetacion-a-v1-lab.css" data-visura-13-r1l1="maquetacion-a-lab">
+<link rel="stylesheet" href="./assets/css/visura-maquetacion-a-aprobadas-r1l2.css" data-visura-13-r1l2="tres-imagenes-aprobadas">
+</head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
 <input type="file" id="scanImportFile" accept="application/json,.json" hidden onchange="importBarcodeFile(this)">
 <div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
   <div class="scan-card">
@@ -295,7 +298,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.30.6';
+const APP_VERSION='0.30.7';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -524,8 +527,8 @@ function renderHome(){
  const allowed=homePermissions(),profile=window.INVENTA_MGMT?.profile;
  const name=profile?.display_name||'Usuario',roleLabel={operator:'Operario',supervisor:'Supervisor',admin:'Administrador'}[allowed.role]||'';
  const person=allowed.authenticated?'<div class="landing-person"><span class="initial" aria-hidden="true">'+esc(name.charAt(0).toUpperCase())+'</span><div><small>Hola,</small><b>'+esc(name)+'</b><small>'+roleLabel+'</small></div></div>':'';
- const top='<div class="landing-top"><img class="landing-logo" src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80">'+settingsButton()+'</div>'+person+'<p class="landing-tagline">Tu almacén, bajo control</p>';
- function tile(kind,title,subtitle,image,action){return '<button type="button" class="landing-card '+kind+'" onclick="'+action+'"><span class="copy"><strong>'+title+'</strong><small>'+subtitle+'</small><span class="arrow" aria-hidden="true">→</span></span><img src="assets/menu/'+image+'.webp" alt="" width="640" height="640"></button>';}
+ const top='<div class="landing-top visura-b-top"><div class="visura-b-source-image"><img src="assets/brand/inventa-warehouse.webp" alt="Imagen original de INVENTA con las marcas Mahou y Voldis, almacén e inventario" width="768" height="768"></div><div class="visura-b-titlebar"><div class="visura-b-core"><span class="visura-b-family">VISURA</span><img class="landing-logo" src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></div><div class="visura-b-settings">'+settingsButton()+'</div></div></div>'+person+'<p class="landing-tagline">Tu almacén, bajo control</p>';
+ function tile(kind,title,subtitle,image,action){return '<button type="button" class="landing-card '+kind+'" aria-label="'+title.replace(/<br\s*\/?\s*>/gi,' ').trim()+'. '+subtitle+'" onclick="'+action+'"><span class="copy"><strong>'+title+'</strong><small>'+subtitle+'</small><span class="arrow" aria-hidden="true">→</span></span><img src="assets/menu/'+image+'.webp" alt="" width="640" height="640"></button>';}
  if(!allowed.authenticated){
   place(top+'<section class="welcome-art" aria-label="Bienvenido a INVENTA"><button type="button" class="welcome-image-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA desde la imagen del almacén"><img src="assets/brand/inventa-warehouse.webp" alt="Almacén con palets, Mahou, Voldis y el logo INVENTA en el portapapeles" width="768" height="768"></button><button type="button" class="welcome-logo-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA"><img src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></button><p class="welcome-hint">Pulsa INVENTA para entrar</p></section><div class="landing-bottom"><span>Entorno piloto · v'+APP_VERSION+'</span>'+installMarkup()+'</div>','');return;
  }
@@ -550,7 +553,11 @@ function openAuthorizedHome(target){
 }
 function renderDemoHome(){
  if(!window.INVENTA_MGMT?.isAdmin()){go('home');return;}
- place('<div class="title"><h1>Zona de demostración</h1><p class="muted">Datos ficticios y recuentos locales. Separados del trabajo real.</p></div><button class="item" onclick="startInventoryFromHome()">Inventario de prueba · individual o pareja →</button><button class="item" onclick="window.INVENTA_CONSULT_DEMO=true;consultUser=\'\';go(\'consult-login\')">Consulta con datos ficticios →</button>','<button class="back" onclick="go(\'home\')">← Menú principal</button>');
+ place('<div class="title"><h1>Zona de demostración</h1><p class="muted">Datos ficticios y recuentos locales. Separados del trabajo real.</p></div>'+
+ '<div class="visura-a-demo-menu" aria-label="Opciones de demostración">'+
+ '<button type="button" class="visura-a-demo-card inventory" onclick="startInventoryFromHome()"><span class="copy"><strong>Inventario de prueba</strong><small>Individual o pareja</small><span class="arrow" aria-hidden="true">→</span></span><img src="assets/menu/inventory-3d.webp" alt="" width="640" height="640"></button>'+
+ '<button type="button" class="visura-a-demo-card consultation" onclick="window.INVENTA_CONSULT_DEMO=true;consultUser=\'\';go(\'consult-login\')"><span class="copy"><strong>Consulta con datos ficticios</strong><small>Artículos y ubicaciones de demostración</small><span class="arrow" aria-hidden="true">→</span></span><img src="assets/menu/consult-3d.webp" alt="" width="640" height="640"></button>'+ 
+ '</div>','<button class="back" onclick="go(\'home\')">← Menú principal</button>');
 }
 function renderManagerLogin(){window.INVENTA_MGMT.renderLogin();}
 function loginManager(){window.INVENTA_MGMT.signIn();}

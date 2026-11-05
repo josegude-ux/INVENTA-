@@ -1,0 +1,40 @@
+/* VISURA 13 — HOMOLOGACION 3D R1/L1 / Diseño B operativo, acabado premium A.
+ * Exclusivamente visual y acotado a la pantalla principal de INVENTA 0.30.6.
+ * Reutiliza directamente assets/brand/inventa-warehouse.webp sin manipular su imagen.
+ * La autenticación, visibilidad, rutas, renderizado interno y RLS permanecen originales. */
+:root{--vb-navy:#0b2647;--vb-blue:#117bbd;--vb-red:#c92035}
+#app.landing{max-width:780px;background:#f7fbfe}
+#app.landing main{min-height:100vh;padding:clamp(12px,3.8vw,28px);background:linear-gradient(120deg,rgba(251,253,255,.94),rgba(241,249,255,.86)),url('../brand/inventa-warehouse.webp') center center/cover fixed}
+.landing-top.visura-b-top{display:flex;flex-direction:column;gap:0;overflow:hidden;margin:2px 0 18px;border:1px solid #a5ccdf;border-radius:23px;background:linear-gradient(120deg,#fff,#e6f3fb);box-shadow:0 14px 32px #103e6523,0 3px 0 #d9ebf4}
+.visura-b-source-image{height:clamp(100px,29vw,176px);width:100%;overflow:hidden;background:#eff7fc;position:relative}
+.visura-b-source-image img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+.visura-b-source-image:after{content:'';position:absolute;inset:auto 0 0;height:22px;background:linear-gradient(transparent,rgba(241,248,255,.67));pointer-events:none}
+.visura-b-titlebar{min-height:72px;display:grid;grid-template-columns:54px minmax(0,1fr) 54px;gap:4px;align-items:center;padding:8px 10px 10px;border-top:1px solid #bed6e7}
+.visura-b-core{grid-column:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;text-align:center;min-width:0}
+.visura-b-family{font-size:10px;line-height:1;font-weight:900;letter-spacing:.19em;color:#187bbd}
+.visura-b-core .landing-logo{display:block;width:min(100%,220px);max-height:52px;object-fit:contain}
+.visura-b-settings{grid-column:3;display:flex;align-items:center;justify-content:center}
+.visura-b-settings .settings-button{min-width:48px;min-height:48px}
+#app.landing .landing-person{padding:0 8px;margin:10px 0 13px}
+#app.landing .landing-person .initial{background:linear-gradient(130deg,#e5f2fe,#b9d9ee);color:var(--vb-navy)}
+#app.landing .landing-tagline{font-size:clamp(18px,4.9vw,24px);font-weight:850;line-height:1.22;color:#0b2647;margin:9px 4px 18px}
+#app.landing .landing-cards{grid-template-columns:minmax(0,1fr);gap:14px}
+#app.landing .landing-card{min-height:156px;border-radius:22px;padding:17px 18px;border:1px solid #adc9de;box-shadow:0 8px 0 #c4d8e6,0 17px 28px #0a33571f;transition:transform .14s,box-shadow .14s;touch-action:manipulation}
+#app.landing .landing-card.inventory{background:linear-gradient(110deg,#fff8fa,#ffe7e8 60%,#f8d2d7);border-color:#f1bfc7}
+#app.landing .landing-card.consultation{background:linear-gradient(110deg,#f7fcff,#d9edfd 60%,#bddcf6);border-color:#b1d0e8}
+#app.landing .landing-card.management{background:linear-gradient(110deg,#fbfdff,#e6f0fa 58%,#cadff0);border-color:#afcde0}
+#app.landing .landing-card .copy{width:58%;max-width:60%}
+#app.landing .landing-card strong{font-size:clamp(22px,5vw,30px);line-height:1.08;letter-spacing:-.5px;color:var(--vb-navy);word-break:normal}
+#app.landing .landing-card small{font-size:12px;line-height:1.28;color:#375773;max-width:196px;margin:8px 0}
+#app.landing .landing-card .arrow{height:38px;width:38px;box-shadow:0 3px 0 #871a28,0 6px 14px #153c5c32;background:var(--vb-red)}
+#app.landing .landing-card.consultation .arrow{background:#1380c3;box-shadow:0 3px 0 #16517c,0 6px 14px #153c5c32}
+#app.landing .landing-card.management .arrow{background:#0b477d;box-shadow:0 3px 0 #09294a,0 6px 14px #153c5c32}
+#app.landing .landing-card img{width:47%;height:106%;right:-1.5%;bottom:-4%;filter:drop-shadow(0 12px 9px #14334b2e);object-fit:contain}
+#app.landing .landing-card:active{transform:translateY(4px);box-shadow:0 4px 0 #c4d8e6,0 6px 14px #0733571c}
+#app.landing .landing-card:focus-visible,.landing-account:focus-visible,.visura-b-top button:focus-visible{outline:3px solid #0069b3;outline-offset:3px}
+.landing-note,#app.landing .landing-bottom{color:#344b61}
+@media(max-width:365px){#app.landing main{padding:10px}.visura-b-source-image{height:103px}.visura-b-titlebar{padding:7px 8px}.visura-b-core .landing-logo{width:100%}#app.landing .landing-card{padding:13px 14px;min-height:150px}#app.landing .landing-card .copy{width:60%}#app.landing .landing-card strong{font-size:22px}#app.landing .landing-card img{width:45%}}
+@media(min-width:700px){#app.landing main{padding:22px 35px 35px}.visura-b-source-image{height:180px}.visura-b-titlebar{min-height:78px}#app.landing .landing-card{min-height:170px}#app.landing .landing-card img{width:40%}#app.landing .landing-card .copy{width:56%}}
+@media(prefers-reduced-motion:reduce){#app.landing .landing-card{transition:none}}
+
+@media(max-width:699px){#app.landing main{background-attachment:scroll}}

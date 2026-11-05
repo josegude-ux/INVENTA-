@@ -1,0 +1,28 @@
+/* VISURA 13 — R1/L2: sólo tres tarjetas principales aprobadas. No alterar operaciones. */
+/* Visual source assets/maquetacion-a/aprobadas-r1l2: exact approved 9 images. */
+/* Base R1/L1 permanece inalterada; no se modifica HTML ni JS de permisos. */
+#app.landing .landing-cards>.landing-card.inventory {
+ background-image:linear-gradient(90deg,rgba(118,0,13,.99) 0%,rgba(118,0,13,.96) 27%,rgba(118,0,13,.72) 44%,rgba(118,0,13,.20) 67%,rgba(34,0,0,.02) 100%),url('../maquetacion-a/aprobadas-r1l2/hacer-inventario-movil-foto.webp');
+ background-position:center,60% center;background-size:cover,cover;
+}
+#app.landing .landing-cards>.landing-card.consultation {
+ background-image:linear-gradient(90deg,rgba(0,42,95,.99) 0%,rgba(0,52,114,.94) 36%,rgba(0,53,104,.56) 66%,rgba(0,28,55,.03) 100%),url('../maquetacion-a/aprobadas-r1l2/realizar-consulta-movil-foto.webp');
+ background-position:center,66% center;background-size:cover,cover;
+}
+#app.landing .landing-cards>.landing-card.management {
+ background-image:linear-gradient(90deg,rgba(120,68,1,.99) 0%,rgba(134,79,3,.96) 35%,rgba(126,76,11,.60) 64%,rgba(60,35,0,.03) 100%),url('../maquetacion-a/aprobadas-r1l2/gestion-almacen-movil-foto.webp');
+ background-position:center,66% center;background-size:cover,cover;
+}
+#app.landing .landing-card.management .arrow{background:rgba(169,111,14,.66)}
+@media(min-width:700px){
+ /* Los banners aprobados incluyen texto, pictograma y flecha incrustados: jamás repetir HTML visible. */
+ #app.landing .landing-cards>.landing-card{min-height:0!important;aspect-ratio:3 / 1;padding:0!important;background-size:100% 100%;background-position:center;background-repeat:no-repeat;}
+ #app.landing .landing-cards>.landing-card.inventory{background-image:url('../maquetacion-a/aprobadas-r1l2/hacer-inventario-banner.webp');background-size:100% 100%;background-position:center;}
+ #app.landing .landing-cards>.landing-card.consultation{background-image:url('../maquetacion-a/aprobadas-r1l2/realizar-consulta-banner.webp');background-size:100% 100%;background-position:center;}
+ #app.landing .landing-cards>.landing-card.management{background-image:url('../maquetacion-a/aprobadas-r1l2/gestion-almacen-banner.webp');background-size:100% 100%;background-position:center;}
+ #app.landing .landing-cards>.landing-card .copy,#app.landing .landing-cards>.landing-card>img{display:none!important}
+}
+/* Sin desplazamiento horizontal; controles completos y accesibles a toque y teclado. */
+#app.landing .landing-cards>.landing-card{min-width:0;touch-action:manipulation;}
+#app.landing .landing-cards>.landing-card:focus-visible{outline:4px solid #56d2ff;outline-offset:4px}
+@media(prefers-reduced-motion:reduce){#app.landing .landing-cards>.landing-card{transition:none}}

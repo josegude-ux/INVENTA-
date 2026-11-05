@@ -1,6 +1,19 @@
 /* INVENTA: versioned offline shell with network-first navigation. */
-const CACHE='inventa-demo-v0306-01';
-const FILES=['./','./index.html','./warehouse-management.js?v=0.30.5','./bc-excel-import.js?v=0.30.5','./fixed-positions-import.js?v=0.30.5','./real-counts.js?v=0.30.6','./consultation-core.js?v=0.30.5','./consultation-ui.js?v=0.30.5','./manifest.webmanifest','./assets/menu/settings-3d.webp','./assets/brand/inventa-warehouse.webp','./assets/brand/inventa-logo.svg','./assets/brand/app-icon-192.png','./assets/brand/app-icon-512.png','./assets/menu/inventory-3d.webp','./assets/menu/consult-3d.webp','./assets/menu/management-3d.webp'];
+const CACHE='inventa-demo-v0307-01';
+const FILES=['./','./index.html','./warehouse-management.js?v=0.30.5','./bc-excel-import.js?v=0.30.5','./fixed-positions-import.js?v=0.30.5','./real-counts.js?v=0.30.6','./consultation-core.js?v=0.30.5','./consultation-ui.js?v=0.30.5','./manifest.webmanifest','./assets/menu/settings-3d.webp','./assets/brand/inventa-warehouse.webp','./assets/brand/inventa-logo.svg','./assets/brand/app-icon-192.png','./assets/brand/app-icon-512.png','./assets/menu/inventory-3d.webp','./assets/menu/consult-3d.webp','./assets/menu/management-3d.webp',
+  /* Maquetación A / 3 imágenes aprobadas: cacheadas SOLO en laboratorio R1/L3. */
+  './assets/css/visura-operativo-3d-lab.css',
+  './assets/css/visura-maquetacion-a-v1-lab.css',
+  './assets/css/visura-maquetacion-a-aprobadas-r1l2.css',
+  './assets/maquetacion-a/inventory-photo-approved-crop.webp',
+  './assets/maquetacion-a/consultation-photo-approved-crop.webp',
+  './assets/maquetacion-a/management-photo-approved-crop.webp',
+  './assets/maquetacion-a/aprobadas-r1l2/hacer-inventario-banner.webp',
+  './assets/maquetacion-a/aprobadas-r1l2/hacer-inventario-movil-foto.webp',
+  './assets/maquetacion-a/aprobadas-r1l2/realizar-consulta-banner.webp',
+  './assets/maquetacion-a/aprobadas-r1l2/realizar-consulta-movil-foto.webp',
+  './assets/maquetacion-a/aprobadas-r1l2/gestion-almacen-banner.webp',
+  './assets/maquetacion-a/aprobadas-r1l2/gestion-almacen-movil-foto.webp'];
 const SCANNER_LIBRARY='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
 const INDEX_URL=new URL('./index.html',self.registration.scope).href;
 self.addEventListener('install',event=>{
