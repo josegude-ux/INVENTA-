@@ -1,0 +1,96 @@
+name: INVENTA 07 isolated PostgreSQL 16 contract
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'inventory-lab/**'
+      - 'tests/sql/inventa07_lab_*'
+      - '.github/workflows/inventa07-ephemeral-db.yml'
+permissions:
+  contents: read
+jobs:
+  disposable-db:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ephemeral_only_not_a_real_secret
+          POSTGRES_DB: inventa07_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: inventa07_test
+      PGPASSWORD: ephemeral_only_not_a_real_secret
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+      - name: Reject accidental execution in other databases
+        env:
+          PGDATABASE: postgres
+        run: |
+          if psql -X -v ON_ERROR_STOP=1 -f inventory-lab/001_disposable_reference_contract.sql > /tmp/inventa07-guard.log 2>&1; then
+            echo 'Safety guard failed: wrong database accepted'
+            exit 1
+          fi
+          grep -q 'INVENTA07 LAB ONLY' /tmp/inventa07-guard.log
+      - name: Install isolated schema (no Supabase credentials or connections)
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/001_disposable_reference_contract.sql
+      - name: Verify stock isolation, zero, review, revocation and idempotency
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_contract.sql
+      - name: Verify competing writes in two PostgreSQL sessions
+        run: bash tests/sql/inventa07_lab_concurrency.sh
+      - name: Install synthetic correction workflow
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/002_disposable_correction_contract.sql
+      - name: Verify proposed corrections, attribution, review and audit
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_corrections.sql
+      - name: Install isolated barcode administration contract
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/003_disposable_barcode_admin.sql
+      - name: Validate admin-only barcodes, conflicts and immutable association history
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_barcode_admin.sql
+      - name: Install double-scan provisional contract in ephemeral database
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/004_disposable_provisionals.sql
+      - name: Verify independent scans, unknowns and manual administrative mapping
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_provisionals.sql
+      - name: Install synthetic incident audit workflow
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/005_disposable_incidents.sql
+      - name: Verify blocking incidents, authorizations and verified corrections
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_incidents.sql
+      - name: Install isolated lot-aware reference contract
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/006_disposable_lot_contract.sql
+      - name: Validate separate lots and server recomputation of physical breakdown
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_lot_contract.sql
+      - name: Install synthetic authenticated V2 receipt lookup
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/007_disposable_v2_receipt.sql
+      - name: Validate V2 loss-recovery receipts by owner, lot and payload
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_v2_receipts.sql
+      - name: Install isolated team and terminal session lease
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/008_disposable_team_terminal.sql
+      - name: Validate original partners, handover, one terminal and revocations
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_team_terminal.sql
+      - name: Race two personal sessions for the same physical terminal
+        run: bash tests/sql/inventa07_lab_team_concurrency.sh
+      - name: Install team-enforced synthetic camera evidence ledger
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/009_disposable_verified_scans.sql
+      - name: Validate two distinct scans, original team and administrative evidence
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_verified_scans.sql
+      - name: Install historic alternate-barcode use provenance
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/010_disposable_actual_alias_use.sql
+      - name: Deny false attribution of unused or mismatched alternate codes
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_actual_alias_use.sql
+      - name: Install manual physical close and automatic aisle status contract
+        run: psql -X -v ON_ERROR_STOP=1 -f inventory-lab/011_disposable_physical_closure.sql
+      - name: Verify manual review, closure, reopen and derived aisle completion
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/inventa07_lab_physical_closure.sql
