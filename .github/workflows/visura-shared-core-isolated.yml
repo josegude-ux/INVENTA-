@@ -1,0 +1,192 @@
+name: VISURA shared-core isolated checks
+on:
+  push:
+    branches:
+      - architecture/visura-shared-core-20261027
+    paths:
+      - "architecture/**"
+      - ".github/workflows/visura-shared-core-isolated.yml"
+  pull_request:
+    paths:
+      - "architecture/**"
+      - ".github/workflows/visura-shared-core-isolated.yml"
+permissions:
+  contents: read
+jobs:
+  isolated:
+    runs-on: ubuntu-latest
+    services:
+      pg:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: visura_test
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate BC batches (no network)
+        run: node --test architecture/tests/*.test.mjs
+      - name: Apply synthetic schema to disposable Postgres 16
+        run: |
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/00_bootstrap_pg16.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_schema_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/20_verify_pg16.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_read_contracts_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/30_verify_read_contract_pg16.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_internal_publish_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/40_verify_publication_pg16.sql
+
+      - name: Simulate two PostgreSQL sessions targeting same warehouse
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/50_hold_warehouse_lock_pg16.sql > /tmp/visura-shared-holder.log 2>&1 &
+          HOLDER_PID=$!
+          trap 'kill "$HOLDER_PID" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 100); do
+            if docker exec "$PG_CONTAINER" test -f /tmp/visura_shared_cor_lock_ready; then ready=1; break; fi
+            if ! kill -0 "$HOLDER_PID" 2>/dev/null; then
+              cat /tmp/visura-shared-holder.log
+              exit 1
+            fi
+            sleep 0.1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/visura-shared-holder.log
+            echo "Timed out waiting for database warehouse row lock" >&2
+            exit 1
+          fi
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/51_conflicting_publisher_pg16.sql
+          wait "$HOLDER_PID"
+          trap - EXIT
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/52_verify_after_concurrency_pg16.sql
+
+      - name: Guard immutability of validated BC batches in disposable PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_staging_guard_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/60_verify_staging_immutability_pg16.sql
+
+      - name: Verify private warehouse catalogs and fixed-position contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_reference_contracts_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/70_verify_reference_contracts_pg16.sql
+
+      - name: Verify private staged-to-validated gate on disposable PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_internal_validate_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/80_verify_validation_gate_pg16.sql
+
+      - name: Exercise anon and authenticated SQL access denials
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/90_verify_client_role_denial_pg16.sql
+
+      - name: Prove transaction rollback keeps warehouse pointer and audit atomic
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/100_verify_rollback_pg16.sql
+
+      - name: Compare Node and PostgreSQL SHA256 normalized row digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_rows_digest_v2_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/110_verify_rows_digest_v2_pg16.sql
+
+      - name: Protect BC batch headers and state transitions in disposable PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_batch_metadata_guard_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/120_verify_batch_metadata_guard_pg16.sql
+
+      - name: Verify private VISURA PREPARA read projection on shared schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_prepara_projection_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/130_verify_prepara_projection_pg16.sql
+
+      - name: Verify shared INVENTA 08 versioned associations in disposable PG16
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_inventa08_association_v1_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/140_verify_inventa08_association_pg16.sql
+
+      - name: Verify CAS state transition and inseparable event audit in disposable PG16
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/drafts/visura_shared_fixed_transition_cas_UNAPPLIED.sql
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/150_verify_fixed_transition_cas_pg16.sql
+
+      - name: Two-session association CAS and audit race in disposable PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          PG_CONTAINER=$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n1)
+          test -n "$PG_CONTAINER"
+          docker exec "$PG_CONTAINER" rm -f /tmp/visura_fixed_cas_lock_ready
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/151_hold_fixed_cas_pg16.sql > /tmp/visura-fixed-cas-holder.log 2>&1 &
+          HOLDER_PID=$!
+          trap 'kill "$HOLDER_PID" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 100); do
+            if docker exec "$PG_CONTAINER" test -f /tmp/visura_fixed_cas_lock_ready; then ready=1; break; fi
+            if ! kill -0 "$HOLDER_PID" 2>/dev/null; then
+              cat /tmp/visura-fixed-cas-holder.log
+              exit 1
+            fi
+            sleep 0.1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/visura-fixed-cas-holder.log
+            echo "Timed out waiting for synthetic fixed association row lock" >&2
+            exit 1
+          fi
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/152_conflicting_fixed_cas_pg16.sql
+          wait "$HOLDER_PID"
+          trap - EXIT
+          docker exec -i "$PG_CONTAINER" psql -U postgres -d visura_test -v ON_ERROR_STOP=1 < architecture/tests/sql/153_verify_fixed_cas_concurrency_pg16.sql
