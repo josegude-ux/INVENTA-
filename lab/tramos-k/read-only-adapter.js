@@ -3,7 +3,7 @@
 const BASE='https://wlejxnpphysogrzcxjfh.supabase.co';
 const KEY='sb_publishable_gPeof-fUW3yITvNXqsjHVw_-PjB1Fyd';
 const STORE='inventa-real-auth-v1';
-const PREFIX=/^K(?:\\d{2})(?:$|[-_])/i;
+const PREFIX=/^K(?:\d{2})(?:$|[-_])/i;
 function session(){let s;try{s=JSON.parse(localStorage.getItem(STORE)||'null');}catch(_){throw Error('SESSION_INVALID');}
  if(!s||!s.access_token||!s.user||!s.user.id||!s.expires_at||s.expires_at*1000<=Date.now()+10000)throw Error('LOGIN_REQUIRED_OR_EXPIRED');
  return s;
