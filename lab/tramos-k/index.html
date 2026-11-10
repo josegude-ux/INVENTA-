@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VISURA INVENTA · Tramos K · LAB</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#182b38;background:#f4f6f8}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1440px;margin:auto;padding:clamp(12px,3vw,32px)}header{background:#263a48;color:white}h1{margin:0;font-size:clamp(1.35rem,2.5vw,2rem)}.notice{padding:12px;background:#fff1d2;border-left:4px solid #b97809}.controls{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}label{display:grid;gap:6px}select,button{font:inherit;min-height:44px;padding:8px;border:1px solid #647787;border-radius:8px;background:white}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.panel{background:white;border-radius:12px;padding:18px;min-width:0}li{padding:10px 0;overflow-wrap:anywhere}.skip{position:absolute;top:-80px;left:12px;background:white;padding:12px}.skip:focus{top:8px}button:focus-visible,select:focus-visible,.skip:focus-visible{outline:3px solid #2371b9}@media(max-width:680px){.grid{grid-template-columns:1fr}.controls>*{flex:1 1 150px}}
+</style></head><body>
+<a class="skip" href="#results">Saltar a resultados</a><header><div class="wrap"><h1>VISURA INVENTA · Tramos K</h1><p>LAB · Pruebas aisladas</p></div></header>
+<main class="wrap"><p class="notice"><strong>LAB: SIN ESCRITURA.</strong> Esta pantalla no confirma recuentos ni modifica la base de datos. Las sesiones son de demostración, no autenticación.</p>
+<div class="controls"><label>Vista de ejemplo<select id="role"><option value="supervisor">Supervisor</option><option value="op-a">Operario A</option><option value="op-b">Operario B</option></select></label><label>Estado<select id="state"><option value="all">Todos</option><option value="pending">Pendiente</option><option value="uncertain">Incierto</option><option value="confirmed">Confirmado</option><option value="blocked">Bloqueado</option><option value="conflict">Conflicto</option></select></label><button id="reset" type="button">Restaurar</button></div>
+<div id="results" class="grid" tabindex="-1" role="region" aria-label="Resultados de tramos K" aria-live="polite" aria-busy="true"></div>
+</main><script src="./model.js"></script><script src="./app.js"></script></body></html>
