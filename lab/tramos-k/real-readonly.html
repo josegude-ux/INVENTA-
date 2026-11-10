@@ -1,0 +1,17 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VISURA INVENTA · K · Consulta LAB</title><style>
+body{font:16px system-ui;margin:0;background:#f5f7fa;color:#1a2b39}main{max-width:1000px;margin:auto;padding:clamp(12px,3vw,32px)}button{min-height:44px;padding:10px 16px;border:1px solid #334d62;border-radius:8px;background:white;font:inherit}button:focus-visible{outline:3px solid #2371b9}section{background:white;padding:16px;border-radius:12px;margin-top:16px}li{padding:8px;overflow-wrap:anywhere}.warning{background:#fff2d2;padding:12px;border-left:4px solid #a76a00}@media(max-width:600px){button{width:100%}}
+</style></head><body><main><h1>VISURA INVENTA · Tramos K</h1><p class="warning">LAB · Solo lectura. Consulta únicamente ubicaciones K autorizadas para Supervisor/Administrador. No realiza asignaciones ni recuentos ni consulta existencias teóricas.</p>
+<p>Es necesario iniciar sesión previamente en INVENTA desde este mismo origen. No introduzcas contraseñas en esta página.</p>
+<button id="load" type="button">Consultar ubicaciones K</button><p id="status" role="status" aria-live="polite"></p><section aria-label="Ubicaciones K"><h2>Ubicaciones</h2><ul id="list"></ul></section>
+<p><a href="./index.html">Volver a demostración ficticia</a></p></main>
+<script src="./read-only-adapter.js"></script><script>
+(function(){'use strict';const button=document.getElementById('load'),status=document.getElementById('status'),list=document.getElementById('list');let seq=0;
+button.addEventListener('click',async()=>{const n=++seq;button.disabled=true;status.textContent='Consultando…';list.replaceChildren();
+try{const data=await VISURA_K_READONLY.readK();if(n!==seq)return;
+status.textContent=data.locations.length+' ubicaciones K visibles con tu sesión.';
+data.locations.forEach(x=>{const li=document.createElement('li');li.textContent=x.code+' · '+(x.aisle||'K')+' · '+(x.enabled?'Habilitada':'No habilitada');list.append(li);});
+}catch(e){if(n===seq)status.textContent='Consulta no disponible: '+e.message;}
+finally{if(n===seq)button.disabled=false;}});
+window.addEventListener('storage',()=>{seq++;list.replaceChildren();status.textContent='Sesión modificada. Vuelve a consultar.';button.disabled=false;});
+})();
+</script></body></html>
