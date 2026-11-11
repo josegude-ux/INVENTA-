@@ -57,7 +57,7 @@ async function register(){
 }
 async function loadProfile(){var u=session&&session.user;if(!u)return;var arr=await api('profiles','user_id=eq.'+encodeURIComponent(u.id)+'&select=*');profile=arr&&arr[0]||null;}
 async function restore(){try{session=JSON.parse(localStorage.getItem(STORE)||'null');if(!session)return;if(session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();if(session)await loadProfile();if(isManager()&&typeof managerUser!=='undefined')managerUser=profile.display_name||profile.role;}catch(e){session=null;profile=null;}}
-async function logout(){fixedReportRows=[];try{if(session)await request('/auth/v1/logout',{method:'POST'});}catch(e){}session=null;profile=null;localStorage.removeItem(STORE);if(typeof managerUser!=='undefined')managerUser='';if(typeof consultUser!=='undefined')consultUser='';notice='';go('home');}
+async function logout(){if(window.INVENTA_F2)window.INVENTA_F2.invalidate();fixedReportRows=[];try{if(session)await request('/auth/v1/logout',{method:'POST'});}catch(e){}session=null;profile=null;localStorage.removeItem(STORE);if(typeof managerUser!=='undefined')managerUser='';if(typeof consultUser!=='undefined')consultUser='';notice='';go('home');}
 function renderLogin(){
  show(heading('CUENTA PERSONAL','Acceso seguro','INVENTA usa cuentas personales y permisos de Supabase.')
   +card('Iniciar sesión',
@@ -73,6 +73,7 @@ function tabs(){return [
  ['dashboard','Resumen'],
  ['campaigns','Campañas'],
  ['assignments','Asignaciones'],
+ ['f2','Tramos K'],
  ['incidents','Incidencias'],
  ['catalog','Ubicaciones'],
  ['snapshot','Existencias BC'],
@@ -162,6 +163,7 @@ async function dataFor(tab){
  }
  if(tab==='campaigns')return {campaigns:await api('campaigns','select=*&order=created_at.desc&limit=100')};
  if(tab==='users'){var people=await api('rpc/admin_user_directory','', 'POST',{});people.forEach(function(p){permissionVersions[p.user_id]=p.version;});return {profiles:people};}
+ if(tab==='f2')return {};
  if(tab==='assignments'){var a=await Promise.all([api('assignments','select=*&order=created_at.desc&limit=200'),api('campaigns','select=*&order=created_at.desc&limit=100'),api('locations','select=*&order=code&limit=1500'),api('profiles','select=*&order=display_name&limit=500')]);return {assignments:a[0],campaigns:a[1],locations:a[2],profiles:a[3]};}
  if(tab==='incidents'){var a=await Promise.all([api('incidents','select=*&order=created_at.desc&limit=100'),api('campaigns','select=*&order=created_at.desc&limit=100'),api('locations','select=code&order=code&limit=1500')]);return {incidents:a[0],campaigns:a[1],locations:a[2]};}
  if(tab==='catalog'){
@@ -190,6 +192,7 @@ async function dataFor(tab){
  return {};
 }
 function contentFor(tab,d){
+ if(tab==='f2')return '<div id="f2TramosPanel" role="region" aria-label="Tramos K">Cargando F2…</div>';
  if(tab==='dashboard'){
   return card('Estado general',
   row('Campañas',d.campaigns.length+' registradas · '+(curr(d.campaigns)?'1 activa':'Ninguna activa'))
@@ -393,6 +396,7 @@ async function render(){
  try{
  var d=await dataFor(s);if(serial!==renderSerial||s!==section||!check())return;
  show(shell(contentFor(s,d)));
+ if(s==='f2'&&window.INVENTA_F2)window.INVENTA_F2.open().catch(function(err){var el=document.getElementById('f2TramosPanel');if(el)el.textContent=err.message;});
  }catch(e){if(serial===renderSerial)show(shell(card('No se pudo cargar',small(e.message)+button('Reintentar','render()'))));}
 }
 function open(s){if(!check())return;section=s;if(s==='catalog'){catalogView='aisles';catalogAisle='';catalogLocation='';}notice='';render();}
