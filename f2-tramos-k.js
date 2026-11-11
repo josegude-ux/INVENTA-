@@ -52,6 +52,7 @@ function draw(){
   html+='<div class="card"><h2>Mis ubicaciones K</h2>'+ (mine.length?mine.map(function(a){return '<div style="border-bottom:1px solid #e5eaf0;padding:10px 0"><b>'+esc(a.location_code)+'</b> · '+esc(a.state)+'</div>';}).join(''):'<p class="muted">Sin ubicaciones K asignadas en la campaña activa.</p>')+'</div>';
  }
  if(!m.isAdmin()){var current=mine.filter(function(a){return a.state==='in_progress';});if(current.length){html+='<div class="card"><h2>Registrar recuento F2</h2><select class="input" id="f2MySlot">'+current.map(function(a){return '<option value="'+esc(a.id)+'">'+esc(a.location_code)+' · ciclo '+a.cycle+'</option>';}).join('')+'</select><label>Artículo</label><input class="input" id="f2Product" placeholder="Código artículo"><label>Lote</label><input class="input" id="f2Lot" placeholder="Lote"><label>Cantidad</label><input class="input" id="f2Quantity" inputmode="decimal" placeholder="0"><button class="btn" onclick="INVENTA_F2.count()">Guardar recuento F2</button></div>';}}
+ if(localStorage.getItem('inventa-f2-pending:'+m.getUserId()))html+='<div class="alert">Hay una operación pendiente de confirmación. Reintenta con la misma clave; no crees una operación nueva.</div><button class="btn-outline" onclick="INVENTA_F2.retry().catch(function(e){alert(e.message)})">Reintentar operación pendiente</button>';
  html+='<button class="btn-outline" type="button" onclick="INVENTA_F2.open()">Actualizar F2</button>';
  target.innerHTML=html;
 }
