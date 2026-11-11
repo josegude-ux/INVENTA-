@@ -86,11 +86,12 @@ begin
   if p_action='assign' then
    if found then raise exception 'Location already assigned' using errcode='23505'; end if;
    if p_operator_id is null or not exists(select 1 from public.profiles where user_id=p_operator_id and enabled and role='operator') then raise exception 'Invalid operator' using errcode='22023'; end if;
-   if p_cycle=2 and not exists(select 1 from public.f2_k_slots where campaign_id=p_campaign_id and location_code=p_location_code and cycle=1 and state in ('completed','withdrawn','transferred')) then raise exception 'First cycle not finished' using errcode='22023'; end if;
+   if exists(select 1 from public.f2_k_slots where campaign_id=p_campaign_id and location_code=p_location_code and cycle=p_cycle) then raise exception 'Cycle already exists' using errcode='23505'; end if;
+   if p_cycle=2 and not exists(select 1 from public.f2_k_slots where campaign_id=p_campaign_id and location_code=p_location_code and cycle=1 and state='completed') then raise exception 'First cycle not finished' using errcode='22023'; end if;
    insert into public.f2_k_slots(campaign_id,location_code,cycle,operator_id,state,assigned_by) values(p_campaign_id,p_location_code,p_cycle,p_operator_id,'pending',v_actor) returning * into v_new;
   elsif p_action='second_count' then
    if p_cycle<>2 then raise exception 'Second count requires cycle 2' using errcode='22023'; end if;
-   if found or not exists(select 1 from public.f2_k_slots where campaign_id=p_campaign_id and location_code=p_location_code and cycle=1 and state='completed') then raise exception 'First count incomplete or second count active' using errcode='22023'; end if;
+   if found or exists(select 1 from public.f2_k_slots where campaign_id=p_campaign_id and location_code=p_location_code and cycle=2) or not exists(select 1 from public.f2_k_slots where campaign_id=p_campaign_id and location_code=p_location_code and cycle=1 and state='completed') then raise exception 'First count incomplete or second count active' using errcode='22023'; end if;
    if p_operator_id is null or not exists(select 1 from public.profiles where user_id=p_operator_id and enabled and role='operator') then raise exception 'Invalid operator' using errcode='22023'; end if;
    insert into public.f2_k_slots(campaign_id,location_code,cycle,operator_id,state,assigned_by) values(p_campaign_id,p_location_code,2,p_operator_id,'pending',v_actor) returning * into v_new;
   else
