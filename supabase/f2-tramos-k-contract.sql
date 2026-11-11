@@ -10,8 +10,7 @@ create table if not exists public.f2_k_slots (
  version bigint not null default 1,
  assigned_by uuid not null references public.profiles(user_id),
  created_at timestamptz not null default now(),
- updated_at timestamptz not null default now(),
- unique(campaign_id,location_code,cycle,version)
+ updated_at timestamptz not null default now()
 );
 create unique index if not exists f2_k_one_active_slot on public.f2_k_slots(campaign_id,location_code,cycle) where state in ('pending','in_progress');
 create table if not exists public.f2_k_actions (
