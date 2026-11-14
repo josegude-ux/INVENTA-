@@ -9,18 +9,18 @@
 :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1d2e43;background:#f0f3f7;font-synthesis:none}
 *{box-sizing:border-box}button,input,select{font:inherit}button{touch-action:manipulation;cursor:pointer}body{margin:0}body,input,button{ -webkit-tap-highlight-color:transparent}
 #app{max-width:640px;margin:auto;height:100dvh;min-height:480px;display:flex;flex-direction:column;background:#f5f7fa;overflow:hidden}
-header{flex:none;background:#fff;border-bottom:1px solid #e3e8ef;padding:calc(9px + env(safe-area-inset-top)) 13px 10px;box-shadow:0 2px 6px #00000008;z-index:2}
+header:not(:has(.real-interior-bar)){flex:none;background:#fff;border-bottom:1px solid #e3e8ef;padding:calc(9px + env(safe-area-inset-top)) 13px 10px;box-shadow:0 2px 6px #00000008;z-index:2}
 .hrow{display:flex;justify-content:space-between;align-items:center;gap:10px}.brand{display:flex;align-items:center;gap:9px}.brand img{width:40px;height:40px;border-radius:11px;object-fit:cover}.brand b{font-size:19px;letter-spacing:.2px}.brand small{display:block;font-size:10px;color:#738294}.topbuttons{display:flex;gap:7px;align-items:center}
 .pill{font-size:11px;background:#fff1f0;color:#af252c;border:1px solid #ffc8cb;border-radius:30px;padding:5px 7px;font-weight:850}.tinybtn{border:1px solid #d9e2eb;background:#f6f8fb;padding:7px 9px;border-radius:9px;color:#405873;font-size:12px;font-weight:750}
-main{flex:1;overflow-y:auto;min-height:0;padding:14px;overscroll-behavior:contain}h1,h2,h3,p{margin:0}h1{font-size:23px;letter-spacing:-.5px}h2{font-size:17px}h3{font-size:14px}.muted{color:#61758a;font-size:12px;line-height:1.45}.overline{font-size:10px;color:#758ba1;font-weight:900;letter-spacing:.9px}.card{background:white;border:1px solid #e1e7ed;border-radius:17px;padding:14px;margin-bottom:11px;box-shadow:0 3px 14px #12294208}.title{margin-bottom:12px}.title p{margin-top:5px}.field{margin-bottom:13px}.field label{display:block;font-size:12px;font-weight:850;margin-bottom:6px}.input{width:100%;border:1.5px solid #cbd8e6;border-radius:11px;background:#fff;height:49px;padding:7px 12px;font-size:18px;color:#163150;outline:0}.input:focus{border-color:#246eb0;box-shadow:0 0 0 3px #247aba23}
+main{flex:1;overflow-y:auto;min-height:0;overscroll-behavior:contain}main:not(:has(.real-counts-view)){padding:14px}h1,h2,h3,p{margin:0}h1{font-size:23px;letter-spacing:-.5px}h2{font-size:17px}h3{font-size:14px}.muted{color:#61758a;font-size:12px;line-height:1.45}.overline{font-size:10px;color:#758ba1;font-weight:900;letter-spacing:.9px}.card{background:white;border:1px solid #e1e7ed;border-radius:17px;padding:14px;margin-bottom:11px;box-shadow:0 3px 14px #12294208}.title{margin-bottom:12px}.title p{margin-top:5px}.field{margin-bottom:13px}.field label{display:block;font-size:12px;font-weight:850;margin-bottom:6px}.input{width:100%;border:1.5px solid #cbd8e6;border-radius:11px;background:#fff;height:49px;padding:7px 12px;font-size:18px;color:#163150;outline:0}.input:focus{border-color:#246eb0;box-shadow:0 0 0 3px #247aba23}
 .btn{width:100%;min-height:49px;border:0;border-radius:12px;background:#c61921;color:#fff;font-weight:900;font-size:15px;padding:9px 13px}.btn:disabled{opacity:.4}.btn-outline{border:1px solid #bdcad8;border-radius:12px;background:#fff;color:#1b4368;padding:10px 12px;min-height:44px;font-weight:800;font-size:14px}.btn-light{background:#f4f7fa;color:#35566e;border:1px solid #dae5ee}.split{display:grid;grid-template-columns:1fr 1fr;gap:9px}.stack{display:flex;flex-direction:column;gap:9px}.between{display:flex;align-items:center;justify-content:space-between;gap:11px}.progress{height:7px;background:#e4eaf0;border-radius:20px;overflow:hidden;margin-top:12px}.progress>div{height:100%;background:#279a67;transition:width .15s}.item{width:100%;border:1px solid #dce4ed;background:#fff;border-radius:15px;padding:15px;text-align:left;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between;gap:11px;min-height:71px}.item strong{display:block;font-size:16px}.item small{font-size:12px;color:#6a8095;display:block;margin-top:4px}.chev{font-size:26px;color:#a1b2c2}.tag{font-size:10px;border-radius:8px;padding:5px 7px;white-space:nowrap;background:#e9eff8;color:#45678c;font-weight:800}.tag.ok{color:#176b46;background:#e4f6ee}.tag.warn{color:#9d5210;background:#fff0dd}.alert{padding:11px 12px;border-radius:12px;background:#fff2df;border:1px solid #ffdbaa;color:#744215;font-size:13px;line-height:1.5;margin-bottom:11px}.alert.red{background:#fff0f1;color:#a52b31;border-color:#ffd5d8}.alert.green{background:#e6f6ed;color:#1c6441;border-color:#d3f1df}
-footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:#fff}.footerrow{display:flex;align-items:center;gap:10px}.footerrow .btn{flex:1}.back{color:#506780;background:none;border:0;font-weight:800;padding:8px 0;font-size:12px}.bigcheck{font-size:35px;line-height:1}
+footer:not(:has(.real-counts-save)){flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:#fff}.footerrow{display:flex;align-items:center;gap:10px}.footerrow .btn{flex:1}.back{color:#506780;background:none;border:0;font-weight:800;padding:8px 0;font-size:12px}.bigcheck{font-size:35px;line-height:1}
 /* Contador B, el teclado seleccionado */
 #app.counter{background:#111d2b}#app.counter header{background:#182538;color:white;border-color:#34465c}#app.counter header .brand small{color:#b1c8e0}#app.counter .pill{background:#3d2b35;color:#ffe5e5;border-color:#74515a}#app.counter main{background:#111d2b;color:#fff;display:flex;flex-direction:column;padding:10px 12px 8px;overflow-y:auto}#app.counter footer{background:#192a3e;color:white;border-color:#334960}
 .modebar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px;flex:none}.modebar button{border:1px solid #43576f;border-radius:12px;padding:10px 5px;background:#2c3c54;color:#d9e6f2;font-size:13px;font-weight:900}.modebar button.on{background:#b8f3cf;color:#123d2a;border-color:#b8f3cf}
 .cproduct{margin-bottom:9px;font-size:12px;color:#bdd0e6;flex:none}.cproduct b{display:block;font-size:16px;color:#fff}.display{background:#20324a;border:1px solid #3f5773;border-radius:16px;padding:10px 12px;flex:none}.display .caption{font-size:12px;color:#aac1d8;display:flex;justify-content:space-between}.digits{font-size:45px;font-weight:950;text-align:right;line-height:1.08;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}.desc{font-size:11px;color:#b0edd0;min-height:18px}.keypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,minmax(37px,1fr));gap:7px;flex:1;min-height:188px;max-height:380px;margin:9px 0}.keypad button{font-size:24px;font-weight:850;background:#2e4058;color:white;border:1px solid #49617c;border-radius:13px;min-height:37px}.keypad button:active{background:#52708d}.keypad .ctl{font-size:14px;background:#455873}.addbtn{background:#b8f3cf;border:0;border-radius:13px;padding:11px;color:#123e2e;font-weight:950;font-size:15px;min-height:46px;flex:none}.addbtn:disabled{opacity:.4}.c-tools{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:11px;color:#b7cbe1;padding-top:7px;flex:none}.c-tools button{border:0;color:#c6efd9;background:transparent;font-size:11px;font-weight:800}.counter-total{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.counter-total span{color:#b1c8df;font-size:11px;font-weight:900}.counter-total strong{font-size:32px;color:#b8f3cf;font-variant-numeric:tabular-nums}.counter-footer{display:flex;gap:8px;align-items:center;margin-top:6px}.counter-footer button{background:#354b67;color:white;border:0;border-radius:9px;padding:8px 9px;font-size:11px;font-weight:850}.counter-footer button:last-child{margin-left:auto;background:#c61921;padding:9px 13px;color:#fff}
 .modalback{position:fixed;inset:0;background:#081a2ac9;z-index:8;display:flex;align-items:center;justify-content:center;padding:15px}.modal{background:#fff;color:#162d45;width:min(480px,100%);border-radius:18px;padding:18px;max-height:85dvh;overflow:auto}.modal h2{margin-bottom:9px}.modal .line{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5eaf0;font-size:12px}.modal .line button{border:0;border-radius:9px;background:#fff0f0;color:#a32329;padding:7px;font-weight:800}.modal-actions{display:flex;gap:8px;margin-top:13px}.modal-actions button{flex:1}
-@media(max-height:740px){main{padding:9px}#app.counter main{padding:7px 10px 5px}.keypad{gap:5px;min-height:158px;margin:6px 0}.keypad button{min-height:32px}.display{padding:6px 10px}.digits{font-size:39px}.cproduct{margin-bottom:5px}.modebar{margin-bottom:5px}.modebar button{padding:7px}.counter-footer{margin-top:3px}.counter-total strong{font-size:27px}}
+@media(max-height:740px){main:not(:has(.real-counts-view)){padding:9px}#app.counter main{padding:7px 10px 5px}.keypad{gap:5px;min-height:158px;margin:6px 0}.keypad button{min-height:32px}.display{padding:6px 10px}.digits{font-size:39px}.cproduct{margin-bottom:5px}.modebar{margin-bottom:5px}.modebar button{padding:7px}.counter-footer{margin-top:3px}.counter-total strong{font-size:27px}}
 
 /* v0.16: pasillos y filtros */
 .aisle-item{gap:15px;min-height:103px}
@@ -190,7 +190,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 @media(max-width:360px){.catalog-aisles{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 /* Mobile controls and long audit identifiers. */
-#realSyncStatus,.real-count-row{overflow-wrap:anywhere}.real-count-row{padding:12px 0;border-top:1px solid #ddd}.card .input{min-height:44px;font-size:16px;max-width:100%;box-sizing:border-box}.card .btn-outline{min-height:44px}details input{margin-bottom:8px}
+.real-count-row{padding:12px 0;overflow-wrap:anywhere}.card .input{min-height:44px;font-size:16px;max-width:100%;box-sizing:border-box}.card .btn-outline{min-height:44px}details:not(.real-counts-details) input{margin-bottom:8px}
 
 /* INVENTA identity: landing only; operational screens retain their layout. */
 .brand .brand-wordmark{width:148px;height:auto;border-radius:0;object-fit:contain}
@@ -242,11 +242,11 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
  .landing-card .copy{width:55%}
  .landing-top{margin-bottom:18px}
  .landing-tagline{margin-bottom:18px}
- #app:not(.landing):not(.counter) main{padding:24px 32px}
+ #app:not(.landing):not(.counter) main:not(:has(.real-counts-view)){padding:24px 32px}
 }
 @media(display-mode:standalone){#app:not(.counter){height:100dvh;margin:0 auto;border-radius:0;box-shadow:none}}
 .brand-home{display:inline-flex;align-items:center;min-height:44px;border:0;background:transparent;padding:0;cursor:pointer}
-#topNavigation{padding-top:12px;display:flex}
+#topNavigation:not(.real-interior-nav){padding-top:12px;display:flex}
 #topNavigation[hidden]{display:none!important}
 .top-back{min-height:48px;min-width:112px;padding:10px 18px;border:1px solid #183e63;border-radius:10px;background:#0b2d50;color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 3px 8px #0b264720}
 .top-back:focus-visible,.brand-home:focus-visible{outline:3px solid #d52835;outline-offset:3px}
@@ -260,7 +260,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 <link rel="stylesheet" href="./assets/css/visura-maquetacion-a-v1-lab.css" data-visura-13-r1l1="maquetacion-a-lab">
 <link rel="stylesheet" href="./assets/css/visura-maquetacion-a-aprobadas-r1l2.css" data-visura-13-r1l2="tres-imagenes-aprobadas">
 <link rel="stylesheet" href="./assets/css/visura-inventa-home-v2-rc1.css" data-visura-13-v2="release-candidate-2">
-<link rel="stylesheet" href="./assets/css/visura-inventa-home-compact.css?v=0.30.9" data-visura-13="compact-lab">
+<link rel="stylesheet" href="./assets/css/visura-inventa-home-compact.css?v=0.30.10" data-visura-13="compact-lab">
 </head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
 <input type="file" id="scanImportFile" accept="application/json,.json" hidden onchange="importBarcodeFile(this)">
 <div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
@@ -286,7 +286,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 <script src="./warehouse-management.js?v=0.30.8-rc.3"></script>
 <script src="./bc-excel-import.js?v=0.30.5"></script>
 <script src="./fixed-positions-import.js?v=0.30.5"></script>
-<script src="./real-counts.js?v=0.30.6"></script>
+<script src="./real-counts.js?v=0.30.10"></script>
 <script src="./consultation-core.js?v=0.30.5"></script>
 <script src="./consultation-ui.js?v=0.30.5"></script>
 <script>
@@ -300,7 +300,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.30.9';
+const APP_VERSION='0.30.10';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -481,17 +481,18 @@ function navigateHome(){
   stopScanner();window.INVENTA_MGMT?.cancelView?.();window.INVENTA_REAL?.leave?.();go('home');
  });
 }
-function place(html,foot=''){
+function place(html,foot='',interiorTitle=''){
  $('content').innerHTML=html;$('content').scrollTop=0;$('foot').innerHTML=foot;
  let back=$('foot').querySelector('button.back');
  if(!back&&screen==='count'){back=document.createElement('button');back.textContent='Volver a los artículos';back.onclick=cancelCount;}
  const oldNav=document.getElementById('topNavigation');if(oldNav)oldNav.remove();
+ if(interiorTitle){$('head').innerHTML='<div class="real-interior-bar"><h1>'+esc(interiorTitle)+'</h1><button type="button" class="compact-icon-button" onclick="openSettings()" aria-label="Ajustes">'+homeIcon('settings')+'</button></div>';}else if($('head').querySelector('.real-interior-bar')){$('head').innerHTML=header();}
  if(back){
   const original=back.onclick;const label=back.textContent.trim();
   back.className='top-back';back.type='button';back.title=label;back.setAttribute('aria-label',label);
-  back.textContent='← Volver';back.onclick=function(event){safeNavigation(()=>{window.INVENTA_MGMT?.cancelView?.();original?.call(back,event);});};
+  if(interiorTitle){back.className='real-interior-back';back.setAttribute('aria-label','Volver');back.innerHTML=homeIcon('arrow-left');}else back.textContent='← Volver';back.onclick=function(event){safeNavigation(()=>{window.INVENTA_MGMT?.cancelView?.();original?.call(back,event);});};
   const nav=document.createElement('nav');nav.id='topNavigation';nav.setAttribute('aria-label','Volver a la pantalla anterior');nav.appendChild(back);
-  $('head').appendChild(nav);
+  if(interiorTitle){nav.className='real-interior-nav';$('head').querySelector('.real-interior-bar').prepend(nav);}else $('head').appendChild(nav);
  }
  $('foot').hidden=!$('foot').textContent.trim();
  navigationBaseline=navigationFields().map(el=>[el,el.type==='checkbox'?el.checked:el.value]);
@@ -535,7 +536,7 @@ const HOME_ICONS={
  arrow:'<path d="M5 12h14m-7-7 7 7-7 7"/>',
  close:'<path d="m18 6-12 12M6 6l12 12"/>',
  'triangle-alert':'<path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>'
-};
+,'arrow-left':'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>'};
 function homeIcon(name){return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+HOME_ICONS[name]+'</svg>';}
 let homeBCObserver=null,homeDismissedExport='',homeDismissedUser='';
 function homeBCUser(){return window.INVENTA_MGMT?.getUserId?.()||'';}
@@ -550,7 +551,7 @@ function observeHomeBC(){if(homeBCObserver)homeBCObserver.disconnect();const sta
 function openCompactHomeSettings(){
  const allowed=homePermissions(),profile=window.INVENTA_MGMT?.profile;
  const roleLabel={operator:'Operario',supervisor:'Supervisor',admin:'Administrador'}[allowed.role]||'';
- $('overlay').innerHTML='<div class="modalback"><section class="modal compact-settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="compact-settings-heading"><h2 id="settingsTitle">Ajustes</h2><button type="button" class="compact-icon-button" onclick="hideModal()" aria-label="Cerrar ajustes">'+homeIcon('close')+'</button></div><p class="compact-settings-version">Entorno piloto · v'+APP_VERSION+'</p>'+(allowed.authenticated?'<p class="compact-settings-user">'+esc(profile?.display_name||'Usuario')+' · '+esc(roleLabel)+'</p>':'<p class="compact-settings-user">Accede con tu cuenta para ver tus funciones.</p>')+(allowed.management?'<section class="compact-settings-info"><h3>Estado de datos BC</h3><p id="compactBCDetails" role="status"></p></section>':'')+'<section class="compact-settings-info"><h3>Aplicación</h3><div class="compact-settings-actions">'+installMarkup()+'<button type="button" class="btn-outline" onclick="hideModal();safeNavigation(()=>checkForUpdates(true))">Buscar actualizaciones</button></div></section>'+(allowed.demo?'<section class="compact-settings-info"><h3>Demostración</h3><button type="button" class="btn-outline" onclick="hideModal();safeNavigation(()=>go(\'demo-home\'))">Zona de demostración</button><p>Recuentos reales individuales. Las pruebas de pareja y escáner están en la zona de demostración.</p></section>':'')+((data.worker&&!allowed.authenticated)?'<button type="button" class="btn-outline" onclick="showModal(\'menu\')">Opciones de demostración</button>':'')+(allowed.authenticated?'<button type="button" class="btn-outline compact-logout" onclick="safeNavigation(()=>{hideModal();logoutManager();})">Cerrar sesión</button>':'')+'</section></div>';
+ $('overlay').innerHTML='<div class="modalback"><section class="modal compact-settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="compact-settings-heading"><h2 id="settingsTitle">Ajustes</h2><button type="button" class="compact-icon-button" onclick="hideModal()" aria-label="Cerrar ajustes">'+homeIcon('close')+'</button></div><p class="compact-settings-version">'+($('head').querySelector('.real-interior-bar')?'INVENTA · v':'Entorno piloto · v')+APP_VERSION+'</p>'+(allowed.authenticated?'<p class="compact-settings-user">'+esc(profile?.display_name||'Usuario')+' · '+esc(roleLabel)+'</p>':'<p class="compact-settings-user">Accede con tu cuenta para ver tus funciones.</p>')+(allowed.management?'<section class="compact-settings-info"><h3>Estado de datos BC</h3><p id="compactBCDetails" role="status"></p></section>':'')+'<section class="compact-settings-info"><h3>Aplicación</h3><div class="compact-settings-actions">'+installMarkup()+'<button type="button" class="btn-outline" onclick="hideModal();safeNavigation(()=>checkForUpdates(true))">Buscar actualizaciones</button></div></section>'+(allowed.demo?'<section class="compact-settings-info"><h3>Demostración</h3><button type="button" class="btn-outline" onclick="hideModal();safeNavigation(()=>go(\'demo-home\'))">Zona de demostración</button><p>Recuentos reales individuales. Las pruebas de pareja y escáner están en la zona de demostración.</p></section>':'')+((data.worker&&!allowed.authenticated)?'<button type="button" class="btn-outline" onclick="showModal(\'menu\')">Opciones de demostración</button>':'')+(allowed.authenticated?'<button type="button" class="btn-outline compact-logout" onclick="safeNavigation(()=>{hideModal();logoutManager();})">Cerrar sesión</button>':'')+'</section></div>';
  updateHomeBCPresentation();$('settingsTitle').setAttribute('tabindex','-1');$('settingsTitle').focus();
 }
 function renderHome(){

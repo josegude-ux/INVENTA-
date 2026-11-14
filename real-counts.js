@@ -44,28 +44,30 @@ function status(){
  var e=document.getElementById('realSyncStatus'),d=document.getElementById('realDiagStatus'),uid=m().getUserId(),pending=0;
  try{pending=uid?read(uid).length:0;}
  catch(error){pending='?';message='Cola local inaccesible. No se ha borrado ningún registro.';}
- if(e)e.textContent=pending+' pendientes en este dispositivo · '+message;
+ if(e){e.textContent=pending+' pendientes · '+message;e.title=pending+' pendientes en este dispositivo · '+message;if(e.dataset)e.dataset.tone=pending===0&&(message==='Lectura actualizada.'||message==='Envíos confirmados por el servidor.')?'ok':'warn';}
  if(d)d.textContent=diagnostic||'Comprobación de acceso pendiente.';
 }
 function option(v,t){return '<option value="'+esc(v)+'">'+esc(t)+'</option>';}
 function draw(){
  if(!visible)return;
  var uid=m().getUserId(),latest=counts.filter(function(c){return !counts.some(function(n){return n.previous_id===c.id;});});
- var html='<div class="title"><div class="overline">CUENTA REAL · RECUENTO INDIVIDUAL</div><h1>Mis recuentos</h1><p class="muted">'+esc(m().profile.display_name)+' · Stock teórico oculto</p></div>'
- +'<div class="card"><p id="realSyncStatus" role="status" aria-live="polite"></p><button class="btn-outline" onclick="INVENTA_REAL.sync()">Sincronizar y comprobar servidor</button><button class="btn-outline" onclick="INVENTA_REAL.reload()">Actualizar lecturas</button><hr><button class="btn-outline" onclick="INVENTA_REAL.diagnose()">Comprobar acceso REAL · solo lectura</button><p id="realDiagStatus" role="status" aria-live="polite"></p><p class="muted">Esta comprobación no guarda recuentos ni modifica la base de datos.</p></div>'
- +'<div class="card"><h2>Registrar recuento</h2><p class="muted">Selecciona una asignación activa. El registro es individual; la pareja continúa en demostración.</p>'
- +'<label for="realAssignment">Ubicación asignada</label><select class="input" id="realAssignment">'+option('','Seleccionar…')+assignments.map(function(a){return option(a.id,a.location_code+' · '+a.campaigns.name);}).join('')+'</select>'
- +'<label for="realProduct">Código del artículo del catálogo</label><input id="realProduct" class="input" autocomplete="off">'
- +'<label for="realLot">Lote (si corresponde)</label><input id="realLot" class="input" autocomplete="off">'
- +'<label for="realQty">Unidades sueltas</label><input id="realQty" class="input" inputmode="decimal" type="text">'
- +'<details><summary>Desglose de palés (opcional)</summary><p class="muted">Se suma a unidades sueltas: palés × cajas/base × alturas × unidades/caja.</p>'
- +['Palés','Cajas/base','Alturas','Unidades/caja'].map(function(t,i){return '<label for="realFactor'+i+'">'+t+'</label><input id="realFactor'+i+'" class="input" inputmode="decimal">';}).join('')+'</details>'
- +'<label for="realPrevious">Corregir recuento propio (opcional)</label><select id="realPrevious" class="input">'+option('','Nuevo recuento')+latest.filter(function(c){return c.actor_id===uid;}).map(function(c){return option(c.id,c.location_code+' · '+c.product_code+' · '+c.quantity+' · '+new Date(c.created_at).toLocaleString('es-ES'));}).join('')+'</select>'
- +'<label for="realReason">Motivo obligatorio para correcciones</label><input id="realReason" class="input">'
- +'<button class="btn" onclick="INVENTA_REAL.save()">Guardar en cola y enviar</button></div>'
- +'<div class="card"><h2>Últimos registros del servidor</h2><p class="muted">Leídos: '+esc(lastRead||'Sin lectura confirmada')+'. Hasta 100 registros; pulsa Actualizar en el otro dispositivo.</p>'
- +counts.map(function(c){return '<div class="real-count-row"><b>'+esc(c.location_code+' · '+c.product_code)+'</b><p>'+esc(c.quantity)+' unidades · '+esc(new Date(c.created_at).toLocaleString('es-ES'))+'</p><small>'+esc(c.actor_id)+' · '+esc(c.client_mutation_id)+'</small>'+(c.previous_id?'<p>Corrección: '+esc(c.correction_reason)+'</p>':'')+'</div>';}).join('')+'</div>';
- place(html,'<button class="back" onclick="INVENTA_REAL.close()">← Menú principal</button>');status();
+ var chevron='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>';
+ var refresh='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>';
+ var scan='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7V4h3m10 0h3v3m0 10v3h-3M7 20H4v-3M7 8v8m3-8v8m4-8v8m3-8v8"/></svg>';
+ var html='<div class="real-counts-view"><div class="real-counts-intro"><p>'+esc(m().profile.display_name)+' · Stock teórico oculto</p><span class="real-counts-chip">CUENTA REAL · RECUENTO INDIVIDUAL</span></div>'
+ +'<section class="real-counts-card real-sync-card" aria-label="Sincronización"><div class="real-sync-line"><p id="realSyncStatus" role="status" aria-live="polite"></p><button type="button" class="real-counts-icon" onclick="INVENTA_REAL.reload()" aria-label="Actualizar lecturas" title="Actualizar lecturas">'+refresh+'</button></div><button type="button" class="real-counts-primary" onclick="INVENTA_REAL.sync()">Sincronizar y comprobar servidor</button><details class="real-counts-details real-diagnostic"><summary>Diagnóstico'+chevron+'</summary><button type="button" class="real-counts-secondary" onclick="INVENTA_REAL.diagnose()">Comprobar acceso REAL · solo lectura</button><p id="realDiagStatus" role="status" aria-live="polite"></p><p class="real-counts-help">Esta comprobación no guarda recuentos ni modifica la base de datos.</p></details></section>'
+ +'<section class="real-counts-card real-counts-form"><h2>Registrar recuento</h2><p class="real-counts-help">Selecciona una asignación activa. El registro es individual; la pareja continúa en demostración.</p>'
+ +'<div class="real-field"><label for="realAssignment">Ubicación asignada</label><div class="real-control-wrap"><select class="real-field-control" id="realAssignment">'+option('','Seleccionar…')+assignments.map(function(a){return option(a.id,a.location_code+' · '+a.campaigns.name);}).join('')+'</select>'+chevron+'</div></div>'
+ +'<div class="real-field"><label for="realProduct">Código del artículo del catálogo</label><div class="real-control-wrap"><input id="realProduct" class="real-field-control" autocomplete="off">'+scan+'</div></div>'
+ +'<div class="real-field"><label for="realLot">Lote (si corresponde)</label><input id="realLot" class="real-field-control" autocomplete="off"></div>'
+ +'<div class="real-field"><label for="realQty">Unidades sueltas</label><input id="realQty" class="real-field-control" inputmode="decimal" type="text"></div>'
+ +'<details class="real-counts-details real-pallet"><summary>Desglose de palés (opcional)'+chevron+'</summary><p class="real-counts-help">Se suma a unidades sueltas: palés × cajas/base × alturas × unidades/caja.</p>'
+ +['Palés','Cajas/base','Alturas','Unidades/caja'].map(function(t,i){return '<div class="real-field"><label for="realFactor'+i+'">'+t+'</label><input id="realFactor'+i+'" class="real-field-control" inputmode="decimal"></div>';}).join('')+'</details>'
+ +'<div class="real-field"><label for="realPrevious">Corregir recuento propio (opcional)</label><div class="real-control-wrap"><select id="realPrevious" class="real-field-control">'+option('','Nuevo recuento')+latest.filter(function(c){return c.actor_id===uid;}).map(function(c){return option(c.id,c.location_code+' · '+c.product_code+' · '+c.quantity+' · '+new Date(c.created_at).toLocaleString('es-ES'));}).join('')+'</select>'+chevron+'</div></div>'
+ +'<div class="real-field"><label for="realReason">Motivo obligatorio para correcciones</label><input id="realReason" class="real-field-control"></div></section>'
+ +'<section class="real-counts-card"><h2>Últimos registros del servidor</h2><p class="real-counts-help">Leídos: '+esc(lastRead||'Sin lectura confirmada')+'. Hasta 100 registros; pulsa Actualizar en el otro dispositivo.</p>'
+ +counts.map(function(c){return '<div class="real-count-row"><b>'+esc(c.location_code+' · '+c.product_code)+'</b><p>'+esc(c.quantity)+' unidades · '+esc(new Date(c.created_at).toLocaleString('es-ES'))+'</p><small>'+esc(c.actor_id)+' · '+esc(c.client_mutation_id)+'</small>'+(c.previous_id?'<p>Corrección: '+esc(c.correction_reason)+'</p>':'')+'</div>';}).join('')+'</section></div>';
+ place(html,'<button class="back" onclick="INVENTA_REAL.close()">← Menú principal</button><button type="button" class="real-counts-save real-counts-primary" onclick="INVENTA_REAL.save()">Guardar en cola y enviar</button>','Mis recuentos');status();
 }
 async function diagnose(){
  if(diagnosticBusy)return false;
