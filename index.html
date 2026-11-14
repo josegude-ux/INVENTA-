@@ -260,7 +260,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 <link rel="stylesheet" href="./assets/css/visura-maquetacion-a-v1-lab.css" data-visura-13-r1l1="maquetacion-a-lab">
 <link rel="stylesheet" href="./assets/css/visura-maquetacion-a-aprobadas-r1l2.css" data-visura-13-r1l2="tres-imagenes-aprobadas">
 <link rel="stylesheet" href="./assets/css/visura-inventa-home-v2-rc1.css" data-visura-13-v2="release-candidate-2">
-<link rel="stylesheet" href="./assets/css/visura-inventa-home-compact.css?v=0.30.8" data-visura-13="compact-lab">
+<link rel="stylesheet" href="./assets/css/visura-inventa-home-compact.css?v=0.30.9" data-visura-13="compact-lab">
 </head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
 <input type="file" id="scanImportFile" accept="application/json,.json" hidden onchange="importBarcodeFile(this)">
 <div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
@@ -300,7 +300,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.30.8';
+const APP_VERSION='0.30.9';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -559,8 +559,8 @@ function renderHome(){
  const name=profile?.display_name||'Usuario',roleLabel={operator:'Operario',supervisor:'Supervisor',admin:'Administrador'}[allowed.role]||'';
  if(!allowed.authenticated){homeDismissedExport='';homeDismissedUser='';}
  const person=allowed.authenticated?'<div class="compact-greeting"><span class="compact-avatar" aria-hidden="true">'+esc(name.charAt(0).toUpperCase())+'</span><span class="compact-greeting-name">Hola, <b>'+esc(name)+'</b></span><span class="compact-role">'+roleLabel+'</span></div>':'';
- const top='<div class="compact-header"><div class="compact-brand"><span>VISURA</span><picture><source media="(prefers-color-scheme: dark)" srcset="assets/brand/inventa-logo-white.svg"><img src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></picture></div><button type="button" class="compact-icon-button" onclick="openSettings()" aria-label="Ajustes">'+homeIcon('settings')+'</button></div>'+person;
- function tile(kind,title,subtitle,action){return '<button type="button" class="compact-card '+kind+'" aria-label="'+title+'. '+subtitle+'" onclick="'+action+'"><img class="compact-card-photo" src="assets/home-compact/'+kind+'.webp" alt="" width="800" height="410" loading="'+(kind==='inventory'?'eager':'lazy')+'" decoding="async"><span class="compact-card-copy"><span class="compact-card-title">'+homeIcon(kind)+'<strong>'+title+'</strong></span><small>'+subtitle+'</small></span><span class="compact-card-arrow">'+homeIcon('arrow')+'</span></button>';}
+ const top='<div class="compact-header"><svg class="compact-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 112" width="496" height="112" role="img" aria-label="VISURA INVENTA"><text x="0" y="24" font-size="28" font-weight="800" letter-spacing="5" fill="currentColor">VISURA</text><g transform="translate(0 32)"><g fill="currentColor"><path d="M0 0h20v80H0z"/><path d="M34 80V0h20l24 43V0h20v80H78L54 37v43z"/><path d="M110 0h23l15 51 16-51h23l-28 80h-23z"/><path d="M197 0h53v19h-32v11h29v18h-29v13h33v19h-54z"/><path d="M263 80V0h20l24 43V0h20v80h-20l-24-43v43z"/><path d="M337 0h64v21h-21v59h-22V21h-21z"/></g><path fill="#D52835" d="M410 80 441 0h24l31 80h-23l-20-53-20 53z"/></g></svg><button type="button" class="compact-icon-button" onclick="openSettings()" aria-label="Ajustes">'+homeIcon('settings')+'</button></div>'+person;
+ function tile(kind,title,subtitle,action){return '<button type="button" class="compact-card '+kind+'" aria-label="'+title+'. '+subtitle+'" onclick="'+action+'"><img class="compact-card-photo" src="'+(kind==='consultation'?'assets/maquetacion-a/aprobadas-r1l2/realizar-consulta-movil-foto.webp':'assets/home-compact/'+kind+'.webp')+'" alt="" width="'+(kind==='consultation'?1412:800)+'" height="'+(kind==='consultation'?724:410)+'" loading="'+(kind==='inventory'?'eager':'lazy')+'" decoding="async"><span class="compact-card-copy"><span class="compact-card-title">'+homeIcon(kind)+'<strong>'+title+'</strong></span><small>'+subtitle+'</small></span><span class="compact-card-arrow">'+homeIcon('arrow')+'</span></button>';}
  if(!allowed.authenticated){
   place(top+'<section class="welcome-art compact-welcome" aria-label="Bienvenido a INVENTA"><button type="button" class="welcome-image-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA desde la imagen del almacén"><img src="assets/brand/inventa-warehouse.webp" alt="Almacén con palets, Mahou, Voldis y el logo INVENTA en el portapapeles" width="768" height="768"></button><button type="button" class="welcome-logo-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA"><img src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></button><p class="welcome-hint">Pulsa INVENTA para entrar</p></section>','');return;
  }
