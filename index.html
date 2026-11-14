@@ -260,7 +260,7 @@ footer{flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(
 <link rel="stylesheet" href="./assets/css/visura-maquetacion-a-v1-lab.css" data-visura-13-r1l1="maquetacion-a-lab">
 <link rel="stylesheet" href="./assets/css/visura-maquetacion-a-aprobadas-r1l2.css" data-visura-13-r1l2="tres-imagenes-aprobadas">
 <link rel="stylesheet" href="./assets/css/visura-inventa-home-v2-rc1.css" data-visura-13-v2="release-candidate-2">
-<link rel="stylesheet" href="./assets/css/visura-inventa-home-compact.css" data-visura-13="compact-lab">
+<link rel="stylesheet" href="./assets/css/visura-inventa-home-compact.css?v=0.30.8" data-visura-13="compact-lab">
 </head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
 <input type="file" id="scanImportFile" accept="application/json,.json" hidden onchange="importBarcodeFile(this)">
 <div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
@@ -300,7 +300,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.30.8-rc.3';
+const APP_VERSION='0.30.8';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -533,7 +533,8 @@ const HOME_ICONS={
  consultation:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>',
  management:'<path d="M22 22V7L12 2 2 7v15M2 22h20M6 22V10h12v12M6 14h12M6 18h12"/>',
  arrow:'<path d="M5 12h14m-7-7 7 7-7 7"/>',
- close:'<path d="m18 6-12 12M6 6l12 12"/>'
+ close:'<path d="m18 6-12 12M6 6l12 12"/>',
+ 'triangle-alert':'<path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>'
 };
 function homeIcon(name){return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+HOME_ICONS[name]+'</svg>';}
 let homeBCObserver=null,homeDismissedExport='',homeDismissedUser='';
@@ -566,7 +567,7 @@ function renderHome(){
  const cards=(allowed.inventory?tile('inventory','Hacer inventario','Cuenta y registra · Individual','openAuthorizedHome(\'inventory\')'):'')
  +(allowed.consultation?tile('consultation','Realizar consulta','Encuentra lo que buscas','openAuthorizedHome(\'consultation\')'):'')
  +(allowed.management?tile('management','Gestión del almacén','Organiza y supervisa','openAuthorizedHome(\'management\')'):'');
- place(top+'<div class="compact-cards">'+cards+'</div>'+(allowed.management?'<p id="bcLiveStatus" hidden>Comprobando última actualización de BC en Supabase…</p><div class="compact-bc-warning" id="compactBCWarning" hidden><span role="status">Datos de hace más de 24 h</span><button type="button" class="compact-icon-button" onclick="dismissHomeBCWarning()" aria-label="Descartar aviso de datos antiguos">'+homeIcon('close')+'</button></div>':'') ,'');
+ place(top+(allowed.management?'<p id="bcLiveStatus" hidden>Comprobando última actualización de BC en Supabase…</p><div class="compact-bc-warning" id="compactBCWarning" hidden><span class="compact-warning-copy">'+homeIcon('triangle-alert')+'<span role="status">Datos de hace más de 24 h</span></span><button type="button" class="compact-icon-button" onclick="dismissHomeBCWarning()" aria-label="Cerrar aviso">'+homeIcon('close')+'</button></div>':'')+'<div class="compact-cards">'+cards+'</div>','');
  if(allowed.management){observeHomeBC();window.INVENTA_MGMT.refreshBCStatus();}
 }
 document.addEventListener('visibilitychange',function(){

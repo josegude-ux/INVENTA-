@@ -1,12 +1,12 @@
 /* INVENTA: versioned offline shell with network-first navigation. */
-const CACHE='inventa-demo-v0308-rc3';
+const CACHE='inventa-demo-v0308-01';
 const FILES=['./','./index.html','./warehouse-management.js?v=0.30.8-rc.3','./bc-excel-import.js?v=0.30.5','./fixed-positions-import.js?v=0.30.5','./real-counts.js?v=0.30.6','./consultation-core.js?v=0.30.5','./consultation-ui.js?v=0.30.5','./manifest.webmanifest','./assets/menu/settings-3d.webp','./assets/brand/inventa-warehouse.webp','./assets/brand/inventa-logo.svg','./assets/brand/app-icon-192.png','./assets/brand/app-icon-512.png','./assets/menu/inventory-3d.webp','./assets/menu/consult-3d.webp','./assets/menu/management-3d.webp',
   /* Maquetación A / 3 imágenes aprobadas: cacheadas SOLO en laboratorio R1/L3. */
   './assets/css/visura-operativo-3d-lab.css',
   './assets/css/visura-maquetacion-a-v1-lab.css',
   './assets/css/visura-maquetacion-a-aprobadas-r1l2.css',
   './assets/css/visura-inventa-home-v2-rc1.css',
-  './assets/css/visura-inventa-home-compact.css',
+  './assets/css/visura-inventa-home-compact.css?v=0.30.8',
   './assets/brand/inventa-logo-white.svg',
   './assets/home-compact/inventory.webp',
   './assets/home-compact/consultation.webp',
