@@ -129,21 +129,24 @@ function curr(a){return a.find(function(x){return x.status==='active';});}
 async function refreshBCStatus(){
  var el=typeof document==='undefined'?null:document.getElementById('bcLiveStatus');
  if(!el||!isManager())return;
+ el.dataset.bcState='pending';delete el.dataset.bcExport;
  el.textContent='Consultando la última exportación BC en Supabase…';
  try{
   await loadProfile();
   if(!isManager())return;
   var active=await api('bc_import_current','select=import_id,updated_at&limit=1');
-  if(!active||!active.length){if(el.isConnected)el.textContent='Sin exportación BC publicada todavía.';return;}
+  if(!active||!active.length){if(el.isConnected){el.dataset.bcState='missing';el.textContent='Sin exportación BC publicada todavía.';}return;}
   var id=active[0].import_id;
   var rows=await api('bc_import_batches','select=warehouse,stock_rows,committed_at&id=eq.'+encodeURIComponent(id)+'&limit=1');
   if(!el.isConnected)return;
   var last=active[0].updated_at;
   var stale=Date.now()-new Date(last).getTime()>24*60*60*1000;
+  el.dataset.bcState=Number.isFinite(new Date(last).getTime())?(stale?'stale':'fresh'):'unknown';
+  if(el.dataset.bcState!=='unknown')el.dataset.bcExport=String(last);
   el.textContent='Supabase conectado · Almacén '+(rows[0]&&rows[0].warehouse||'BC')
    +' · '+(rows[0]&&rows[0].stock_rows||0)+' líneas de stock · Actualización: '+ftime(last)
    +(stale?' · Exportación BC con más de 24 horas':'');
- }catch(e){if(el.isConnected)el.textContent='No se pudo comprobar la sincronización BC: '+e.message;}
+ }catch(e){if(el.isConnected){el.dataset.bcState='error';delete el.dataset.bcExport;el.textContent='No se pudo comprobar la sincronización BC: '+e.message;}}
 }
 async function dataFor(tab){
  if(tab==='dashboard'){

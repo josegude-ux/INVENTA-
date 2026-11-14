@@ -1,0 +1,248 @@
+/* VISURA INVENTA — HOME V2 · CANDIDATA RC1 (11/11/2026)
+   Fuente contrastada: josegude-ux/INVENTA- main 7d7a88e4adfdfa8d4fa4b4754a21511fbcc28cee
+   Superposición aditiva para la pantalla inicial, SIN reemplazar fotografías aprobadas R1/L2.
+   No modifica HTML de funciones, permisos, navegación, autenticación, JS ni estados de negocio.
+   Insertar DESPUÉS de visura-maquetacion-a-aprobadas-r1l2.css.
+*/
+#app.landing {
+  --inventa-v2-navy: #0b294b;
+  --inventa-v2-red: #b90f24;
+  --inventa-v2-blue: #073f81;
+  --inventa-v2-amber: #99600a;
+  --inventa-v2-radius: 20px;
+  color: var(--inventa-v2-navy);
+}
+
+#app.landing main {
+  background:
+    radial-gradient(ellipse at 95% 18%, rgba(222,234,249,.56), transparent 58%),
+    linear-gradient(160deg,#f9fbff 0%,#f3f7fc 100%);
+}
+#app.landing .landing-top.visura-b-top {
+  margin: 2px 0 12px;
+  border: 1px solid #c6d8e7;
+  border-radius: 19px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(17,46,78,.11);
+}
+#app.landing .visura-b-source-image {
+  height: clamp(72px, 14vw, 120px);
+  background: #edf4f9;
+}
+#app.landing .visura-b-source-image img {
+  object-fit: cover;
+  object-position: center 23%;
+}
+#app.landing .visura-b-titlebar {
+  grid-template-columns: minmax(0,1fr) auto;
+  min-height: 65px;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,.96);
+  border-top-color: #deebf3;
+}
+#app.landing .visura-b-core {
+  grid-column: 1;
+  min-width: 0;
+  gap: 2px;
+  padding-left: 7px;
+}
+#app.landing .visura-b-family {
+  color: #1976a4;
+  letter-spacing: .22em;
+  font-size: 10px;
+}
+#app.landing .visura-b-core .landing-logo {
+  width: min(100%, 224px);
+  max-height: 43px;
+}
+#app.landing .visura-b-settings {
+  grid-column: 2;
+  justify-content: flex-end;
+}
+#app.landing .visura-b-settings .settings-button {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  min-height: 44px;
+  min-width: 76px;
+  padding: 6px 8px;
+  border: 1px solid #d8e3ed;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(13,50,83,.08);
+  color: var(--inventa-v2-navy);
+  font-size: 11px;
+  font-weight: 800;
+}
+#app.landing .visura-b-settings .settings-button img {
+  width: 23px;
+  height: 23px;
+}
+#app.landing .landing-person {
+  margin: 10px 2px 7px;
+  padding: 0 4px;
+  gap: 10px;
+}
+#app.landing .landing-person .initial {
+  width: 40px;
+  height: 40px;
+  color: #0b315f;
+  background: linear-gradient(135deg,#e9f4ff,#c2ddf1);
+  font-size: 19px;
+}
+#app.landing .landing-person b {
+  font-size: 15px;
+  max-width: min(200px, 54vw);
+  color: var(--inventa-v2-navy);
+}
+#app.landing .landing-person small {
+  color: #597086;
+  font-size: 11px;
+  line-height: 1.25;
+}
+#app.landing .landing-tagline {
+  margin: 6px 3px 14px;
+  color: var(--inventa-v2-navy);
+  font-size: clamp(20px, 4.8vw, 26px);
+  font-weight: 880;
+  letter-spacing: -.5px;
+  line-height: 1.18;
+}
+#app.landing .landing-cards { gap: 14px; }
+#app.landing .landing-cards > .landing-card {
+  border-radius: var(--inventa-v2-radius);
+  box-shadow: 0 5px 0 #d8e3ed, 0 10px 22px rgba(15,45,73,.15);
+  border: 1px solid rgba(255,255,255,.75);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+#app.landing .landing-cards > .landing-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 #d8e3ed, 0 14px 26px rgba(15,45,73,.18);
+}
+#app.landing .landing-cards > .landing-card:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #d8e3ed, 0 5px 13px rgba(15,45,73,.18);
+}
+#app.landing .landing-cards > .landing-card:focus-visible,
+#app.landing .visura-b-settings .settings-button:focus-visible {
+  outline: 3px solid #0e79be;
+  outline-offset: 4px;
+}
+
+/* Mobile: los fondos son fotografías aprobadas R1/L2; textos e iconos son HTML real. */
+@media (max-width:699px) {
+  #app.landing main { padding: 12px 12px 22px; }
+  #app.landing .landing-top.visura-b-top { margin-bottom: 12px; }
+  #app.landing .visura-b-source-image { height: clamp(67px, 18vw, 87px); }
+  #app.landing .visura-b-titlebar { min-height: 63px; }
+  #app.landing .landing-cards { gap: 13px; }
+
+  #app.landing .landing-cards > .landing-card {
+    min-height: 172px;
+    padding: 14px 15px;
+    overflow: hidden;
+    text-align: left;
+    background-size: cover, cover;
+    background-repeat: no-repeat;
+  }
+  #app.landing .landing-cards > .landing-card.inventory {
+    background-position: center, 60% center;
+  }
+  #app.landing .landing-cards > .landing-card.consultation,
+  #app.landing .landing-cards > .landing-card.management {
+    background-position: center, 66% center;
+  }
+  #app.landing .landing-cards > .landing-card .copy {
+    width: min(82%, 340px);
+    max-width: 82%;
+    min-height: 142px;
+    gap: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  #app.landing .landing-cards > .landing-card > img {
+    top: 11px;
+    left: 12px;
+    width: 53px;
+    height: 55px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,.25));
+  }
+  #app.landing .landing-cards > .landing-card strong {
+    margin-left: 64px;
+    min-height: 47px;
+    font-size: clamp(22px, 6.0vw, 28px);
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -.5px;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,.32);
+  }
+  #app.landing .landing-cards > .landing-card small {
+    margin: 4px 0 0;
+    max-width: 260px;
+    font-size: clamp(14px, 3.8vw, 16px);
+    font-weight: 620;
+    line-height: 1.3;
+    color: #fff;
+    text-shadow: 0 1px 7px rgba(0,0,0,.38);
+  }
+  #app.landing .landing-cards > .landing-card .arrow {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    margin-top: auto;
+    border: 2px solid #fff;
+    background: rgba(130,0,18,.55);
+    box-shadow: 0 3px 11px rgba(0,0,0,.24);
+    font-size: 26px;
+  }
+  #app.landing .landing-cards > .landing-card.consultation .arrow {
+    background: rgba(3,65,122,.68);
+  }
+  #app.landing .landing-cards > .landing-card.management .arrow {
+    background: rgba(147,89,7,.7);
+  }
+}
+@media (max-width:365px) {
+  #app.landing main { padding: 10px; }
+  #app.landing .visura-b-source-image { height: 64px; }
+  #app.landing .visura-b-titlebar { gap: 5px; padding: 5px 7px; }
+  #app.landing .visura-b-settings .settings-button { min-width: 68px; padding: 5px; }
+  #app.landing .visura-b-core .landing-logo { max-height: 37px; }
+  #app.landing .landing-tagline { font-size: 19px; }
+  #app.landing .landing-cards > .landing-card { min-height: 168px; padding: 12px; }
+  #app.landing .landing-cards > .landing-card .copy { min-height: 143px; }
+  #app.landing .landing-cards > .landing-card > img { width: 47px; height: 49px; }
+  #app.landing .landing-cards > .landing-card strong { margin-left: 57px; font-size: 22px; }
+}
+
+/* Tablet/escritorio: los banners R1/L2 ya contienen texto e iconos: no duplicarlos. */
+@media (min-width:700px) {
+  #app.landing .landing-top.visura-b-top,
+  #app.landing .landing-cards { max-width: 1100px; margin-left: auto; margin-right: auto; }
+  #app.landing .landing-person,
+  #app.landing .landing-tagline,
+  #app.landing .landing-bottom,
+  #app.landing .landing-note { max-width: 1100px; margin-left: auto; margin-right: auto; }
+  #app.landing .landing-cards > .landing-card {
+    aspect-ratio: 3 / 1;
+    min-height: 0 !important;
+    padding: 0 !important;
+    background-size: 100% 100%;
+    background-position: center;
+  }
+  #app.landing .landing-cards > .landing-card .copy,
+  #app.landing .landing-cards > .landing-card > img { display: none !important; }
+}
+@media (min-width:1000px) {
+  #app.landing { max-width: 1440px; }
+  #app.landing main { padding: 25px 32px 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app.landing .landing-cards > .landing-card { transition: none; }
+}
