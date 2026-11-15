@@ -119,41 +119,41 @@ async function withRetry(fn,label){
  }
  throw last;
 }
-function status(msg,kind){var el=document.getElementById('bcExcelStatus');if(!el)return;el.innerHTML='<div class="'+(kind==='error'?'alert':'card')+'" role="status" style="margin-top:10px">'+esc(msg)+'</div>';}
+function status(msg,kind){var el=document.getElementById('bcExcelStatus');if(!el)return;el.innerHTML='<div class="'+(kind==='error'?'vis-notice management-error':'vis-card')+'" role="status">'+esc(msg)+'</div>';}
 function renderPreview(){
  var el=document.getElementById('bcExcelStatus');if(!el)return;
  if(!state){el.innerHTML='';return;}
  var s=state;
- var html='<div class="card" style="margin-top:12px"><h3>Vista previa · '+esc(s.fileName)+'</h3>'
+ var html='<div class="vis-card"><h3>Vista previa · '+esc(s.fileName)+'</h3>'
  +'<p><b>'+s.rows.length.toLocaleString('es-ES')+'</b> líneas · <b>'+s.products+'</b> artículos · <b>'+s.locations+'</b> ubicaciones</p>'
  +'<p>Almacén: <b>'+esc(s.warehouse)+'</b> · Stock negativo: <b>'+s.negative+'</b> · Stock cero: '+s.zero+(s.headerRow>1?' · Cabecera en fila '+s.headerRow:'')+'</p>'
- +'<p class="muted">Se leerá exclusivamente <b>Stock calculado</b>. No se importará Cant. (stock físico) ni Cantidad.</p>'
- +'<p class="muted">La publicación es atómica: si se interrumpe la carga, el stock visible no cambia.</p>';
- if(s.errors.length)html+='<div class="alert"><b>Errores que impiden la carga ('+s.errors.length+')</b><ul>'+s.errors.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div>';
- if(s.warnings.length)html+='<div class="alert"><b>Advertencias</b><ul>'+s.warnings.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div>';
- html+='<div style="overflow-x:auto"><table style="width:100%;font-size:12px;text-align:left"><thead><tr><th>Ubicación</th><th>Artículo</th><th>Lote</th><th>Stock BC</th></tr></thead><tbody>'
+ +'<p class="vis-help">Se leerá exclusivamente <b>Stock calculado</b>. No se importará Cant. (stock físico) ni Cantidad.</p>'
+ +'<p class="vis-help">La publicación es atómica: si se interrumpe la carga, el stock visible no cambia.</p>';
+ if(s.errors.length)html+='<div class="vis-notice"><b>Errores que impiden la carga ('+s.errors.length+')</b><ul>'+s.errors.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div>';
+ if(s.warnings.length)html+='<div class="vis-notice"><b>Advertencias</b><ul>'+s.warnings.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div>';
+ html+='<div class="management-table"><table><thead><tr><th>Ubicación</th><th>Artículo</th><th>Lote</th><th>Stock BC</th></tr></thead><tbody>'
  +s.example.map(function(v){return '<tr><td>'+esc(v.location_code)+'</td><td>'+esc(v.product_code)+'</td><td>'+esc(v.lot)+'</td><td>'+v.quantity+'</td></tr>';}).join('')
  +'</tbody></table></div>';
- if(!s.errors.length)html+='<label style="display:flex;align-items:flex-start;gap:9px;margin:14px 0"><input id="bcExcelConfirm" type="checkbox" style="width:22px;height:22px;flex:none"> <span>Confirmo que este Excel es una <b>exportación completa</b> del almacén y debe sustituir las existencias BC anteriores.</span></label>'
- +'<button class="btn" style="width:100%" onclick="INVENTA_BC.commit()">Confirmar y publicar stock BC</button>';
+ if(!s.errors.length)html+='<label class="management-check"><input id="bcExcelConfirm" type="checkbox"> <span>Confirmo que este Excel es una <b>exportación completa</b> del almacén y debe sustituir las existencias BC anteriores.</span></label>'
+ +'<button class="vis-button-primary" onclick="INVENTA_BC.commit()">Confirmar y publicar stock BC</button>';
  el.innerHTML=html+'</div>';
 }
 function panel(data,isAdmin){
  var current=data.current&&data.current[0],active=current&&data.history.find(function(b){return b.id===current.import_id;});
  var stale=current&&(Date.now()-new Date(current.updated_at).getTime()>86400000);
- var html='<div class="card"><h2>Importación Excel de Business Central</h2>'
- +'<p class="muted">Actualiza las existencias oficiales sin tocar recuentos físicos ni posiciones fijas. La carga completa se publica al finalizar; no se muestra stock parcial.</p>'
- +(current?'<div class="alert">Última importación: <b>'+esc(active&&active.file_name||'BC')+'</b> · '+esc(new Date(current.updated_at).toLocaleString('es-ES'))+(stale?' · <b>Datos con más de 24 horas</b>':'')+'</div>':'<div class="alert">Todavía no hay una exportación BC publicada.</div>');
+ var html='<div class="vis-card"><h2>Importación Excel de Business Central</h2>'
+ +'<p class="vis-help">Actualiza las existencias oficiales sin tocar recuentos físicos ni posiciones fijas. La carga completa se publica al finalizar; no se muestra stock parcial.</p>'
+ +(current?'<div class="vis-notice">Última importación: <b>'+esc(active&&active.file_name||'BC')+'</b> · '+esc(new Date(current.updated_at).toLocaleString('es-ES'))+(stale?' · <b>Datos con más de 24 horas</b>':'')+'</div>':'<div class="vis-notice">Todavía no hay una exportación BC publicada.</div>');
  if(isAdmin)html+='<label for="bcExcelFile"><b>Selecciona el Excel (.xlsx)</b></label>'
- +'<input class="input" style="font-size:14px;padding:11px;margin:10px 0" type="file" id="bcExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">'
- +'<button class="btn-outline" style="width:100%" onclick="INVENTA_BC.analyse()">1. Analizar archivo y previsualizar</button>'
- +'<p class="muted" style="font-size:12px">2. Revisa las líneas y confirma la sustitución. Necesitas conexión a Internet hasta terminar.</p><div id="bcExcelStatus" aria-live="polite"></div>';
- else html+='<p class="muted">Solo Administración puede subir una nueva exportación BC.</p>';
- html+='</div><div class="card"><h2>Historial de importaciones</h2>';
+ +'<input class="vis-control management-file" type="file" id="bcExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">'
+ +'<button class="vis-button-secondary" onclick="INVENTA_BC.analyse()">1. Analizar archivo y previsualizar</button>'
+ +'<p class="vis-help">2. Revisa las líneas y confirma la sustitución. Necesitas conexión a Internet hasta terminar.</p><div id="bcExcelStatus" aria-live="polite"></div>';
+ else html+='<p class="vis-help">Solo Administración puede subir una nueva exportación BC.</p>';
+ html+='</div><div class="vis-card"><h2>Historial de importaciones</h2>';
  var committed=data.history.filter(function(h){return h.status==='committed';});
  var uploading=data.history.filter(function(h){return h.status==='uploading';});
- html+=(committed.length?committed.map(function(h){return '<div style="border-top:1px solid #e6ebef;padding:10px 0"><b>'+esc(h.file_name)+'</b> '+(current&&current.import_id===h.id?'<b>· ACTUAL</b>':'')+'<div class="muted">'+esc(h.warehouse)+' · '+esc(new Date(h.committed_at).toLocaleString('es-ES'))+' · '+h.stock_rows+' líneas de stock · '+h.product_count+' artículos · '+h.location_count+' ubicaciones · '+h.negative_count+' negativos</div></div>';}).join(''):'<p class="muted">Todavía no hay cargas completadas.</p>');
- if(uploading.length)html+='<div class="alert" style="margin-top:12px"><b>Intentos no publicados:</b> '+uploading.length+' lote(s) quedaron a medias. No afectan al stock visible.</div>';
+ html+=(committed.length?committed.map(function(h){return '<div class="management-row"><b>'+esc(h.file_name)+'</b> '+(current&&current.import_id===h.id?'<b>· ACTUAL</b>':'')+'<div class="vis-help">'+esc(h.warehouse)+' · '+esc(new Date(h.committed_at).toLocaleString('es-ES'))+' · '+h.stock_rows+' líneas de stock · '+h.product_count+' artículos · '+h.location_count+' ubicaciones · '+h.negative_count+' negativos</div></div>';}).join(''):'<p class="vis-help">Todavía no hay cargas completadas.</p>');
+ if(uploading.length)html+='<div class="vis-notice"><b>Intentos no publicados:</b> '+uploading.length+' lote(s) quedaron a medias. No afectan al stock visible.</div>';
  html+='</div>';
  return html;
 }

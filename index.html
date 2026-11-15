@@ -5,263 +5,365 @@
 <meta name="theme-color" content="#c61921"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="INVENTA">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/brand/app-icon-192.png"><link rel="icon" href="assets/brand/app-icon-192.png" type="image/png">
+<link rel="stylesheet" href="./assets/css/visura-base.css?v=0.30.11">
 <style>
-:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1d2e43;background:#f0f3f7;font-synthesis:none}
-*{box-sizing:border-box}button,input,select{font:inherit}button{touch-action:manipulation;cursor:pointer}body{margin:0}body,input,button{ -webkit-tap-highlight-color:transparent}
-#app{max-width:640px;margin:auto;height:100dvh;min-height:480px;display:flex;flex-direction:column;background:#f5f7fa;overflow:hidden}
-header:not(:has(.real-interior-bar)){flex:none;background:#fff;border-bottom:1px solid #e3e8ef;padding:calc(9px + env(safe-area-inset-top)) 13px 10px;box-shadow:0 2px 6px #00000008;z-index:2}
-.hrow{display:flex;justify-content:space-between;align-items:center;gap:10px}.brand{display:flex;align-items:center;gap:9px}.brand img{width:40px;height:40px;border-radius:11px;object-fit:cover}.brand b{font-size:19px;letter-spacing:.2px}.brand small{display:block;font-size:10px;color:#738294}.topbuttons{display:flex;gap:7px;align-items:center}
-.pill{font-size:11px;background:#fff1f0;color:#af252c;border:1px solid #ffc8cb;border-radius:30px;padding:5px 7px;font-weight:850}.tinybtn{border:1px solid #d9e2eb;background:#f6f8fb;padding:7px 9px;border-radius:9px;color:#405873;font-size:12px;font-weight:750}
-main{flex:1;overflow-y:auto;min-height:0;overscroll-behavior:contain}main:not(:has(.real-counts-view)){padding:14px}h1,h2,h3,p{margin:0}h1{font-size:23px;letter-spacing:-.5px}h2{font-size:17px}h3{font-size:14px}.muted{color:#61758a;font-size:12px;line-height:1.45}.overline{font-size:10px;color:#758ba1;font-weight:900;letter-spacing:.9px}.card{background:white;border:1px solid #e1e7ed;border-radius:17px;padding:14px;margin-bottom:11px;box-shadow:0 3px 14px #12294208}.title{margin-bottom:12px}.title p{margin-top:5px}.field{margin-bottom:13px}.field label{display:block;font-size:12px;font-weight:850;margin-bottom:6px}.input{width:100%;border:1.5px solid #cbd8e6;border-radius:11px;background:#fff;height:49px;padding:7px 12px;font-size:18px;color:#163150;outline:0}.input:focus{border-color:#246eb0;box-shadow:0 0 0 3px #247aba23}
-.btn{width:100%;min-height:49px;border:0;border-radius:12px;background:#c61921;color:#fff;font-weight:900;font-size:15px;padding:9px 13px}.btn:disabled{opacity:.4}.btn-outline{border:1px solid #bdcad8;border-radius:12px;background:#fff;color:#1b4368;padding:10px 12px;min-height:44px;font-weight:800;font-size:14px}.btn-light{background:#f4f7fa;color:#35566e;border:1px solid #dae5ee}.split{display:grid;grid-template-columns:1fr 1fr;gap:9px}.stack{display:flex;flex-direction:column;gap:9px}.between{display:flex;align-items:center;justify-content:space-between;gap:11px}.progress{height:7px;background:#e4eaf0;border-radius:20px;overflow:hidden;margin-top:12px}.progress>div{height:100%;background:#279a67;transition:width .15s}.item{width:100%;border:1px solid #dce4ed;background:#fff;border-radius:15px;padding:15px;text-align:left;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between;gap:11px;min-height:71px}.item strong{display:block;font-size:16px}.item small{font-size:12px;color:#6a8095;display:block;margin-top:4px}.chev{font-size:26px;color:#a1b2c2}.tag{font-size:10px;border-radius:8px;padding:5px 7px;white-space:nowrap;background:#e9eff8;color:#45678c;font-weight:800}.tag.ok{color:#176b46;background:#e4f6ee}.tag.warn{color:#9d5210;background:#fff0dd}.alert{padding:11px 12px;border-radius:12px;background:#fff2df;border:1px solid #ffdbaa;color:#744215;font-size:13px;line-height:1.5;margin-bottom:11px}.alert.red{background:#fff0f1;color:#a52b31;border-color:#ffd5d8}.alert.green{background:#e6f6ed;color:#1c6441;border-color:#d3f1df}
-footer:not(:has(.real-counts-save)){flex:none;border-top:1px solid #dde4ec;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:#fff}.footerrow{display:flex;align-items:center;gap:10px}.footerrow .btn{flex:1}.back{color:#506780;background:none;border:0;font-weight:800;padding:8px 0;font-size:12px}.bigcheck{font-size:35px;line-height:1}
-/* Contador B, el teclado seleccionado */
-#app.counter{background:#111d2b}#app.counter header{background:#182538;color:white;border-color:#34465c}#app.counter header .brand small{color:#b1c8e0}#app.counter .pill{background:#3d2b35;color:#ffe5e5;border-color:#74515a}#app.counter main{background:#111d2b;color:#fff;display:flex;flex-direction:column;padding:10px 12px 8px;overflow-y:auto}#app.counter footer{background:#192a3e;color:white;border-color:#334960}
-.modebar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px;flex:none}.modebar button{border:1px solid #43576f;border-radius:12px;padding:10px 5px;background:#2c3c54;color:#d9e6f2;font-size:13px;font-weight:900}.modebar button.on{background:#b8f3cf;color:#123d2a;border-color:#b8f3cf}
-.cproduct{margin-bottom:9px;font-size:12px;color:#bdd0e6;flex:none}.cproduct b{display:block;font-size:16px;color:#fff}.display{background:#20324a;border:1px solid #3f5773;border-radius:16px;padding:10px 12px;flex:none}.display .caption{font-size:12px;color:#aac1d8;display:flex;justify-content:space-between}.digits{font-size:45px;font-weight:950;text-align:right;line-height:1.08;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}.desc{font-size:11px;color:#b0edd0;min-height:18px}.keypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,minmax(37px,1fr));gap:7px;flex:1;min-height:188px;max-height:380px;margin:9px 0}.keypad button{font-size:24px;font-weight:850;background:#2e4058;color:white;border:1px solid #49617c;border-radius:13px;min-height:37px}.keypad button:active{background:#52708d}.keypad .ctl{font-size:14px;background:#455873}.addbtn{background:#b8f3cf;border:0;border-radius:13px;padding:11px;color:#123e2e;font-weight:950;font-size:15px;min-height:46px;flex:none}.addbtn:disabled{opacity:.4}.c-tools{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:11px;color:#b7cbe1;padding-top:7px;flex:none}.c-tools button{border:0;color:#c6efd9;background:transparent;font-size:11px;font-weight:800}.counter-total{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.counter-total span{color:#b1c8df;font-size:11px;font-weight:900}.counter-total strong{font-size:32px;color:#b8f3cf;font-variant-numeric:tabular-nums}.counter-footer{display:flex;gap:8px;align-items:center;margin-top:6px}.counter-footer button{background:#354b67;color:white;border:0;border-radius:9px;padding:8px 9px;font-size:11px;font-weight:850}.counter-footer button:last-child{margin-left:auto;background:#c61921;padding:9px 13px;color:#fff}
-.modalback{position:fixed;inset:0;background:#081a2ac9;z-index:8;display:flex;align-items:center;justify-content:center;padding:15px}.modal{background:#fff;color:#162d45;width:min(480px,100%);border-radius:18px;padding:18px;max-height:85dvh;overflow:auto}.modal h2{margin-bottom:9px}.modal .line{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5eaf0;font-size:12px}.modal .line button{border:0;border-radius:9px;background:#fff0f0;color:#a32329;padding:7px;font-weight:800}.modal-actions{display:flex;gap:8px;margin-top:13px}.modal-actions button{flex:1}
-@media(max-height:740px){main:not(:has(.real-counts-view)){padding:9px}#app.counter main{padding:7px 10px 5px}.keypad{gap:5px;min-height:158px;margin:6px 0}.keypad button{min-height:32px}.display{padding:6px 10px}.digits{font-size:39px}.cproduct{margin-bottom:5px}.modebar{margin-bottom:5px}.modebar button{padding:7px}.counter-footer{margin-top:3px}.counter-total strong{font-size:27px}}
 
-/* v0.16: pasillos y filtros */
-.aisle-item{gap:15px;min-height:103px}
-.aisle-letter{font-size:30px;font-weight:950;color:#b61e28;border:1px solid #ffd8dc;background:#fff4f5;border-radius:14px;width:59px;height:64px;display:flex;align-items:center;justify-content:center}
-.aisle-details{flex:1;min-width:0}.mini-progress{display:block;height:6px;background:#e8edf3;border-radius:8px;margin-top:8px;overflow:hidden}.mini-progress>span{display:block;background:#20976c;height:100%}
-.filters{display:flex;gap:7px;overflow-x:auto;padding:1px 0 11px;margin-bottom:3px;scrollbar-width:none}.filters button{white-space:nowrap;border:1px solid #d8e3ef;background:white;color:#425a71;border-radius:11px;min-height:41px;padding:8px 10px;font-size:12px;font-weight:800}
-.filters button.selected{background:#193750;color:white;border-color:#193750}
-.filters button span{margin-left:6px;opacity:.8}
-.location-item.done-location{background:#e2f2eb;border-color:#9ed3b7}
-/* Las referencias contadas se distinguen aunque la ubicación aún no esté terminada. */
-.article-item.counted-article{background:#c7ead3!important;border:2px solid #53a775!important;box-shadow:inset 6px 0 0 #167a46,0 3px 8px #244b2d2b}
-.article-item.counted-article::before{content:'✓';flex:0 0 auto;font-weight:950;font-size:21px;color:#107343}
-.article-item.issue-article{background:#f9e8c7!important;border-color:#dda545!important}
-.article-item.issue-article::before{content:'!';color:#a96807}
-.article-item.counted-article strong{color:#14573a;font-weight:900}
-.article-item.counted-article small{color:#496d5d}
-.article-item.counted-article.issue-article{border-color:#e6bc74;box-shadow:inset 4px 0 0 #e5a02d,0 2px 7px #6c441d12}
-.article-item.counted-article .tag.ok{background:#b9e3ce;color:#145538;font-size:12px}
-.article-item.counted-article .tag.warn{background:#ffe5b8;color:#88500c;font-size:12px}
-.article-item:not(.counted-article) .tag{font-size:12px}
-.article-item .chev{flex-shrink:0}
-.article-legend{font-size:12px;line-height:1.4;margin:0 0 12px;color:#536c7b}
-.article-legend b{color:#16714b}
+*{box-sizing:border-box;}button,input,select{font:inherit;}button{touch-action:manipulation;cursor:pointer;}body{margin:0;}body,input,button{ -webkit-tap-highlight-color:transparent;}
+#app{max-width:var(--legacy-size-640);margin:auto;height:100dvh;min-height:var(--legacy-size-480);display:flex;flex-direction:column;overflow:hidden;}
+#app:where(:not(:has(.consult-view,.real-counts-view,.inventory-view,.management-view,.rest-view))){background:var(--color-bg);}
+header:not(:has(.real-interior-bar,.consult-header,.inventory-header,.management-header,.rest-header)){flex:none;background:var(--legacy-color-ffffff);border-bottom:1px solid var(--legacy-color-e3e8ef);padding:calc(var(--legacy-space-9) + env(safe-area-inset-top)) var(--legacy-space-13) var(--legacy-space-10);box-shadow:var(--legacy-shadow-7ebaa77631);z-index:2;}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:var(--legacy-space-10);}.brand{display:flex;align-items:center;gap:var(--legacy-space-9);}.brand img{width:var(--legacy-size-40);height:var(--legacy-size-40);border-radius:var(--legacy-radius-11);object-fit:cover;}.brand b{font-size:var(--legacy-font-size-19);letter-spacing:.2px;}.brand small{display:block;font-size:var(--legacy-font-size-10);color:var(--legacy-color-738294);}.topbuttons{display:flex;gap:var(--legacy-space-7);align-items:center;}
 
-.location-item.partial-location{background:#f1f7fd}
-.location-item.flag-location{border-left:4px solid #e4a044}
-.location-item.done-location strong{color:#12643f}
-.done-ico{border-radius:50%;font-size:18px;color:#1c8555;background:#bce6d0;width:30px;height:30px;display:grid;place-items:center}
-.flag-ico{font-size:23px;color:#ba7516}
-.count-feedback{border-radius:9px;padding:7px 8px;background:#21402f;border:1px solid #395744;font-size:11px;font-weight:850;color:#b9f8d1;text-align:center;line-height:1.35;flex:none;margin-top:6px}
-#app.counter footer .counter-total span{font-size:10px}
+main{flex:1;overflow-y:auto;min-height:0;overscroll-behavior:contain;}main:not(:has(.real-counts-view,.consult-view,.inventory-view,.management-view,.rest-view)){padding:var(--legacy-space-14);}h1,h2,h3,p{margin:0;}h1{font-size:var(--legacy-font-size-23);letter-spacing:-.5px;}h2{font-size:var(--legacy-font-size-17);}h3{font-size:var(--font-size-14);}.title{margin-bottom:var(--space-sm);}.title p{margin-top:var(--legacy-space-5);}.field{margin-bottom:var(--legacy-space-13);}.field label{display:block;font-size:var(--font-size-12);font-weight:var(--legacy-font-weight-850);margin-bottom:var(--legacy-space-6);}.input{width:100%;border:1px solid var(--color-border);border-radius:var(--radius-control);background:var(--color-surface);height:var(--field-h);padding:var(--legacy-space-7) var(--space-sm);font-size:var(--font-size-16);color:var(--color-ink);outline:0;}.input:focus{border-color:var(--color-focus);box-shadow:none;outline:var(--focus-width) solid var(--color-focus);outline-offset:var(--focus-offset);}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:var(--legacy-space-9);}.between{display:flex;align-items:center;justify-content:space-between;gap:var(--legacy-space-11);}.progress{height:var(--legacy-size-7);background:var(--legacy-color-e4eaf0);border-radius:var(--radius-card);overflow:hidden;margin-top:var(--space-sm);}.progress>div{height:100%;background:var(--legacy-color-279a67);transition:width .15s;}.item{width:100%;border:1px solid var(--legacy-color-dce4ed);background:var(--legacy-color-ffffff);border-radius:var(--legacy-radius-15);padding:var(--legacy-space-15);text-align:left;margin-bottom:var(--legacy-space-9);display:flex;align-items:center;justify-content:space-between;gap:var(--legacy-space-11);min-height:var(--legacy-size-71);}.item strong{display:block;font-size:var(--font-size-16);}.item small{font-size:var(--font-size-12);color:var(--legacy-color-6a8095);display:block;margin-top:var(--space-2xs);}.alert{padding:var(--legacy-space-11) var(--space-sm);border-radius:var(--radius-control);background:var(--legacy-color-fff2df);border:1px solid var(--legacy-color-ffdbaa);color:var(--legacy-color-744215);font-size:var(--font-size-13);line-height:1.5;margin-bottom:var(--legacy-space-11);}.alert.red{background:var(--legacy-color-fff0f1);color:var(--legacy-color-a52b31);border-color:var(--legacy-color-ffd5d8);}.alert.green{background:var(--legacy-color-e6f6ed);color:var(--legacy-color-1c6441);border-color:var(--legacy-color-d3f1df);}
+footer:not(:has(.real-counts-save)):not(.inventory-footer){flex:none;border-top:1px solid var(--legacy-color-dde4ec);padding:var(--legacy-space-10) var(--legacy-space-14) calc(var(--legacy-space-10) + env(safe-area-inset-bottom));background:var(--legacy-color-ffffff);}.back{color:var(--legacy-color-506780);background:none;border:0;font-weight:var(--legacy-font-weight-800);padding:var(--space-xs) 0;font-size:var(--font-size-12);}.bigcheck{font-size:var(--legacy-font-size-35);line-height:1;}
+/* Inventario operativo · teclado y composición específica (F4.4). */
+.inventory-view{grid-template-columns:minmax(0,1fr);align-content:start;}
+main:has(.inventory-view){padding:var(--space);background:var(--color-bg);color:var(--color-ink);}
+main:has(.inventory-view):has(+ #foot[hidden]){padding-bottom:calc(var(--space) + env(safe-area-inset-bottom));}
+.inventory-view .vis-title h1{overflow-wrap:anywhere;}
+.inventory-view .between{min-width:0;flex-wrap:wrap;}
+.inventory-stage{font-size:var(--font-size-12);color:var(--color-muted);font-weight:var(--font-weight-label);}
+.inventory-notice{display:block;margin:0;padding:var(--space-sm);line-height:1.45;overflow-wrap:anywhere;}
+.inventory-notice.green{background:color-mix(in srgb,var(--color-success) 10%,var(--color-surface));color:var(--color-success);}
+.inventory-notice.red{background:var(--color-surface);color:var(--color-danger);border:1px solid var(--color-danger-border);}
+.inventory-chip{display:inline-flex;align-items:center;gap:var(--space-2xs);white-space:normal;overflow-wrap:anywhere;}
+.inventory-chip.ok{background:color-mix(in srgb,var(--color-success) 10%,var(--color-surface));color:var(--color-success);}
+.inventory-chip.warn{background:var(--color-warning-bg);color:var(--color-warning-text);}
 
-/* INVENTA v0.18 · recuento accesible y total principal */
-#app.counter .cproduct{font-size:14px;line-height:1.4;margin-bottom:8px}
-#app.counter .cproduct b{font-size:19px;line-height:1.25}
-#app.counter .cproduct small{font-size:12px;display:block;color:#b8cfe3;margin-top:3px}
-#app.counter .cproduct small strong{color:#b8f3cf}
-#app.counter .modebar button{font-size:15px;padding:10px 4px}
-#app.counter .display .caption{font-size:15px;font-weight:800}
-#app.counter .desc{font-size:13px;line-height:1.3;min-height:20px}
-#app.counter .digits{font-size:49px}
-#app.counter .c-tools{font-size:13px}
-#app.counter .c-tools button{font-size:13px}
-#app.counter .count-feedback{font-size:13px}
-#app.counter .addbtn{font-size:17px}
-#app.counter .counter-total{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;border:2px solid #7bf2af;background:#123b34;border-radius:15px;padding:8px 10px}
-#app.counter .total-heading{font-size:18px;font-weight:950;color:white;letter-spacing:.6px;line-height:1.15}
-#app.counter .total-reading{display:flex;justify-content:center;align-items:baseline;gap:9px}
-#app.counter .total-reading strong{font-size:clamp(44px,12vw,63px);line-height:1.03;color:#aefbc8;font-weight:950;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
-#app.counter .total-reading .total-unit{font-size:16px;font-weight:900;color:#d4ffdf}
-#app.counter .total-staged{font-size:11px;font-weight:850;letter-spacing:.55px;color:#b5eed0}
-#app.counter .counter-footer button{font-size:12px;min-height:39px}
-#app.counter footer{padding:7px 11px calc(7px + env(safe-area-inset-bottom))}
-#app.counter .counter-footer{margin-top:7px}
-@media(max-height:740px){
- #app.counter .counter-total{padding:5px 8px}
- #app.counter .total-heading{font-size:16px}
- #app.counter .total-reading strong{font-size:clamp(40px,10.5vw,55px)}
- #app.counter .cproduct b{font-size:16px}
- #app.counter .modebar button{font-size:14px;padding:8px 4px}
- #app.counter .count-feedback{font-size:11px}
-}
-#updateBanner[hidden]{display:none!important}
-#updateBanner{position:fixed;z-index:20;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(calc(100% - 22px),570px);background:#fff;color:#173149;box-shadow:0 12px 35px #0005;border:2px solid #b6d9fb;border-radius:15px;padding:12px;display:flex;align-items:center;gap:10px}
-#updateBanner .update-msg{font-size:14px;font-weight:750;line-height:1.35;flex:1}
-#updateBanner button{font-size:13px;background:#146a4c;color:#fff;border:0;border-radius:10px;padding:11px;font-weight:900}
-#app.counter~#updateBanner{bottom:auto;top:calc(70px + env(safe-area-inset-top))}
+.inventory-view .vis-card h2{overflow-wrap:anywhere;}
+.inventory-view .vis-card .vis-help:empty{display:none;}
+.inventory-view .vis-empty{margin:0;}
+.inventory-view .back{min-height:var(--tap-min);color:var(--color-ink);}
+.inventory-view .edit-note{padding-block:var(--space-xs);}
+.inventory-view .vis-list-item{flex-wrap:wrap;}
+.inventory-view .vis-list-copy{flex:1 1 120px;}
+.inventory-view .vis-list-chevron{color:var(--color-muted);}
+.inventory-view .vis-list-item .inventory-chip{max-width:100%;}
+.inventory-view .vis-help{margin:0;}
+.inventory-footer .vis-stack{gap:var(--space-xs);}
+.inventory-footer .back{min-height:var(--tap-min);color:var(--color-ink);}
+.inventory-footer>.vis-help{display:block;}
+.inventory-centered{text-align:center;}
+.inventory-total{font-size:var(--legacy-font-size-49);font-weight:var(--font-weight-title);color:var(--color-ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.inventory-detail-line{border-bottom:1px solid var(--color-divider);padding:var(--space-xs) 0;}
+#app.counter .inventory-view{gap:var(--space-xs);}
+.display{padding:var(--space-sm);gap:var(--space-2xs);}
+.display .caption{display:flex;justify-content:space-between;gap:var(--space-xs);font-size:var(--font-size-14);color:var(--color-muted);}
+.digits{font-size:clamp(var(--font-size-28),10vw,var(--legacy-font-size-49));font-weight:var(--font-weight-title);line-height:1.08;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.desc{font-size:var(--font-size-13);color:var(--color-muted);line-height:1.3;min-height:var(--legacy-size-20);}
+.keypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,minmax(var(--tap-min),1fr));gap:var(--space-xs);}
+.keypad button{min-width:0;min-height:var(--tap-min);border:1px solid var(--color-border);border-radius:var(--radius-control);background:var(--color-surface);color:var(--color-ink);font-size:var(--font-size-22);font-weight:var(--font-weight-title);}
+.keypad .ctl{font-size:var(--font-size-14);background:var(--color-chip-bg);color:var(--color-chip-text);}
+.keypad button:active{background:var(--color-chip-bg);}
+.keypad button:focus-visible,.reuse-row button:focus-visible,.inventory-view .back:focus-visible{outline:var(--focus-width) solid var(--color-focus);outline-offset:var(--focus-offset);}
+.c-tools{display:flex;align-items:center;justify-content:space-between;gap:var(--space-xs);font-size:var(--font-size-13);color:var(--color-muted);}
+.c-tools button{width:auto;min-height:var(--tap-min);}
+.counter-total{text-align:center;gap:var(--space-2xs);padding:var(--space-xs);border:1px solid var(--color-border-subtle);box-shadow:none;}
+.total-heading{font-size:var(--font-size-14);font-weight:var(--font-weight-title);color:var(--color-ink);}
+.total-reading{display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;gap:var(--space-xs);}
+.total-reading strong{font-size:clamp(var(--font-size-28),10vw,var(--legacy-font-size-49));line-height:1.05;color:var(--color-success);font-weight:var(--font-weight-title);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;min-width:0;}
+.total-unit{font-size:var(--font-size-14);font-weight:var(--font-weight-label);color:var(--color-ink);}
+.total-staged{font-size:var(--font-size-12);color:var(--color-muted);}
+.counter-footer{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);gap:var(--space-xs);margin-top:var(--space-xs);}
+.counter-footer button{min-height:var(--tap-min);height:auto;font-size:var(--font-size-12);padding:var(--space-xs);overflow-wrap:anywhere;}
+.count-feedback{padding:var(--space-xs);border-radius:var(--radius-control);background:var(--color-chip-bg);color:var(--color-chip-text);font-size:var(--font-size-13);line-height:1.35;}
 
-.reuse-row[hidden]{display:none!important}.reuse-row{margin:-3px 0 8px}.reuse-row button{width:100%;padding:10px 8px;border:1px solid #76d9a8;border-radius:10px;background:#244838;color:#e0ffe8;font-size:14px;font-weight:850}
+.modalback{position:fixed;inset:0;background:var(--legacy-color-081a2ac9);z-index:8;display:flex;align-items:center;justify-content:center;padding:var(--legacy-space-15);}.general-dialog{width:min(var(--legacy-size-480),100%);max-height:min(85dvh,calc(100dvh - var(--space)*2 - env(safe-area-inset-top) - env(safe-area-inset-bottom)));overflow:auto;overscroll-behavior:contain;align-content:start;}.inventory-dialog{width:min(var(--legacy-size-480),100%);max-height:85dvh;overflow:auto;} .inventory-dialog .edit-note{padding-block:var(--space-xs);} .inventory-dialog .vis-help:empty,.inventory-dialog .edit-reason-error:empty{display:none;} 
+@media(max-height:740px){main:not(:has(.real-counts-view,.consult-view,.inventory-view,.management-view,.rest-view)){padding:var(--legacy-space-9);}}
+/* Inventory lists: use common rows and state-specific semantics. */
+.aisle-letter{font-size:var(--font-size-22);font-weight:var(--font-weight-title);}
+.mini-progress{display:block;height:var(--space-2xs);background:var(--color-border-subtle);border-radius:var(--radius-pill);overflow:hidden;}
+.mini-progress>span{display:block;background:var(--color-success);height:100%;}
+.inventory-filters .vis-chip span{margin-left:var(--space-2xs);}
+.location-item.done-location,.article-item.counted-article{background:color-mix(in srgb,var(--color-success) 10%,var(--color-surface));border-color:var(--color-success);}
+.location-item.partial-location{background:var(--color-chip-bg);}
+.location-item.flag-location,.article-item.issue-article{background:var(--color-warning-bg);color:var(--color-warning-text);border-color:var(--color-warning);}
+.article-item .vis-counted-mark,.done-ico{color:var(--color-success);}
+.flag-ico,.inventory-warning-text{color:var(--color-warning-text);}
+.article-legend{font-size:var(--font-size-13);line-height:1.45;color:var(--color-muted);}
+.article-legend b{color:var(--color-success);}
+#updateBanner[hidden]{display:none!important;}
+#updateBanner{position:fixed;z-index:20;left:50%;bottom:calc(var(--space) + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(calc(100% - var(--space)*2),var(--legacy-size-570));border:1px solid var(--color-border);display:flex;align-items:center;gap:var(--space-xs);}
+#updateBanner .update-msg{font-size:var(--font-size-14);font-weight:var(--font-weight-label);line-height:1.35;flex:1;min-width:0;overflow-wrap:anywhere;}
+#updateBanner button{width:auto;flex:none;min-width:var(--tap-min);}
+#app.counter~#updateBanner{bottom:auto;top:calc(70px + env(safe-area-inset-top));}
 
-.review-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:0 0 13px}
-.review-metrics>div{background:#fff;border:1px solid #dce5ed;border-radius:12px;text-align:center;padding:12px 3px}
-.review-metrics strong{font-size:24px;color:#173b56;display:block}
-.review-metrics span{font-size:11px;color:#6b7c8c;font-weight:800}
-.location-review-item{padding:10px 0;display:flex;justify-content:space-between;align-items:center;gap:9px;border-bottom:1px solid #e6edf4}
-.location-review-item:last-child{border-bottom:none}
-.location-review-item b{font-size:13px;color:#253d56}
-.location-review-item small{display:block;font-size:11px;color:#6c8495;margin-top:2px}
-.location-review-item.review-issue{background:#fff4df;padding:10px 6px}
+.reuse-row[hidden]{display:none!important;}.reuse-row{margin:0;}.reuse-row button{width:100%;min-height:var(--tap-min);padding:var(--space-xs);border:1px solid var(--color-border);border-radius:var(--radius-control);background:var(--color-surface);color:var(--color-ink);font-size:var(--font-size-14);font-weight:var(--font-weight-label);}
+
+.review-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-xs);}
+.review-metrics>div{background:var(--color-surface);border:1px solid var(--color-border-subtle);border-radius:var(--radius-control);text-align:center;padding:var(--space-sm) var(--space-2xs);}
+.review-metrics strong{font-size:var(--font-size-22);color:var(--color-ink);display:block;}
+.review-metrics span{font-size:var(--font-size-12);color:var(--color-muted);font-weight:var(--font-weight-label);}
+.location-review-item{padding:var(--space-sm) 0;display:flex;justify-content:space-between;align-items:center;gap:var(--space-xs);border-bottom:1px solid var(--color-divider);min-width:0;}
+.location-review-item:last-child{border-bottom:none;}
+.location-review-item b{font-size:var(--font-size-14);color:var(--color-ink);overflow-wrap:anywhere;}
+.location-review-item small{display:block;font-size:var(--font-size-13);color:var(--color-muted);margin-top:var(--space-2xs);}
+.location-review-item.review-issue{background:var(--color-warning-bg);padding:var(--space-sm);border-radius:var(--radius-control);}
 
 /* INVENTA v0.22 — auditoría de modificaciones */
-.entry-detail{display:flex;align-items:center;gap:9px;padding:11px 0;border-bottom:1px solid #e3eaf1}
-.entry-detail:last-child{border-bottom:0}
-.entry-index{background:#e7eef6;border-radius:8px;min-width:27px;height:28px;display:grid;place-items:center;color:#536b85;font-size:13px;font-weight:900}
-.entry-main{flex:1;min-width:0}
-.entry-main b{font-size:14px;color:#1a3550;display:block}
-.entry-main small{display:block;color:#546e86;font-size:12px;line-height:1.35;margin-top:3px}
-.entry-detail strong{white-space:nowrap;font-size:16px;font-variant-numeric:tabular-nums;color:#193958}
-.entry-delete{background:#fff0ec;border:1px solid #f6c8bd;border-radius:8px;color:#a83d2b;padding:8px;font-size:13px;font-weight:900}
-.original-record{border-left:5px solid #647b96}
-.proposed-record{border-left:5px solid #2a9a69}
-.original-total,.proposed-total{margin-top:10px;display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid #dfe8f1;padding-top:10px;font-size:12px;font-weight:850}
-.original-total strong,.proposed-total strong{font-size:22px;font-weight:950}
-.proposed-total strong{color:#17794e}
-.change-total{font-size:13px;margin-top:10px;color:#4e647a}
-.reason-label{display:block;margin:12px 0 7px;font-size:13px;font-weight:850}
-.edit-note{min-height:90px;resize:vertical}
-#editReasonWrap[hidden]{display:none}
-.edit-reason-error{font-size:13px;color:#a32132;margin-top:7px;font-weight:750}
-.audit-line{padding:9px 0;border-top:1px solid #ecf0f5}
-.audit-line b{display:block;font-size:13px}
-.audit-line small{display:block;color:#63778e;font-size:11px;line-height:1.4;margin-top:4px}
+.entry-detail{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-xs);padding:var(--space-sm) 0;border-bottom:1px solid var(--color-divider);min-width:0;}
+.entry-detail:last-child{border-bottom:0;}
+.entry-index{background:var(--color-chip-bg);border-radius:var(--radius-control);min-width:var(--tap-min);height:var(--tap-min);display:grid;place-items:center;color:var(--color-chip-text);font-size:var(--font-size-13);font-weight:var(--font-weight-title);}
+.entry-main{flex:1;min-width:0;}
+.entry-main b{font-size:var(--font-size-14);color:var(--color-ink);display:block;}
+.entry-main small{display:block;color:var(--color-muted);font-size:var(--font-size-13);line-height:1.35;}
+.entry-detail strong{font-size:var(--font-size-16);font-variant-numeric:tabular-nums;color:var(--color-ink);overflow-wrap:anywhere;}
 
-.entry-detail.entry-changed{background:#f0faf4;border-left:4px solid #2f9767;padding:10px 6px}
-.entry-detail .entry-edit{border:1px solid #91cbb1;background:#e4f6ed;color:#16673d;border-radius:9px;padding:10px;font-size:13px;font-weight:850}
-.entry-change-label{display:block;margin-top:4px;font-size:11px;font-weight:900;color:#16673d}
-.inline-entry-editor{width:100%;flex-basis:100%;background:#f0f6fc;padding:13px;border-radius:12px;display:flex;flex-direction:column;gap:8px}
-.inline-entry-editor label{display:block;font-size:12px;font-weight:850;color:#34536a}
-.inline-entry-editor .input{margin-top:5px;min-width:0}
-.entry-detail:has(.inline-entry-editor){flex-wrap:wrap}
-.entry-factor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.original-record{border-left:4px solid var(--color-border);}
+.proposed-record{border-left:4px solid var(--color-success);}
+.original-total,.proposed-total{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--space-xs);align-items:center;border-top:1px solid var(--color-divider);padding-top:var(--space-sm);font-size:var(--font-size-13);font-weight:var(--font-weight-label);}
+.original-total strong,.proposed-total strong{font-size:var(--font-size-22);font-weight:var(--font-weight-title);overflow-wrap:anywhere;}
+.proposed-total strong{color:var(--color-success);}
+.change-total{font-size:var(--font-size-13);color:var(--color-muted);}
+.reason-label{display:block;font-size:var(--font-size-14);font-weight:var(--font-weight-label);color:var(--color-ink);}
+.edit-note{min-height:var(--legacy-size-90);resize:vertical;}
+#editReasonWrap[hidden]{display:none;}
+.edit-reason-error{font-size:var(--font-size-13);color:var(--color-danger);font-weight:var(--font-weight-label);}
+.audit-line{padding:var(--space-xs) 0;border-top:1px solid var(--color-divider);}
+.audit-line b{display:block;font-size:var(--font-size-13);}
+.audit-line small{display:block;color:var(--color-muted);font-size:var(--font-size-13);line-height:1.4;margin-top:var(--space-2xs);}
+
+.entry-detail.entry-changed{background:color-mix(in srgb,var(--color-success) 10%,var(--color-surface));border-left:4px solid var(--color-success);padding:var(--space-sm);}
+.entry-detail .entry-edit{width:auto;min-height:var(--tap-min);}
+.entry-change-label{display:block;margin-top:var(--space-2xs);font-size:var(--font-size-12);font-weight:var(--font-weight-label);color:var(--color-success);}
+.inline-entry-editor{width:100%;flex-basis:100%;background:var(--color-chip-bg);padding:var(--space-sm);border-radius:var(--radius-control);display:grid;gap:var(--space-xs);min-width:0;}
+.inline-entry-editor label{display:grid;gap:var(--space-xs);font-size:var(--font-size-14);font-weight:var(--font-weight-label);color:var(--color-ink);min-width:0;}
+.inline-entry-editor .vis-control{min-width:0;}
+.entry-detail:has(.inline-entry-editor){flex-wrap:wrap;}
+.entry-factor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-xs);}
 
 /* INVENTA v0.24 — cámara y base propia de códigos */
-.scan-open{display:block;width:100%;min-height:52px;background:#193b59;color:white;font-size:16px;font-weight:900;border:0;border-radius:12px;margin:10px 0}
-#scanOverlay[hidden],#scanUnknown[hidden]{display:none!important}
-#scanOverlay{position:fixed;z-index:90;inset:0;background:#071827ef;display:flex;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom))}
-.home-choice{min-height:120px}.home-choice strong{font-size:19px}.home-choice small{font-size:13px;line-height:1.5;margin-top:8px}
-.scan-card{width:min(560px,100%);max-height:100%;overflow-y:auto;padding:14px;background:#fff;color:#1c3549;border-radius:17px;box-shadow:0 12px 40px #0007}
-.scan-card h2{font-size:21px;margin:4px 0 8px}
-.scan-card p{font-size:13px;line-height:1.45;color:#576f82;margin:0 0 9px}
-#scanReader{background:#101f2d;min-height:180px;overflow:hidden;border-radius:13px;margin:10px 0}
-#scanReader video{width:100%!important;max-height:340px;object-fit:cover;border-radius:12px}
-#scanReader img{display:none}
-#scanStatus{font-size:13px;font-weight:850;color:#244b62;min-height:39px;line-height:1.5;margin:9px 0}
-.scan-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.scan-controls button,.scan-manual button{min-height:45px;padding:8px;border-radius:10px;font-size:13px;font-weight:900;border:1px solid #bdd3e3;background:#e7f2f9;color:#1b4661}
-.scan-controls .scan-retry{background:#163e5a;color:#fff;border-color:#163e5a}
-.scan-manual{margin-top:12px}
-.scan-manual label,.scan-link-label{font-size:12px;font-weight:900;display:block;color:#567187;margin-bottom:6px}
-.scan-manual-row{display:flex;gap:7px}
-.scan-manual-row .input{min-width:0;flex:1}
-.scan-manual-row button{flex:0 0 auto;background:#164966;color:#fff}
-#scanUnknown{background:#fff2df;border:1px solid #dfb96a;padding:12px;margin-top:10px;border-radius:12px}
-#scanUnknown p{color:#6b4c1b}
-#scanUnknown button{width:100%;min-height:44px;background:#92570c;color:#fff;border:0;border-radius:9px;padding:7px;font-size:14px;font-weight:850;margin-top:9px}
-#scanUnknown button.scan-secondary{background:#f7e7c9;color:#714b13;border:1px solid #ddbb7b}
-#scanLinkArticle{font-size:15px}
-.consult-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.consult-tabs button{border:1px solid #cbd8e6;background:white;color:#2b5476;border-radius:12px;padding:12px 8px;font-size:14px;font-weight:850}
-.consult-tabs button.active{background:#1d506b;color:#fff;border-color:#1d506b}
-.consult-line{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:10px 0;border-top:1px solid #e6eaf0}
-.consult-line>div:first-child{min-width:0}.consult-line b{font-size:14px}.consult-line small{display:block;font-size:11px;color:#667f92;margin-top:3px}
-.consult-qty{display:block;text-align:right;font-weight:850;font-size:13px;white-space:nowrap}
-.consult-tags{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:4px;margin-top:4px}
-.consult-empty{color:#99520f;background:#fff6e7;padding:9px;border-radius:10px;font-size:12px;margin-top:8px}
-/* Posición fija: solo sombreado, sin iconos ni etiquetas. */
-.consult-line.consult-fixed{background:#e5effa;padding:11px 9px;margin:5px -9px;border-radius:12px;border-top-color:transparent}
-.item.consult-fixed,.card.consult-fixed{background:#e5effa}
+
+#scanOverlay[hidden],#scanUnknown[hidden]{display:none!important;}
+#scanOverlay{position:fixed;z-index:90;inset:0;background:var(--legacy-color-071827ef);display:flex;align-items:center;justify-content:center;padding:calc(var(--legacy-space-10) + env(safe-area-inset-top)) var(--space-sm) calc(var(--legacy-space-10) + env(safe-area-inset-bottom));}
+
+.scan-card{width:min(var(--legacy-size-560),100%);max-height:100%;overflow-y:auto;padding:var(--space);background:var(--color-surface);color:var(--color-ink);border-radius:var(--radius-card);box-shadow:var(--shadow-card);}
+.scan-card h2{font-size:var(--font-size-22);margin:var(--space-2xs) 0 var(--space-xs);}
+.scan-card p{font-size:var(--font-size-13);line-height:1.45;color:var(--color-muted);margin:0 0 var(--legacy-space-9);}
+#scanReader{background:var(--legacy-color-101f2d);min-height:var(--legacy-size-180);overflow:hidden;border-radius:var(--legacy-radius-13);margin:var(--legacy-space-10) 0;}
+#scanReader video{width:100%!important;max-height:var(--legacy-size-340);object-fit:cover;border-radius:var(--radius-control);}
+#scanReader img{display:none;}
+#scanStatus{font-size:var(--font-size-13);font-weight:var(--font-weight-label);color:var(--color-ink);min-height:var(--legacy-size-39);line-height:1.5;margin:var(--legacy-space-9) 0;}
+.scan-controls{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-xs);}
+.scan-controls button,.scan-manual button{min-height:var(--field-h);padding:var(--space-xs);border-radius:var(--radius-control);font-size:var(--font-size-14);font-weight:var(--font-weight-label);border:1px solid var(--color-border-subtle);background:var(--color-surface);color:var(--color-ink);}
+.scan-controls .scan-retry{background:var(--color-primary);color:var(--color-on-primary);border-color:var(--color-primary);}
+.scan-manual{margin-top:var(--space-sm);}
+.scan-manual label,.scan-link-label{font-size:var(--font-size-14);font-weight:var(--font-weight-label);display:block;color:var(--color-ink);margin-bottom:var(--legacy-space-6);}
+.scan-manual-row{display:flex;gap:var(--legacy-space-7);}
+.scan-manual-row .input{min-width:0;flex:1;}
+#scanManual::placeholder{color:var(--color-muted);opacity:1;}
+.scan-manual-row button{flex:0 0 auto;background:var(--color-primary);color:var(--color-on-primary);}
+#scanUnknown{background:var(--color-warning-bg);border:1px solid var(--color-warning);color:var(--color-warning-text);padding:var(--space-sm);margin-top:var(--legacy-space-10);border-radius:var(--radius-control);}
+#scanUnknown p{color:var(--color-warning-text);}
+#scanUnknown button{width:100%;margin-top:var(--space-xs);}
+
+#scanLinkArticle{font-size:var(--font-size-16);}
+/* Shared scanner: the same presentation aliases in all contexts. No camera or event changes. */
 
 
-/* Catálogo guiado: pasillo → ubicación → detalle; mantenimiento plegado. */
-.catalog-aisles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0 0 14px}
-.catalog-aisle{min-height:90px;border:1px solid #dce4ed;border-radius:15px;background:#fff;color:#234361;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;box-shadow:0 2px 8px #192e420b}
-.catalog-aisle b{font-size:29px;line-height:1;font-weight:950;color:#a9232b}.catalog-aisle small{font-size:11px;color:#678198;font-weight:700}
-.catalog-full{width:100%;margin-bottom:12px}.catalog-location[hidden]{display:none!important}
-.catalog-maintenance{border:1px solid #dce4ed;background:#fff;border-radius:13px;padding:0;margin:13px 0;overflow:hidden}
-.catalog-maintenance summary{cursor:pointer;padding:14px;font-size:14px;font-weight:850;color:#355b78;list-style-position:inside}
-.catalog-maintenance[open] summary{border-bottom:1px solid #e3e9ef}.catalog-maintenance-body{padding:15px}
-.catalog-maintenance-body h3{margin:0 0 13px;font-size:15px}
-.catalog-product{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-top:1px solid #e9edf2}
-.catalog-product.catalog-fixed-shade{background:#e5effa;border-radius:12px;padding:12px 9px;margin:5px -9px;border-top-color:transparent}
-.fixed-report-row[hidden]{display:none!important}
-.catalog-product:first-child{border-top:0}.catalog-product>div:first-child{min-width:0}.catalog-product b{font-size:13px}
-.catalog-product small{display:block;font-size:11px;color:#657e91;line-height:1.45;margin-top:4px}
-.catalog-product-right{text-align:right;flex:0 0 auto;max-width:45%}
-.catalog-product-right .tinybtn{white-space:normal;max-width:100%;line-height:1.25;font-size:12px}.catalog-product-right .tag{display:block;margin-top:5px}
-@media(max-width:360px){.catalog-aisles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+#scanOverlay button:focus-visible{outline:var(--focus-width) solid var(--color-focus);outline-offset:var(--focus-offset);}
+@media(prefers-color-scheme:dark){#scanManual,.inventory-view .vis-control,.inventory-dialog .vis-control{color-scheme:dark;}}
+.consult-results>h2{font-size:var(--font-size-18);font-weight:var(--font-weight-title);}
+
+/* Consulta · F4.2. Shared primitives live in visura-base.css; only view layout here. */
+#app:has(.consult-view,.real-counts-view,.inventory-view,.management-view,.rest-view){background:var(--color-bg);color:var(--color-ink);}
+#head:has(.consult-header,.real-interior-bar,.inventory-header,.management-header,.rest-header){flex:none;z-index:2;}
+main:has(.consult-view,.management-view,.rest-view){padding:var(--space) var(--space) calc(var(--space) + env(safe-area-inset-bottom));background:var(--color-bg);color:var(--color-ink);}
+.vis-header--interior :is(.consult-home,.real-interior-home,.inventory-home,.management-home,.rest-home){display:flex;align-items:center;min-height:var(--tap-min);min-width:0;max-width:60%;padding:0;border:0;background:transparent;color:var(--color-ink);border-radius:var(--radius-control);}
+:is(.consult-home,.real-interior-home,.inventory-home,.management-home,.rest-home) picture{display:flex;min-width:0;}
+:is(.consult-home,.real-interior-home,.inventory-home,.management-home,.rest-home) img{display:block;height:var(--logo-interior-h);width:auto;max-width:100%;object-fit:contain;}
+:is(.consult-home,.real-interior-home,.inventory-home,.management-home,.rest-home):focus-visible{outline:var(--focus-width) solid var(--color-focus);outline-offset:var(--focus-offset);}
+.consult-nav,.real-interior-nav,.inventory-nav,.management-nav,.rest-nav{display:flex;flex:none;}
+.consult-view,.consult-results,.rest-view{grid-template-columns:minmax(0,1fr);align-content:start;}
+.rest-view:has(.vis-card--form),.rest-view:has(#managerEmail){width:min(var(--legacy-size-640),100%);margin-inline:auto;}
+.rest-view .vis-help:empty{display:none;}
+.rest-view .vis-notice{margin:0;}
+.consult-view .vis-segment button{display:flex;align-items:center;justify-content:center;gap:var(--space-2xs);}
+.consult-total{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-xs);font-size:var(--font-size-14);}
+.consult-results h2,.consult-results h3,.consult-results p{overflow-wrap:anywhere;}
+.consult-line{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-xs);padding:var(--space-sm) 0;border-top:1px solid var(--color-divider);min-width:0;font-size:var(--font-size-14);}
+.consult-line>div:first-child,.consult-line>span:first-child{min-width:0;overflow-wrap:anywhere;}
+.consult-line small{display:block;font-size:var(--font-size-13);color:var(--color-muted);margin-top:var(--space-2xs);overflow-wrap:anywhere;}
+.consult-line>div:last-child,.consult-line>strong{min-width:0;max-width:50%;text-align:right;overflow-wrap:anywhere;}
+.consult-qty{display:block;text-align:right;font-weight:var(--font-weight-title);font-size:var(--font-size-14);}
+.consult-tags{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:var(--space-2xs);margin-top:var(--space-2xs);}
+.consult-warning-chip{background:var(--color-warning-bg);color:var(--color-warning-text);display:inline-block;white-space:normal;overflow-wrap:anywhere;}
+.consult-results .vis-list-chevron{display:grid;place-items:center;color:var(--color-muted);}
+/* Fixed positions preserve the original shading-only convention, even at zero stock. */
+.consult-fixed{background:var(--color-chip-bg);color:var(--color-chip-text);}
+.consult-line.consult-fixed{padding:var(--space-sm);border-radius:var(--radius-control);border-top-color:transparent;}
+.consult-error{border:1px solid var(--color-danger-border);color:var(--color-danger);overflow-wrap:anywhere;}
+@media(min-width:1000px){main:has(.consult-view,.inventory-view,.management-view,.rest-view){padding-inline:var(--legacy-space-32);}.consult-header,.inventory-header,.management-header,.rest-header{padding-inline:var(--legacy-space-32);}}
+
+
+
+/* Gestión · F4.5. Layout only; shared primitives are defined in visura-base.css. */
+.management-view{grid-template-columns:minmax(0,1fr);align-content:start;overflow-wrap:anywhere;}
+.management-view .vis-card,.management-view .vis-stack{grid-template-columns:minmax(0,1fr);}
+.management-view .vis-title h2{font-size:var(--font-size-18);}
+
+.management-view .vis-notice{margin:0;display:block;padding:var(--space-sm);min-width:0;}
+.management-view .vis-notice ul{margin:var(--space-xs) 0;padding-left:var(--space);}
+.management-view .vis-card h3{font-size:var(--font-size-16);font-weight:var(--font-weight-title);}
+.management-view .vis-chips{margin-inline:calc(-1 * var(--space-2xs));}
+.management-view .vis-chips .vis-chip{min-width:var(--tap-min);}
+.management-view .management-connection{display:flex;align-items:center;justify-content:space-between;gap:var(--space-xs);flex-wrap:wrap;}
+.management-connection .vis-button-secondary{width:auto;min-width:var(--tap-min);}
+.management-row{display:grid;gap:var(--space-xs);min-width:0;padding-block:var(--space-xs);border-top:1px solid var(--color-divider);}
+.management-row:first-child{border-top:0;padding-top:0;}
+.management-between{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-xs);flex-wrap:wrap;min-width:0;}
+.management-between>div{min-width:0;overflow-wrap:anywhere;}
+.management-right{text-align:right;}
+.management-between small{display:block;}
+.management-check{display:flex;align-items:center;gap:var(--space-xs);min-height:var(--tap-min);font-size:var(--font-size-14);color:var(--color-ink);cursor:pointer;}
+.management-check input{width:var(--icon-size);height:var(--icon-size);flex:none;accent-color:var(--color-primary);}
+.management-check:has(input:focus-visible){outline:var(--focus-width) solid var(--color-focus);outline-offset:var(--focus-offset);border-radius:var(--radius-control);}
+.management-check input:focus-visible{outline:0;}
+.management-file{height:auto;min-height:var(--field-h);max-width:100%;padding:var(--space-xs);font-size:var(--font-size-16);}
+.management-file::file-selector-button{border:1px solid var(--color-border);border-radius:var(--radius-control);background:var(--color-surface);color:var(--color-ink);min-height:var(--tap-min);padding:var(--space-xs);font-size:var(--font-size-13);}
+.management-table{max-width:100%;min-width:0;overflow-x:auto;}
+.management-table table{width:100%;border-collapse:collapse;text-align:left;font-size:var(--font-size-13);}
+.management-table th,.management-table td{padding:var(--space-xs);border-bottom:1px solid var(--color-divider);overflow-wrap:anywhere;}
+.management-table th{background:var(--color-chip-bg);color:var(--color-chip-text);font-weight:var(--font-weight-label);}
+.management-error{border:1px solid var(--color-danger-border);color:var(--color-danger);}
+.management-warning{display:inline-block;white-space:normal;background:var(--color-warning-bg);color:var(--color-warning-text);}
+.catalog-aisles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-xs);}
+.catalog-aisle{min-height:calc(var(--field-h) + var(--space-sm)*2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-2xs);padding:var(--space-xs);}
+.catalog-aisle b{font-size:var(--font-size-22);font-weight:var(--font-weight-title);line-height:1;color:var(--color-ink);}
+.catalog-aisle small{font-size:var(--font-size-12);color:var(--color-muted);}
+.catalog-location[hidden]{display:none!important;}
+.fixed-report-row[hidden]{display:none!important;}
+.catalog-maintenance{padding:var(--space);}
+.catalog-maintenance summary{gap:var(--space-xs);}
+.catalog-maintenance-body{display:grid;gap:var(--space);min-width:0;}
+.catalog-product{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-xs);padding:var(--space-sm) 0;border-top:1px solid var(--color-divider);min-width:0;}
+.catalog-product:first-child{border-top:0;}
+.catalog-product>div:first-child{min-width:0;flex:1;overflow-wrap:anywhere;}
+.catalog-product small{display:block;font-size:var(--font-size-13);color:var(--color-muted);margin-top:var(--space-2xs);overflow-wrap:anywhere;}
+.catalog-product.catalog-fixed-shade{background:var(--color-chip-bg);color:var(--color-chip-text);border-radius:var(--radius-control);padding:var(--space-sm);border-top-color:transparent;}
+.catalog-product-right{display:grid;gap:var(--space-xs);text-align:right;flex:0 1 45%;min-width:0;overflow-wrap:anywhere;}
+.catalog-product-right .vis-button-secondary{font-size:var(--font-size-13);padding:var(--space-xs);overflow-wrap:anywhere;}
+@media(max-width:360px){.catalog-aisles{grid-template-columns:repeat(3,minmax(0,1fr));}.catalog-product{flex-wrap:wrap;}.catalog-product-right{flex:1 1 100%;}}
+@media(prefers-color-scheme:dark){.management-view .vis-control,.management-view .management-check input{color-scheme:dark;}}
 
 /* Mobile controls and long audit identifiers. */
-.real-count-row{padding:12px 0;overflow-wrap:anywhere}.card .input{min-height:44px;font-size:16px;max-width:100%;box-sizing:border-box}.card .btn-outline{min-height:44px}details:not(.real-counts-details) input{margin-bottom:8px}
+details:not(.real-counts-details,.catalog-maintenance) input{margin-bottom:var(--space-xs);}
 
 /* INVENTA identity: landing only; operational screens retain their layout. */
-.brand .brand-wordmark{width:148px;height:auto;border-radius:0;object-fit:contain}
-#app.landing{max-width:760px;background:#fffaf6}
-#app.landing header{display:none}
-#app.landing main{padding:24px 22px 18px;background:radial-gradient(ellipse at 85% 0%,#fff1ee 0,transparent 55%),#fffaf6}
-#app.landing footer{display:none}
-.landing-top{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:6px 0 22px}
-.landing-logo{width:min(60%,340px);height:auto}
-.landing-person{display:flex;align-items:center;gap:9px;color:#0b2647;min-width:0}
-.landing-person .initial{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;background:#f1e5df;color:#a81525;font-size:19px;font-weight:900}
-.landing-person small{display:block;font-size:10px;color:#677587}
-.landing-person b{display:block;font-size:14px;max-width:115px;overflow:hidden;text-overflow:ellipsis}
-.landing-tagline{color:#536b83;font-size:18px;margin:-10px 0 24px}
-.landing-cards{display:grid;gap:17px}
-.landing-card{position:relative;isolation:isolate;display:flex;align-items:center;width:100%;min-height:194px;border:1px solid transparent;border-radius:25px;padding:24px;text-align:left;overflow:hidden;box-shadow:0 12px 24px #18304a0b;transition:transform .18s,box-shadow .18s;color:#092548}
-.landing-card:hover{transform:translateY(-3px);box-shadow:0 16px 30px #18304a18}
-.landing-card:active{transform:scale(.985)}
-.landing-card:focus-visible,.landing-account:focus-visible{outline:3px solid #174e8a;outline-offset:4px}
-.landing-card.inventory{background:linear-gradient(115deg,#fff1ef,#f9d9da)}
-.landing-card.consultation{background:linear-gradient(115deg,#eef9ff,#d7ebfc)}
-.landing-card.management{background:linear-gradient(115deg,#fff8e6,#fbe9bf)}
-.landing-card .copy{position:relative;z-index:2;width:53%}
-.landing-card strong{display:block;font-size:clamp(22px,4.7vw,31px);line-height:1.05;letter-spacing:-.8px;font-weight:900}
-.landing-card small{display:block;font-size:13px;line-height:1.35;color:#4f657e;margin:9px 0 14px;max-width:170px}
-.landing-card .arrow{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#d62532;color:white;font-size:24px;font-weight:700}
-.landing-card.consultation .arrow{background:#246ab5}
-.landing-card.management .arrow{background:#d89005}
-.landing-card img{position:absolute;right:-2%;bottom:-3%;width:53%;height:104%;object-fit:contain;z-index:1;pointer-events:none;filter:drop-shadow(0 12px 12px #18263a12)}
-.landing-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:22px;color:#6e7b8c;font-size:11px}
-.landing-account{background:transparent;border:0;padding:8px 0;color:#345572;font-size:12px;font-weight:700;text-decoration:underline;text-underline-offset:3px}
-.landing-note{font-size:11px;color:#7c8792;line-height:1.5;margin-top:10px}
-.welcome-card{padding:24px;border-radius:28px;background:linear-gradient(140deg,#fff0ec,#f7dedd);text-align:center;box-shadow:0 14px 30px #1234560b}
-.welcome-card img{width:min(85%,330px);display:block;margin:0 auto 8px}
-.welcome-card h1{font-size:29px;line-height:1.1;color:#092548;margin:8px 0}
-.welcome-card p{font-size:14px;color:#536b83;margin:10px 0 20px}
-.welcome-card .btn{max-width:350px;border-radius:16px;min-height:53px;background:#cf2632}
-@media(min-width:600px){.landing-card{min-height:230px;padding:30px}.landing-card img{right:0;width:53%}.landing-card strong{font-size:36px}.landing-card small{font-size:16px;max-width:230px}.landing-tagline{font-size:22px}}
-@media(max-width:360px){#app.landing main{padding:18px 14px}.landing-card{min-height:180px;padding:20px 15px}.landing-card strong{font-size:22px}.landing-card small{font-size:12px}.landing-person .initial{display:none}.landing-person b{max-width:85px}.landing-top{gap:10px}}
-@media(prefers-reduced-motion:reduce){.landing-card{transition:none}}
+.brand .brand-wordmark{width:var(--legacy-size-148);height:auto;border-radius:0;object-fit:contain;}
+
+#app.landing header{display:none;}
+
+#app.landing footer{display:none;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @media(min-width:1000px){
- #app:not(.counter){max-width:1180px;margin:20px auto;height:calc(100dvh - 40px);border-radius:24px;box-shadow:0 12px 50px #0b26471a}
- #app.landing{max-width:960px}
- #app.landing main{padding:25px 34px}
- .landing-card{min-height:185px;padding:24px 30px}
- .landing-card img{width:42%;right:3%}
- .landing-card .copy{width:55%}
- .landing-top{margin-bottom:18px}
- .landing-tagline{margin-bottom:18px}
- #app:not(.landing):not(.counter) main:not(:has(.real-counts-view)){padding:24px 32px}
+ #app:not(.counter){max-width:var(--legacy-size-1180);margin:var(--legacy-space-20) auto;height:calc(100dvh - var(--legacy-size-40));border-radius:var(--radius-card);box-shadow:var(--shadow-card);}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ #app:not(.landing):not(.counter) main:not(:has(.real-counts-view,.consult-view,.inventory-view,.management-view,.rest-view)){padding:var(--legacy-space-24) var(--legacy-space-32);}
 }
-@media(display-mode:standalone){#app:not(.counter){height:100dvh;margin:0 auto;border-radius:0;box-shadow:none}}
-.brand-home{display:inline-flex;align-items:center;min-height:44px;border:0;background:transparent;padding:0;cursor:pointer}
-#topNavigation:not(.real-interior-nav){padding-top:12px;display:flex}
-#topNavigation[hidden]{display:none!important}
-.top-back{min-height:48px;min-width:112px;padding:10px 18px;border:1px solid #183e63;border-radius:10px;background:#0b2d50;color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 3px 8px #0b264720}
-.top-back:focus-visible,.brand-home:focus-visible{outline:3px solid #d52835;outline-offset:3px}
-#app.counter .brand-home{background:#fff;border-radius:6px;padding:4px 8px}
-#app.counter .top-back{border-color:#8da6bf}
-.settings-button{border:1px solid #dbe3ed;background:#fff;border-radius:13px;min-width:64px;min-height:60px;padding:3px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#163653;font-size:11px;font-weight:800;box-shadow:0 3px 9px #19354d12}
-.settings-button img{width:40px;height:40px;object-fit:contain}.settings-button:focus-visible{outline:3px solid #d52835;outline-offset:3px}
-.landing-person{margin-bottom:15px}.landing-top{align-items:center}.welcome-card>img{max-width:320px;width:100%;height:auto;border-radius:22px}
-.welcome-art{display:flex;flex-direction:column;align-items:center;gap:14px;margin:0 auto 22px;width:100%}.welcome-image-access{display:block;width:min(100%,540px);padding:0;border:0;background:transparent;border-radius:26px;cursor:pointer}.welcome-image-access img{display:block;width:100%;height:auto;border-radius:26px;box-shadow:0 12px 35px #0b264718}.welcome-logo-access{display:flex;align-items:center;justify-content:center;width:min(82%,350px);min-height:70px;padding:18px 30px;border:1px solid #ded7d2;border-radius:18px;background:#fff;box-shadow:0 5px 16px #0b264716;cursor:pointer}.welcome-logo-access img{width:100%;height:auto}.welcome-hint{font-size:12px;color:#61758a}.welcome-image-access:focus-visible,.welcome-logo-access:focus-visible{outline:3px solid #d52835;outline-offset:5px}.welcome-logo-access:hover{background:#fff5f2}@media(min-width:1000px){.welcome-image-access{width:min(100%,52vh,560px)}}
-</style><link rel="stylesheet" href="./assets/css/visura-operativo-3d-lab.css" data-visura-r1l1="visual-only">
-<link rel="stylesheet" href="./assets/css/visura-maquetacion-a-v1-lab.css" data-visura-13-r1l1="maquetacion-a-lab">
-<link rel="stylesheet" href="./assets/css/visura-maquetacion-a-aprobadas-r1l2.css" data-visura-13-r1l2="tres-imagenes-aprobadas">
-<link rel="stylesheet" href="./assets/css/visura-inventa-home-v2-rc1.css" data-visura-13-v2="release-candidate-2">
-<link rel="stylesheet" href="./assets/css/visura-inventa-home-compact.css?v=0.30.10" data-visura-13="compact-lab">
-</head><body><div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" hidden></div>
+@media(display-mode:standalone){#app:not(.counter){height:100dvh;margin:0 auto;border-radius:0;box-shadow:none;}}
+.brand-home{display:inline-flex;align-items:center;min-height:var(--tap-min);border:0;background:transparent;padding:0;cursor:pointer;}
+#topNavigation:not(.real-interior-nav,.consult-nav,.inventory-nav,.management-nav,.rest-nav){padding-top:var(--space-sm);display:flex;}
+#topNavigation[hidden]{display:none!important;}
+.top-back{min-height:var(--field-h);min-width:var(--legacy-size-112);padding:var(--legacy-space-10) var(--legacy-space-18);border:1px solid var(--legacy-color-183e63);border-radius:var(--legacy-radius-10);background:var(--legacy-color-0b2d50);color:var(--legacy-color-ffffff);font-size:var(--legacy-font-size-15);font-weight:var(--legacy-font-weight-800);cursor:pointer;box-shadow:var(--legacy-shadow-5cdda2d602);}
+.top-back:focus-visible,.brand-home:focus-visible{outline:var(--focus-width) solid var(--color-focus);outline-offset:var(--focus-offset);}
+.settings-button{border:1px solid var(--legacy-color-dbe3ed);background:var(--legacy-color-ffffff);border-radius:var(--legacy-radius-13);min-width:var(--legacy-size-64);min-height:var(--legacy-size-60);padding:var(--legacy-space-3) var(--legacy-space-7);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--legacy-color-163653);font-size:var(--legacy-font-size-11);font-weight:var(--legacy-font-weight-800);box-shadow:var(--legacy-shadow-6db6793701);}
+.settings-button .vis-icon{width:var(--icon-size);height:var(--icon-size);}.settings-button:focus-visible{outline:var(--focus-width) solid var(--color-focus);outline-offset:var(--focus-offset);}
+
+.welcome-art{display:flex;flex-direction:column;align-items:center;gap:var(--legacy-space-14);margin:0 auto var(--legacy-space-22);width:100%;}.welcome-image-access{display:block;width:min(100%,var(--legacy-size-540));padding:0;border:0;background:transparent;border-radius:var(--radius-card);cursor:pointer;}.welcome-image-access img{display:block;width:100%;height:auto;border-radius:var(--radius-card);box-shadow:var(--shadow-card);}.welcome-logo-access{display:flex;align-items:center;justify-content:center;width:min(82%,var(--legacy-size-350));min-height:var(--legacy-size-70);padding:var(--legacy-space-18) var(--legacy-space-30);border:1px solid var(--color-border);border-radius:var(--radius-card);background:var(--color-surface);box-shadow:var(--shadow-card);cursor:pointer;}.welcome-logo-access picture{display:block;width:100%;}.welcome-logo-access img{width:100%;height:auto;}.welcome-hint{font-size:var(--font-size-13);color:var(--color-muted);}.welcome-image-access:focus-visible,.welcome-logo-access:focus-visible{outline:var(--focus-width) solid var(--color-focus);outline-offset:var(--focus-offset);}.welcome-logo-access:hover{background:var(--color-chip-bg);}@media(min-width:1000px){.welcome-image-access{width:min(100%,52vh,var(--legacy-size-560));}}
+</style><link rel="stylesheet" href="./assets/css/visura-operativo-3d-lab.css?v=0.30.11" data-visura-r1l1="visual-only">
+<link rel="stylesheet" href="./assets/css/visura-maquetacion-a-v1-lab.css?v=0.30.11" data-visura-13-r1l1="maquetacion-a-lab">
+<link rel="stylesheet" href="./assets/css/visura-maquetacion-a-aprobadas-r1l2.css?v=0.30.11" data-visura-13-r1l2="tres-imagenes-aprobadas">
+<link rel="stylesheet" href="./assets/css/visura-inventa-home-v2-rc1.css?v=0.30.11" data-visura-13-v2="release-candidate-2">
+<link rel="stylesheet" href="./assets/css/visura-inventa-home-compact.css?v=0.30.11" data-visura-13="compact-lab">
+</head><body>
+<!-- Lucide 0.456.0 · https://github.com/lucide-icons/lucide/tree/0.456.0/icons
+ISC License
+
+Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022 as part of Feather (MIT). All other copyright (c) for Lucide are held by Lucide Contributors 2022.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-->
+<svg id="vis-icon-registry" xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;overflow:hidden" ><defs>
+<symbol id="vis-icon-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+<symbol id="vis-icon-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+<symbol id="vis-icon-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="vis-icon-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="vis-icon-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="vis-icon-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></symbol>
+<symbol id="vis-icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+<symbol id="vis-icon-warehouse" viewBox="0 0 24 24"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"/><path d="M6 18h12"/><path d="M6 14h12"/><rect width="12" height="12" x="6" y="10"/></symbol>
+<symbol id="vis-icon-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+<symbol id="vis-icon-triangle-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="vis-icon-refresh-cw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+<symbol id="vis-icon-scan-barcode" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 7v10"/><path d="M12 7v10"/><path d="M17 7v10"/></symbol>
+<symbol id="vis-icon-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+<symbol id="vis-icon-user-round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+<symbol id="vis-icon-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+<symbol id="vis-icon-arrow-left-right" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></symbol>
+<symbol id="vis-icon-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="vis-icon-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="vis-icon-square" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/></symbol>
+<symbol id="vis-icon-calculator" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></symbol>
+<symbol id="vis-icon-delete" viewBox="0 0 24 24"><path d="M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/><path d="m12 9 6 6"/><path d="m18 9-6 6"/></symbol>
+<symbol id="vis-icon-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+<symbol id="vis-icon-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="vis-icon-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></symbol>
+<symbol id="vis-icon-list-checks" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></symbol>
+<symbol id="vis-icon-chart-no-axes-column" viewBox="0 0 24 24"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></symbol>
+</defs></svg>
+<div id="app"><header id="head"></header><main id="content"></main><footer id="foot"></footer></div><div id="overlay"></div><div id="updateBanner" class="vis-card" hidden></div>
 <input type="file" id="scanImportFile" accept="application/json,.json" hidden onchange="importBarcodeFile(this)">
 <div id="scanOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="scanTitle">
   <div class="scan-card">
@@ -274,8 +376,8 @@ footer:not(:has(.real-counts-save)){flex:none;border-top:1px solid #dde4ec;paddi
       <p id="scanUnknownText"></p>
       <label class="scan-link-label" for="scanLinkArticle">Artículo de Business Central al que corresponde</label>
       <select id="scanLinkArticle" class="input"></select>
-      <button type="button" onclick="saveScannedAssociation()">Guardar relación y abrir artículo</button>
-      <button type="button" class="scan-secondary" onclick="scanAddUnexpected()">No aparece: artículo no previsto</button>
+      <button type="button" class="vis-button-primary" onclick="saveScannedAssociation()">Guardar relación y abrir artículo</button>
+      <button type="button" class="scan-secondary vis-button-secondary" onclick="scanAddUnexpected()">No aparece: artículo no previsto</button>
     </div>
     <div class="scan-manual">
       <label for="scanManual">Introducir código manualmente</label>
@@ -283,12 +385,12 @@ footer:not(:has(.real-counts-save)){flex:none;border-top:1px solid #dde4ec;paddi
     </div>
   </div>
 </div>
-<script src="./warehouse-management.js?v=0.30.8-rc.3"></script>
-<script src="./bc-excel-import.js?v=0.30.5"></script>
-<script src="./fixed-positions-import.js?v=0.30.5"></script>
-<script src="./real-counts.js?v=0.30.10"></script>
+<script src="./warehouse-management.js?v=0.30.11"></script>
+<script src="./bc-excel-import.js?v=0.30.11"></script>
+<script src="./fixed-positions-import.js?v=0.30.11"></script>
+<script src="./real-counts.js?v=0.30.11"></script>
 <script src="./consultation-core.js?v=0.30.5"></script>
-<script src="./consultation-ui.js?v=0.30.5"></script>
+<script src="./consultation-ui.js?v=0.30.11"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -300,7 +402,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.30.10';
+const APP_VERSION='0.30.11';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
@@ -322,14 +424,14 @@ function sessionLabel(){return sessionMode()==='pair'?'Pareja: '+sessionWorkers(
 function sessionAudit(){return {workers:sessionWorkers(),countMode:sessionMode()};}
 function renderSession(){
  const colleague=Object.keys(AISLES).filter(w=>w!==data.worker);
- place(`<div class="title"><div class="overline">MODALIDAD DE RECUENTO · DEMO</div><h1>¿Cómo vais a contar?</h1><p class="muted">Esta selección se mantiene entre ubicaciones. En la versión definitiva la asignará el supervisor.</p></div>
- <div class="card"><h2>👤 Recuento individual</h2><p class="muted">${esc(data.worker)} cuenta y registra las cantidades.</p><button class="btn btn-light" onclick="startSession('single')">Empezar individual →</button></div>
- <div class="card"><h2>👥 Recuento en pareja</h2><p class="muted">Dos personas cuentan juntas y utilizan un único móvil; se guarda un solo resultado con ambos nombres.</p>
- <div class="field"><label for="sessionPartner">Segundo operario</label><select class="input" id="sessionPartner">${colleague.map(w=>'<option value="'+esc(w)+'">'+esc(w)+'</option>').join('')}</select></div>
- <div class="field"><label for="partnerPin">PIN del segundo operario (solo demo)</label><input class="input" id="partnerPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 cifras"></div>
- <button class="btn" onclick="startSession('pair')">Empezar en pareja →</button></div>
- <div class="alert">Esta versión funciona localmente y utiliza el PIN 1234 de prueba. No autentica realmente al segundo operario ni asigna permisos de supervisor.</div><p id="sessionError" class="muted" role="alert"></p>`,
- '<button class="back" onclick="logout()">← Cambiar usuario principal</button>');
+ place(`<div class="vis-title"><h1>¿Cómo vais a contar?</h1><p class="vis-help">MODALIDAD DE RECUENTO · DEMO · Esta selección se mantiene entre ubicaciones. En la versión definitiva la asignará el supervisor.</p></div>
+ <div class="vis-card"><h2><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-user-round"/></svg> Recuento individual</h2><p class="vis-help">${esc(data.worker)} cuenta y registra las cantidades.</p><button class="vis-button-secondary" onclick="startSession('single')">Empezar individual <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></button></div>
+ <div class="vis-card"><h2><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-users"/></svg> Recuento en pareja</h2><p class="vis-help">Dos personas cuentan juntas y utilizan un único móvil; se guarda un solo resultado con ambos nombres.</p>
+ <div class="vis-field"><label for="sessionPartner">Segundo operario</label><select class="vis-control" id="sessionPartner">${colleague.map(w=>'<option value="'+esc(w)+'">'+esc(w)+'</option>').join('')}</select></div>
+ <div class="vis-field"><label for="partnerPin">PIN del segundo operario (solo demo)</label><input class="vis-control" id="partnerPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 cifras"></div>
+ <button class="vis-button-primary" onclick="startSession('pair')">Empezar en pareja <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></button></div>
+ <div class="vis-notice inventory-notice">Esta versión funciona localmente y utiliza el PIN 1234 de prueba. No autentica realmente al segundo operario ni asigna permisos de supervisor.</div><p id="sessionError" class="vis-help" role="alert"></p>`,
+ '<button class="back" onclick="logout()"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> Cambiar usuario principal</button>');
 }
 function startSession(mode){
  if(!data.worker||!['single','pair'].includes(mode))return;
@@ -412,7 +514,7 @@ function countingInProgress(){return ['count','review','discrepancy','edit-detai
 function showPendingUpdate(){
  const el=$('updateBanner');if(!el)return;
  if(!updateReady){el.hidden=true;return;}
- el.hidden=false;el.innerHTML='<div class="update-msg">↻ Actualización lista para instalar.<br>'+ (countingInProgress()?'Termina de guardar el artículo antes de actualizar.':'Puedes actualizar INVENTA ahora.')+'</div><button onclick="applyInventaUpdate()">'+ (countingInProgress()?'Después':'Actualizar')+'</button>';
+ el.hidden=false;el.innerHTML='<div class="update-msg"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-refresh-cw"/></svg> Actualización lista para instalar.<br>'+ (countingInProgress()?'Termina de guardar el artículo antes de actualizar.':'Puedes actualizar INVENTA ahora.')+'</div><button class="vis-button-primary" onclick="applyInventaUpdate()">'+ (countingInProgress()?'Después':'Actualizar')+'</button>';
 }
 function forceUpdateInventa(){
  if(countingInProgress()){alert('Termina de guardar el artículo antes de actualizar. No se perderán los recuentos guardados.');return;}
@@ -453,13 +555,22 @@ function initInventaUpdates(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>60000)checkForUpdates(false);});
 }
 function go(s){screen=s;render();if(s==='review'||s==='discrepancy'||s==='edit-detail')saveDraft();showPendingUpdate();}
-function settingsButton(){return '<button type="button" class="settings-button" onclick="openSettings()" aria-label="Ajustes"><img src="assets/menu/settings-3d.webp" alt="" width="48" height="48"><span>Ajustes</span></button>';}
+function settingsButton(){return '<button type="button" class="settings-button" onclick="openSettings()" aria-label="Ajustes"><svg class="vis-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-settings"/></svg><span>Ajustes</span></button>';}
 function openSettings(){
- if(screen==='home'){openCompactHomeSettings();return;}
- const authenticated=!!window.INVENTA_MGMT?.isAuthenticated();
- const profile=window.INVENTA_MGMT?.profile;
- $('overlay').innerHTML='<div class="modalback"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Ajustes</h2><p class="muted">INVENTA · v'+APP_VERSION+'</p>'+(authenticated?'<p>'+esc(profile.display_name)+' · '+esc({admin:'Administrador',supervisor:'Supervisor',operator:'Operario'}[profile.role]||'')+'</p>':'<p>Accede con tu cuenta para ver tus funciones.</p>')+'<div class="stack" style="margin-top:16px"><button class="btn-outline" onclick="hideModal();installInventa()">Instalar aplicación</button><button class="btn-outline" onclick="hideModal();safeNavigation(()=>checkForUpdates(true))">Buscar actualizaciones</button>'+(authenticated?'<button class="btn-outline" onclick="safeNavigation(()=>{hideModal();logoutManager();})">Cerrar sesión</button>':'')+((data.worker&&!authenticated)?'<button class="btn-outline" onclick="showModal(\'menu\')">Opciones de demostración</button>':'')+'<button class="btn" onclick="hideModal()">Cerrar ajustes</button></div></section></div>';
- $('settingsTitle').setAttribute('tabindex','-1');$('settingsTitle').focus();
+ const allowed=homePermissions(),profile=window.INVENTA_MGMT?.profile;
+ const homeContext=screen==='home',realContext=!!$('head').querySelector('.real-interior-bar');
+ const roleLabel={operator:'Operario',supervisor:'Supervisor',admin:'Administrador'}[allowed.role]||'';
+ const version=(homeContext&&!realContext?'Entorno piloto · v':'INVENTA · v')+APP_VERSION;
+ $('overlay').innerHTML='<div class="modalback settings-backdrop"><section class="compact-settings vis-card vis-stack" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">'
+ +'<div class="settings-heading vis-title"><div><h2 id="settingsTitle">Ajustes</h2><p>'+version+'</p></div><button type="button" class="vis-icon-button vis-icon-button--bare" onclick="hideModal()" aria-label="Cerrar ajustes">'+homeIcon('close')+'</button></div>'
+ +'<section class="settings-section"><h3>Cuenta</h3>'+(allowed.authenticated?'<p>'+esc(profile?.display_name||(homeContext?'Usuario':''))+' · '+esc(roleLabel)+'</p>':'<p class="vis-help">Accede con tu cuenta para ver tus funciones.</p>')+'</section>'
+ +'<section class="settings-section"><h3>Aplicación</h3><p class="vis-help">Tema: según la configuración del sistema.</p><div class="settings-actions">'+installMarkup(!homeContext)+'<button type="button" class="vis-button-secondary" onclick="hideModal();safeNavigation(()=>checkForUpdates(true))">'+homeIcon('refresh-cw')+' Buscar actualizaciones</button></div></section>'
+ +(allowed.management&&$('bcLiveStatus')?'<section class="settings-section"><h3>Estado de datos BC</h3><p class="vis-help" id="compactBCDetails" role="status"></p></section>':'')
+ +(screen==='management'&&allowed.management?'<section class="settings-section"><h3>Conexión</h3><p class="vis-help">Conectado a INVENTA · Supabase</p><p class="vis-help">No se modifica Business Central automáticamente. Los datos locales de la demo no se envían al servidor.</p></section>':'')
+ +(homeContext&&allowed.demo?'<section class="settings-section"><h3>Demostración</h3><button type="button" class="vis-button-secondary" onclick="hideModal();safeNavigation(()=>go(\'demo-home\'))">Zona de demostración</button><p class="vis-help">Recuentos reales individuales. Las pruebas de pareja y escáner están en la zona de demostración.</p></section>':'')
+ +((data.worker&&!allowed.authenticated)?'<section class="settings-section"><h3>Demostración</h3><button type="button" class="vis-button-secondary" onclick="showModal(\'menu\')">Opciones de demostración</button></section>':'')
+ +(allowed.authenticated?'<button type="button" class="vis-button-secondary compact-logout" onclick="safeNavigation(()=>{hideModal();logoutManager();})">Cerrar sesión</button>':'')+'</section></div>';
+ if(homeContext)updateHomeBCPresentation();$('settingsTitle').setAttribute('tabindex','-1');$('settingsTitle').focus();
 }
 function header(){const counting=!['home','manager-login','management','consult-login','consult'].includes(screen);return `<div class="hrow"><div class="brand"><div><button class="brand-home" type="button" onclick="navigateHome()" aria-label="INVENTA: ir al menú principal"><img class="brand-wordmark" src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></button><small>${window.INVENTA_MGMT?.isAuthenticated()&&!window.INVENTA_CONSULT_DEMO?'INVENTA':'Demo'} · v${APP_VERSION}${counting&&data.worker&&data.countSession?' · '+esc(sessionLabel()):screen==='consult'?' · Consulta':screen==='management'?' · Gestión almacén':''}</small></div></div><div class="topbuttons">${settingsButton()}</div></div>`;}
 function render(){let counter=screen==='count';$('app').classList.toggle('landing',screen==='home');$('app').classList.toggle('counter',counter);$('head').innerHTML=header();$('overlay').innerHTML='';if(screen==='home')renderHome();else if(screen==='demo-home')renderDemoHome();else if(screen==='manager-login')renderManagerLogin();else if(screen==='management')renderManagement();else if(screen==='consult-login')renderConsultLogin();else if(screen==='consult')renderConsult();else if(screen==='login')renderLogin();else if(screen==='session')renderSession();else if(screen==='aisles')renderAisles();else if(screen==='locations')renderLocations();else if(screen==='verify')renderVerify();else if(screen==='articles')renderArticles();else if(screen==='edit-detail')renderEditDetail();else if(screen==='count')renderCount();else if(screen==='review')renderReview();else if(screen==='discrepancy')renderWarning();else if(screen==='location-review')renderLocationReview();else if(screen==='closed')renderClosed();else renderHome();}
@@ -481,18 +592,29 @@ function navigateHome(){
   stopScanner();window.INVENTA_MGMT?.cancelView?.();window.INVENTA_REAL?.leave?.();go('home');
  });
 }
+function interiorHeader(bar,home){return '<div class="' + bar + ' vis-header vis-header--interior"><button type="button" class="' + home + '" onclick="navigateHome()" aria-label="INVENTA: ir al menú principal"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/brand/inventa-logo-white.svg"><img src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></picture></button><span class="vis-header-spacer" aria-hidden="true"></span><button type="button" class="vis-icon-button vis-icon-button--settings" onclick="openSettings()" aria-label="Ajustes">'+homeIcon('settings')+'</button></div>';}
 function place(html,foot='',interiorTitle=''){
- $('content').innerHTML=html;$('content').scrollTop=0;$('foot').innerHTML=foot;
+ const managementView=screen==='management';
+ const restView=['manager-login','consult-login','login','demo-home'].includes(screen);
+ const inventoryView=['session','aisles','locations','verify','articles','edit-detail','count','review','discrepancy','location-review','closed'].includes(screen);
+ $('foot').classList.toggle('vis-footer',inventoryView);$('foot').classList.toggle('inventory-footer',inventoryView);
+ $('content').innerHTML=inventoryView?'<div class="inventory-view vis-stack">'+html+'</div>':managementView?'<div class="management-view vis-stack">'+html+'</div>':restView?'<div class="rest-view vis-stack">'+html+'</div>':html;$('content').scrollTop=0;$('foot').innerHTML=foot;
  let back=$('foot').querySelector('button.back');
  if(!back&&screen==='count'){back=document.createElement('button');back.textContent='Volver a los artículos';back.onclick=cancelCount;}
  const oldNav=document.getElementById('topNavigation');if(oldNav)oldNav.remove();
- if(interiorTitle){$('head').innerHTML='<div class="real-interior-bar"><h1>'+esc(interiorTitle)+'</h1><button type="button" class="compact-icon-button" onclick="openSettings()" aria-label="Ajustes">'+homeIcon('settings')+'</button></div>';}else if($('head').querySelector('.real-interior-bar')){$('head').innerHTML=header();}
+ if(interiorTitle){$('head').innerHTML=interiorHeader('real-interior-bar','real-interior-home');}else if($('head').querySelector('.real-interior-bar')){$('head').innerHTML=header();}
+ if(screen==='consult'){$('head').innerHTML=interiorHeader('consult-header','consult-home');}
+ if(inventoryView){$('head').innerHTML=interiorHeader('inventory-header','inventory-home');}
+ if(managementView){$('head').innerHTML=interiorHeader('management-header','management-home');}
+ if(restView){$('head').innerHTML=interiorHeader('rest-header','rest-home');}
+ // Presentation only: keep the already selected management tab inside its horizontal viewport.
+ if(managementView){const chips=$('content').querySelector('.vis-chips'),selected=chips?.querySelector('[aria-pressed="true"]');if(selected){chips.scrollLeft+=selected.getBoundingClientRect().left-chips.getBoundingClientRect().left-chips.clientWidth/2+selected.getBoundingClientRect().width/2;}}
  if(back){
   const original=back.onclick;const label=back.textContent.trim();
   back.className='top-back';back.type='button';back.title=label;back.setAttribute('aria-label',label);
-  if(interiorTitle){back.className='real-interior-back';back.setAttribute('aria-label','Volver');back.innerHTML=homeIcon('arrow-left');}else back.textContent='← Volver';back.onclick=function(event){safeNavigation(()=>{window.INVENTA_MGMT?.cancelView?.();original?.call(back,event);});};
+  if(interiorTitle){back.className='real-interior-back vis-icon-button vis-icon-button--bare';back.setAttribute('aria-label','Volver');back.innerHTML=homeIcon('arrow-left');}else if(screen==='consult'||inventoryView||managementView||restView){back.className='vis-icon-button vis-icon-button--bare';back.innerHTML=homeIcon('arrow-left');}else back.innerHTML=homeIcon('arrow-left')+' Volver';back.onclick=function(event){safeNavigation(()=>{window.INVENTA_MGMT?.cancelView?.();original?.call(back,event);});};
   const nav=document.createElement('nav');nav.id='topNavigation';nav.setAttribute('aria-label','Volver a la pantalla anterior');nav.appendChild(back);
-  if(interiorTitle){nav.className='real-interior-nav';$('head').querySelector('.real-interior-bar').prepend(nav);}else $('head').appendChild(nav);
+  if(interiorTitle){nav.className='real-interior-nav';$('head').querySelector('.real-interior-bar').prepend(nav);}else if(screen==='consult'){nav.className='consult-nav';$('head').querySelector('.consult-header').prepend(nav);}else if(inventoryView){nav.className='inventory-nav';$('head').querySelector('.inventory-header').prepend(nav);}else if(managementView){nav.className='management-nav';$('head').querySelector('.management-header').prepend(nav);}else if(restView){nav.className='rest-nav';$('head').querySelector('.rest-header').prepend(nav);}else $('head').appendChild(nav);
  }
  $('foot').hidden=!$('foot').textContent.trim();
  navigationBaseline=navigationFields().map(el=>[el,el.type==='checkbox'?el.checked:el.value]);
@@ -510,9 +632,9 @@ function openConsultFromHome(){
 
 let inventaInstallPrompt=null;
 function inventaInstalled(){return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}
-function installMarkup(){return inventaInstalled()?'<span>Aplicación instalada</span>':'<button type="button" id="installInventa" class="landing-account" onclick="installInventa()">Instalar aplicación</button>';}
+function installMarkup(closeBefore=false){return inventaInstalled()?'<p class="vis-help settings-installed">'+homeIcon('circle-check')+' Aplicación instalada</p>':'<button type="button" id="installInventa" class="vis-button-primary" onclick="'+(closeBefore?'hideModal();':'')+'installInventa()">Instalar aplicación</button>';}
 function installInstructions(){
- $('overlay').innerHTML='<div class="modalback"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="installTitle"><h2 id="installTitle">INVENTA en tu escritorio</h2><p class="muted" style="margin:14px 0">Abre INVENTA en Microsoft Edge o Google Chrome. Pulsa el icono de instalación de la barra de direcciones y confirma Instalar.</p><p class="muted">También puedes buscar la opción de instalar esta página como aplicación en el menú del navegador. En iPhone: Compartir → Añadir a pantalla de inicio.</p><p class="muted" style="margin-top:14px">Se abrirá en su propia ventana con tu cuenta y las funciones permitidas por tu rol. La sincronización necesita conexión; los envíos pendientes se conservan en este dispositivo.</p><button class="btn" style="margin-top:18px" onclick="hideModal()">Entendido</button></section></div>';
+ $('overlay').innerHTML='<div class="modalback settings-backdrop"><section class="compact-settings vis-card vis-stack" role="dialog" aria-modal="true" aria-labelledby="installTitle"><div class="vis-title"><h2 id="installTitle">INVENTA en tu escritorio</h2></div><p class="vis-help">Abre INVENTA en Microsoft Edge o Google Chrome. Pulsa el icono de instalación de la barra de direcciones y confirma Instalar.</p><p class="vis-help">También puedes buscar la opción de instalar esta página como aplicación en el menú del navegador. En iPhone: Compartir → Añadir a pantalla de inicio.</p><p class="vis-help">Se abrirá en su propia ventana con tu cuenta y las funciones permitidas por tu rol. La sincronización necesita conexión; los envíos pendientes se conservan en este dispositivo.</p><button class="vis-button-primary" onclick="hideModal()">Entendido</button></section></div>';
 }
 async function installInventa(){
  if(inventaInstalled())return;
@@ -528,16 +650,10 @@ function homePermissions(){
  return {authenticated,role,inventory:authenticated&&['operator','supervisor','admin'].includes(role),consultation:authenticated&&api.isManager(),management:authenticated&&api.isManager(),demo:authenticated&&api.isAdmin()};
 }
 // VISURA 13: presentation-only compact home. All navigation and permission checks remain original.
-const HOME_ICONS={
- settings:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
- inventory:'<path d="M16.5 9.4 7.5 4.21"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',
- consultation:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>',
- management:'<path d="M22 22V7L12 2 2 7v15M2 22h20M6 22V10h12v12M6 14h12M6 18h12"/>',
- arrow:'<path d="M5 12h14m-7-7 7 7-7 7"/>',
- close:'<path d="m18 6-12 12M6 6l12 12"/>',
- 'triangle-alert':'<path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>'
-,'arrow-left':'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>'};
-function homeIcon(name){return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+HOME_ICONS[name]+'</svg>';}
+const HOME_ICON_NAMES=Object.freeze({inventory:'package',consultation:'search',management:'warehouse',arrow:'arrow-right',close:'x'});
+function homeIcon(name){return '<svg class="vis-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-'+(HOME_ICON_NAMES[name]||name)+'"/></svg>';}
+// Presentation only: use the existing status strings without mutating stored or compared values.
+function iconFeedback(value,escapeText=false){const raw=String(value);const marker=raw.match(/^(⚠️?|✓)\s*/);const text=marker?raw.slice(marker[0].length):raw;return (marker?homeIcon(marker[1].startsWith('⚠')?'triangle-alert':'check')+' ':'')+(escapeText?esc(text):text);}
 let homeBCObserver=null,homeDismissedExport='',homeDismissedUser='';
 function homeBCUser(){return window.INVENTA_MGMT?.getUserId?.()||'';}
 function updateHomeBCPresentation(){
@@ -548,27 +664,21 @@ function updateHomeBCPresentation(){
 }
 function dismissHomeBCWarning(){const status=$('bcLiveStatus');if(status){homeDismissedExport=status.dataset.bcExport||'';homeDismissedUser=homeBCUser();}updateHomeBCPresentation();}
 function observeHomeBC(){if(homeBCObserver)homeBCObserver.disconnect();const status=$('bcLiveStatus');if(!status)return;homeBCObserver=new MutationObserver(updateHomeBCPresentation);homeBCObserver.observe(status,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['data-bc-state','data-bc-export']});updateHomeBCPresentation();}
-function openCompactHomeSettings(){
- const allowed=homePermissions(),profile=window.INVENTA_MGMT?.profile;
- const roleLabel={operator:'Operario',supervisor:'Supervisor',admin:'Administrador'}[allowed.role]||'';
- $('overlay').innerHTML='<div class="modalback"><section class="modal compact-settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="compact-settings-heading"><h2 id="settingsTitle">Ajustes</h2><button type="button" class="compact-icon-button" onclick="hideModal()" aria-label="Cerrar ajustes">'+homeIcon('close')+'</button></div><p class="compact-settings-version">'+($('head').querySelector('.real-interior-bar')?'INVENTA · v':'Entorno piloto · v')+APP_VERSION+'</p>'+(allowed.authenticated?'<p class="compact-settings-user">'+esc(profile?.display_name||'Usuario')+' · '+esc(roleLabel)+'</p>':'<p class="compact-settings-user">Accede con tu cuenta para ver tus funciones.</p>')+(allowed.management?'<section class="compact-settings-info"><h3>Estado de datos BC</h3><p id="compactBCDetails" role="status"></p></section>':'')+'<section class="compact-settings-info"><h3>Aplicación</h3><div class="compact-settings-actions">'+installMarkup()+'<button type="button" class="btn-outline" onclick="hideModal();safeNavigation(()=>checkForUpdates(true))">Buscar actualizaciones</button></div></section>'+(allowed.demo?'<section class="compact-settings-info"><h3>Demostración</h3><button type="button" class="btn-outline" onclick="hideModal();safeNavigation(()=>go(\'demo-home\'))">Zona de demostración</button><p>Recuentos reales individuales. Las pruebas de pareja y escáner están en la zona de demostración.</p></section>':'')+((data.worker&&!allowed.authenticated)?'<button type="button" class="btn-outline" onclick="showModal(\'menu\')">Opciones de demostración</button>':'')+(allowed.authenticated?'<button type="button" class="btn-outline compact-logout" onclick="safeNavigation(()=>{hideModal();logoutManager();})">Cerrar sesión</button>':'')+'</section></div>';
- updateHomeBCPresentation();$('settingsTitle').setAttribute('tabindex','-1');$('settingsTitle').focus();
-}
 function renderHome(){
  if(homeBCObserver)homeBCObserver.disconnect();
  const allowed=homePermissions(),profile=window.INVENTA_MGMT?.profile;
  const name=profile?.display_name||'Usuario',roleLabel={operator:'Operario',supervisor:'Supervisor',admin:'Administrador'}[allowed.role]||'';
  if(!allowed.authenticated){homeDismissedExport='';homeDismissedUser='';}
- const person=allowed.authenticated?'<div class="compact-greeting"><span class="compact-avatar" aria-hidden="true">'+esc(name.charAt(0).toUpperCase())+'</span><span class="compact-greeting-name">Hola, <b>'+esc(name)+'</b></span><span class="compact-role">'+roleLabel+'</span></div>':'';
- const top='<div class="compact-header"><svg class="compact-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 112" width="496" height="112" role="img" aria-label="VISURA INVENTA"><text x="0" y="24" font-size="28" font-weight="800" letter-spacing="5" fill="currentColor">VISURA</text><g transform="translate(0 32)"><g fill="currentColor"><path d="M0 0h20v80H0z"/><path d="M34 80V0h20l24 43V0h20v80H78L54 37v43z"/><path d="M110 0h23l15 51 16-51h23l-28 80h-23z"/><path d="M197 0h53v19h-32v11h29v18h-29v13h33v19h-54z"/><path d="M263 80V0h20l24 43V0h20v80h-20l-24-43v43z"/><path d="M337 0h64v21h-21v59h-22V21h-21z"/></g><path fill="#D52835" d="M410 80 441 0h24l31 80h-23l-20-53-20 53z"/></g></svg><button type="button" class="compact-icon-button" onclick="openSettings()" aria-label="Ajustes">'+homeIcon('settings')+'</button></div>'+person;
- function tile(kind,title,subtitle,action){return '<button type="button" class="compact-card '+kind+'" aria-label="'+title+'. '+subtitle+'" onclick="'+action+'"><img class="compact-card-photo" src="'+(kind==='consultation'?'assets/maquetacion-a/aprobadas-r1l2/realizar-consulta-movil-foto.webp':'assets/home-compact/'+kind+'.webp')+'" alt="" width="'+(kind==='consultation'?1412:800)+'" height="'+(kind==='consultation'?724:410)+'" loading="'+(kind==='inventory'?'eager':'lazy')+'" decoding="async"><span class="compact-card-copy"><span class="compact-card-title">'+homeIcon(kind)+'<strong>'+title+'</strong></span><small>'+subtitle+'</small></span><span class="compact-card-arrow">'+homeIcon('arrow')+'</span></button>';}
+ const person=allowed.authenticated?'<div class="compact-greeting"><span class="compact-avatar" aria-hidden="true">'+esc(name.charAt(0).toUpperCase())+'</span><span class="compact-greeting-name">Hola, <b>'+esc(name)+'</b></span><span class="compact-role vis-chip">'+roleLabel+'</span></div>':'';
+ const top='<div class="compact-header vis-header vis-header--home"><svg class="compact-brand vis-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 112" width="496" height="112" role="img" aria-label="VISURA INVENTA"><text x="0" y="24" font-size="28" font-weight="800" letter-spacing="5" fill="currentColor">VISURA</text><g transform="translate(0 32)"><g fill="currentColor"><path d="M0 0h20v80H0z"/><path d="M34 80V0h20l24 43V0h20v80H78L54 37v43z"/><path d="M110 0h23l15 51 16-51h23l-28 80h-23z"/><path d="M197 0h53v19h-32v11h29v18h-29v13h33v19h-54z"/><path d="M263 80V0h20l24 43V0h20v80h-20l-24-43v43z"/><path d="M337 0h64v21h-21v59h-22V21h-21z"/></g><path fill="#D52835" d="M410 80 441 0h24l31 80h-23l-20-53-20 53z"/></g></svg><button type="button" class="compact-icon-button vis-icon-button vis-icon-button--settings" onclick="openSettings()" aria-label="Ajustes">'+homeIcon('settings')+'</button></div>'+person;
+ function tile(kind,title,subtitle,action){return '<button type="button" class="compact-card vis-banner '+kind+'" aria-label="'+title+'. '+subtitle+'" onclick="'+action+'"><img class="compact-card-photo vis-banner-photo" src="'+(kind==='consultation'?'assets/home-compact/consultation-visible-800.webp':'assets/home-compact/'+kind+'.webp')+'" alt="" width="'+800+'" height="'+(kind==='consultation'?724:410)+'" loading="'+(kind==='inventory'?'eager':'lazy')+'" decoding="async"><span class="compact-card-copy vis-banner-copy"><span class="compact-card-title vis-banner-title">'+homeIcon(kind)+'<strong>'+title+'</strong></span><small>'+subtitle+'</small></span><span class="compact-card-arrow vis-banner-arrow">'+homeIcon('arrow')+'</span></button>';}
  if(!allowed.authenticated){
-  place(top+'<section class="welcome-art compact-welcome" aria-label="Bienvenido a INVENTA"><button type="button" class="welcome-image-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA desde la imagen del almacén"><img src="assets/brand/inventa-warehouse.webp" alt="Almacén con palets, Mahou, Voldis y el logo INVENTA en el portapapeles" width="768" height="768"></button><button type="button" class="welcome-logo-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA"><img src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></button><p class="welcome-hint">Pulsa INVENTA para entrar</p></section>','');return;
+  place(top+'<section class="welcome-art compact-welcome" aria-label="Bienvenido a INVENTA"><button type="button" class="welcome-image-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA desde la imagen del almacén"><img src="assets/brand/inventa-warehouse.webp" alt="Almacén con palets, Mahou, Voldis y el logo INVENTA en el portapapeles" width="768" height="768"></button><button type="button" class="welcome-logo-access" onclick="go(\'manager-login\')" aria-label="Acceder a INVENTA"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/brand/inventa-logo-white.svg"><img src="assets/brand/inventa-logo.svg" alt="INVENTA" width="496" height="80"></picture></button><p class="welcome-hint">Pulsa INVENTA para entrar</p></section>','');return;
  }
  const cards=(allowed.inventory?tile('inventory','Hacer inventario','Cuenta y registra · Individual','openAuthorizedHome(\'inventory\')'):'')
  +(allowed.consultation?tile('consultation','Realizar consulta','Encuentra lo que buscas','openAuthorizedHome(\'consultation\')'):'')
  +(allowed.management?tile('management','Gestión del almacén','Organiza y supervisa','openAuthorizedHome(\'management\')'):'');
- place(top+(allowed.management?'<p id="bcLiveStatus" hidden>Comprobando última actualización de BC en Supabase…</p><div class="compact-bc-warning" id="compactBCWarning" hidden><span class="compact-warning-copy">'+homeIcon('triangle-alert')+'<span role="status">Datos de hace más de 24 h</span></span><button type="button" class="compact-icon-button" onclick="dismissHomeBCWarning()" aria-label="Cerrar aviso">'+homeIcon('close')+'</button></div>':'')+'<div class="compact-cards">'+cards+'</div>','');
+ place(top+(allowed.management?'<p id="bcLiveStatus" hidden>Comprobando última actualización de BC en Supabase…</p><div class="compact-bc-warning vis-notice" id="compactBCWarning" hidden><span class="compact-warning-copy vis-notice-copy">'+homeIcon('triangle-alert')+'<span role="status">Datos de hace más de 24 h</span></span><button type="button" class="compact-icon-button vis-icon-button" onclick="dismissHomeBCWarning()" aria-label="Cerrar aviso">'+homeIcon('close')+'</button></div>':'')+'<div class="compact-cards vis-stack">'+cards+'</div>','');
  if(allowed.management){observeHomeBC();window.INVENTA_MGMT.refreshBCStatus();}
 }
 document.addEventListener('visibilitychange',function(){
@@ -586,11 +696,11 @@ function openAuthorizedHome(target){
 }
 function renderDemoHome(){
  if(!window.INVENTA_MGMT?.isAdmin()){go('home');return;}
- place('<div class="title"><h1>Zona de demostración</h1><p class="muted">Datos ficticios y recuentos locales. Separados del trabajo real.</p></div>'+
- '<div class="visura-a-demo-menu" aria-label="Opciones de demostración">'+
- '<button type="button" class="visura-a-demo-card inventory" onclick="startInventoryFromHome()"><span class="copy"><strong>Inventario de prueba</strong><small>Individual o pareja</small><span class="arrow" aria-hidden="true">→</span></span><img src="assets/menu/inventory-3d.webp" alt="" width="640" height="640"></button>'+
- '<button type="button" class="visura-a-demo-card consultation" onclick="window.INVENTA_CONSULT_DEMO=true;consultUser=\'\';go(\'consult-login\')"><span class="copy"><strong>Consulta con datos ficticios</strong><small>Artículos y ubicaciones de demostración</small><span class="arrow" aria-hidden="true">→</span></span><img src="assets/menu/consult-3d.webp" alt="" width="640" height="640"></button>'+ 
- '</div>','<button class="back" onclick="go(\'home\')">← Menú principal</button>');
+ place('<div class="vis-title"><h1>Zona de demostración</h1><p class="vis-help">Datos ficticios y recuentos locales. Separados del trabajo real.</p></div>'+
+ '<div class="visura-a-demo-menu vis-stack" aria-label="Opciones de demostración">'+
+ '<button type="button" class="visura-a-demo-card vis-banner inventory" onclick="startInventoryFromHome()"><img class="vis-banner-photo" src="assets/maquetacion-a/inventory-photo-approved-crop.webp" alt="" width="768" height="385" loading="eager" decoding="async"><span class="vis-banner-copy"><span class="vis-banner-title"><svg class="vis-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-package"/></svg><strong>Inventario de prueba</strong></span><small>Individual o pareja</small></span><span class="vis-banner-arrow" aria-hidden="true"><svg class="vis-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></span></button>'+
+ '<button type="button" class="visura-a-demo-card vis-banner consultation" onclick="window.INVENTA_CONSULT_DEMO=true;consultUser=\'\';go(\'consult-login\')"><img class="vis-banner-photo" src="assets/maquetacion-a/consultation-photo-approved-crop.webp" alt="" width="768" height="385" loading="lazy" decoding="async"><span class="vis-banner-copy"><span class="vis-banner-title"><svg class="vis-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-search"/></svg><strong>Consulta con datos ficticios</strong></span><small>Artículos y ubicaciones de demostración</small></span><span class="vis-banner-arrow" aria-hidden="true"><svg class="vis-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></span></button>'+ 
+ '</div>','<button class="back" onclick="go(\'home\')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> Menú principal</button>');
 }
 function renderManagerLogin(){window.INVENTA_MGMT.renderLogin();}
 function loginManager(){window.INVENTA_MGMT.signIn();}
@@ -599,12 +709,12 @@ function renderManagement(){window.INVENTA_MGMT.render();}
 function consultRole(){if(isManager()&&!window.INVENTA_CONSULT_DEMO)return window.INVENTA_MGMT.profile.role;return consultUser==='Supervisor (demo)'?'supervisor':consultUser==='Administrador (demo)'?'admin':'operator';}
 function consultBlocked(){return !!data.demoInventoryOpen&&consultRole()==='operator';}
 function renderConsultLogin(){
- place(`<div class="title"><div class="overline">CONSULTA INDIVIDUAL</div><h1>Identificar usuario</h1><p class="muted">La consulta no pide elegir entre individual y pareja.</p></div>
- <div class="card"><div class="field"><label for="consultAccount">Usuario de demostración</label><select id="consultAccount" class="input"><option>Operario 1</option><option>Operario 2</option><option>Supervisor (demo)</option><option>Administrador (demo)</option></select></div>
- <div class="field"><label for="consultPin">PIN de prueba</label><input id="consultPin" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="4 cifras"></div>
- <button class="btn" onclick="loginConsult()">Acceder a Consulta →</button><p class="muted" id="consultError" role="alert" style="margin-top:10px"></p></div>
- <div class="alert">PIN de demo: 1234. Con inventario abierto, Consulta se bloquea para operarios, no para supervisores y administradores. Los permisos reales requieren autenticación central.</div>`,
- '<button class="back" onclick="go(\'home\')">← Menú principal</button>');
+ place(`<div class="vis-title"><h1>Identificar usuario</h1><p class="vis-help">La consulta no pide elegir entre individual y pareja.</p></div>
+ <div class="vis-card vis-card--form"><div class="vis-field"><label for="consultAccount">Usuario de demostración</label><select id="consultAccount" class="vis-control"><option>Operario 1</option><option>Operario 2</option><option>Supervisor (demo)</option><option>Administrador (demo)</option></select></div>
+ <div class="vis-field"><label for="consultPin">PIN de prueba</label><input id="consultPin" class="vis-control" type="password" inputmode="numeric" maxlength="4" placeholder="4 cifras"></div>
+ <button class="vis-button-primary" onclick="loginConsult()">Acceder a Consulta <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></button><p class="vis-help" id="consultError" role="alert"></p></div>
+ <div class="vis-notice">PIN de demo: 1234. Con inventario abierto, Consulta se bloquea para operarios, no para supervisores y administradores. Los permisos reales requieren autenticación central.</div>`,
+ '<button class="back" onclick="go(\'home\')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> Menú principal</button>');
 }
 function loginConsult(){
  if($('consultPin')?.value!=='1234'){$('consultError').textContent='PIN incorrecto. Usa 1234 en la demo.';return;}
@@ -624,7 +734,7 @@ function closeDemoCampaign(){
  data.events.push({what:'Cierre de campaña de prueba',actor:consultUser,at:new Date().toISOString()});
  save();renderConsult();
 }
-function renderLogin(){place(`<div class="title"><div class="overline">IDENTIFICACIÓN · INVENTARIO</div><h1>Empezar inventario</h1><p class="muted">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="card"><div class="field"><label for="worker">Operario</label><select class="input" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="field"><label for="pin">PIN de prueba</label><input class="input" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="alert">PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</div><button class="btn" onclick="login()">Entrar al inventario →</button><p id="loginError" class="muted" style="margin-top:9px"></p></div><p class="muted">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p><button class="back" onclick="go('home')">← Menú principal</button>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
+function renderLogin(){place(`<div class="vis-title"><h1>Empezar inventario</h1><p class="vis-help">Selecciona tu usuario y escribe tu PIN de demostración.</p></div><div class="vis-card vis-card--form"><div class="vis-field"><label for="worker">Operario</label><select class="vis-control" id="worker"><option value="Operario 1">Operario 1</option><option value="Operario 2">Operario 2</option></select></div><div class="vis-field"><label for="pin">PIN de prueba</label><input class="vis-control" id="pin" type="password" inputmode="numeric" placeholder="4 cifras" maxlength="4" autocomplete="off"></div><div class="vis-notice"><span>PIN de la demostración: <b>1234</b>. No es una identificación segura ni conecta con la empresa.</span></div><button class="vis-button-primary" onclick="login()">Entrar al inventario <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></button><p id="loginError" class="vis-help"></p></div><p class="vis-help">La demo guarda el avance en este dispositivo. No sincroniza con Supabase ni Business Central.</p><button class="vis-button-secondary" onclick="go('home')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> Menú principal</button>`);$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});}
 function login(){if($('pin').value!=='1234'){$('loginError').textContent='PIN incorrecto. Usa el PIN de demostración.';return;}data.worker=$('worker').value;activeAisle='';if(data.countSession?.workers?.[0]!==data.worker)data.countSession=null;save();const d=readDraft(data.worker);if(d){restoreDraft(d);render();}else go(data.countSession?'aisles':'session');}
 
 /* Escáner móvil. La cámara se abre al pulsar; solo el sistema operativo gestiona permisos. */
@@ -825,9 +935,9 @@ function renderAisles(){
    const done=locs.filter(l=>progress(l).complete).length;
    const issues=locs.filter(l=>progress(l).flagged).length;
    const percent=locs.length?Math.round(100*done/locs.length):0;
-   return `<button class="item aisle-item" onclick="openAisle('${a}')"><span class="aisle-letter">${a}</span><span class="aisle-details"><strong>Pasillo ${a}</strong><small>${done} de ${locs.length} ubicaciones revisadas${issues?` · ⚠ ${issues} con aviso`:''}</small><span class="mini-progress"><span style="width:${percent}%"></span></span></span><span class="chev">›</span></button>`;
+   return `<button class="vis-list-item aisle-item" onclick="openAisle('${a}')"><span class="vis-list-icon aisle-letter">${a}</span><span class="vis-list-copy"><strong>Pasillo ${a}</strong><small>${done} de ${locs.length} ubicaciones revisadas${issues?` · ${homeIcon('triangle-alert')} ${issues} con aviso`:''}</small><span class="mini-progress"><span style="width:${percent}%"></span></span></span><span class="vis-list-chevron"><svg class="vis-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-chevron-right"/></svg></span></button>`;
  }).join('');
- place(`<div class="title"><div class="overline">INVENTARIO ASIGNADO</div><h1>Hola, ${esc(data.worker)}</h1><p class="muted">${esc(sessionLabel())}. Elige por qué pasillo quieres empezar o continuar.</p></div><button class="btn-outline" style="width:100%;margin-bottom:13px" onclick="changeSession()">⇄ Cambiar modalidad o pareja</button>${tiles}<div class="alert">Demo: estos pasillos están asignados solo como ejemplo. En la versión definitiva los asignará el responsable.</div>`,`<span class="muted">Puedes cambiar de pasillo al volver aquí.</span>`);
+ place(`<div class="vis-title"><h1>Hola, ${esc(data.worker)}</h1><p class="vis-help">INVENTARIO ASIGNADO · ${esc(sessionLabel())}. Elige por qué pasillo quieres empezar o continuar.</p></div><button class="vis-button-secondary"  onclick="changeSession()"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left-right"/></svg> Cambiar modalidad o pareja</button>${tiles}<div class="vis-notice inventory-notice">Demo: estos pasillos están asignados solo como ejemplo. En la versión definitiva los asignará el responsable.</div>`,`<span class="vis-help">Puedes cambiar de pasillo al volver aquí.</span>`);
 }
 function renderLocations(){
  if(!assignedAisles().includes(activeAisle)){go('aisles');return;}
@@ -846,22 +956,22 @@ function renderLocations(){
   const p=progress(l);
   const state=p.complete?'done-location':p.partial?'partial-location':'';
   const issue=p.flagged?'flag-location':'';
-  const suffix=p.flagged?'<span class="flag-ico">⚠</span>':p.complete?'<span class="done-ico">✓</span>':`<span class="tag">${p.done}/${p.total||0}</span>`;
+  const suffix=p.flagged?'<span class="flag-ico" role="img" aria-label="Revisar ubicación"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-triangle-alert"/></svg></span>':p.complete?'<span class="done-ico" role="img" aria-label="Recuento completo"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-check"/></svg></span>':`<span class="vis-chip inventory-chip">${p.done}/${p.total||0}</span>`;
   const detail=p.complete?'Recuento completo':p.partial?`${p.done}/${p.total} artículos · en curso`:'Pendiente de recuento';
-  return `<button class="item location-item ${state} ${issue}" onclick="openLocation('${l}')"><span><strong>${l}</strong><small>${detail}</small></span>${suffix}<span class="chev">›</span></button>`;
+  return `<button class="vis-list-item location-item ${state} ${issue}" onclick="openLocation('${l}')"><span class="vis-list-copy"><strong>${l}</strong><small>${detail}</small></span>${suffix}<span class="vis-list-chevron"><svg class="vis-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-chevron-right"/></svg></span></button>`;
  }).join('');
- place(`<div class="title"><div class="overline">PASILLO ${activeAisle} · UBICACIONES</div><div class="between"><h1>${activeAisle} · Mis ubicaciones</h1><span class="tag">${counts.counted}/${counts.all} revisadas</span></div><p class="muted">Las ubicaciones con fondo verde ya tienen todos sus artículos revisados.</p></div>
- <button class="scan-open" onclick="openScanner(\'location\')">▣ Escanear ubicación</button>
- <div class="filters">${options.map(([key,label])=>`<button class="${locationFilter===key?'selected':''}" onclick="setLocationFilter('${key}')">${label}<span>${counts[key]}</span></button>`).join('')}</div>
- ${html || '<div class="card"><p class="muted">No hay ubicaciones con este filtro.</p></div>'}
- <p class="muted">⚠ señala una diferencia o incidencia sin mostrar las existencias teóricas.</p>`,
- `<button class="back" onclick="go('aisles')">← Cambiar de pasillo</button>`);
+ place(`<div class="vis-title"><div class="between"><h1>${activeAisle} · Mis ubicaciones</h1><span class="vis-chip inventory-chip">${counts.counted}/${counts.all} revisadas</span></div><p class="vis-help">PASILLO ${activeAisle} · UBICACIONES · Las ubicaciones con fondo verde ya tienen todos sus artículos revisados.</p></div>
+ <button class="vis-button-primary" onclick="openScanner(\'location\')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-scan-barcode"/></svg> Escanear ubicación</button>
+ <div class="vis-chips inventory-filters">${options.map(([key,label])=>`<button class="vis-chip" aria-pressed="${locationFilter===key}" onclick="setLocationFilter('${key}')">${iconFeedback(label,true)}<span>${counts[key]}</span></button>`).join('')}</div>
+ ${html || '<div class="vis-empty">No hay ubicaciones con este filtro.</div>'}
+ <p class="vis-help"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-triangle-alert"/></svg> señala una diferencia o incidencia sin mostrar las existencias teóricas.</p>`,
+ `<button class="back" onclick="go('aisles')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> Cambiar de pasillo</button>`);
 }
 
 function openLocation(loc){if(aisleFor(loc)!==activeAisle)return;savedFeedback='';activeLoc=loc;const d=getLoc(loc);if(d.closed){go('closed')}else if(d.verified){go('articles')}else{verifyValue='';go('verify')}}
-function renderVerify(){place(`<div class="title"><div class="overline">PASO 1 · UBICACIÓN</div><h1>${activeLoc}</h1><p class="muted">Comprueba que estás delante de la ubicación correcta. Puedes leer su etiqueta con un escáner que escriba el código, o confirmarla visualmente.</p></div><div class="card"><div class="field"><label for="locationBarcode">Código de ubicación</label><input class="input" id="locationBarcode" autocapitalize="characters" autocomplete="off" placeholder="${activeLoc}" value="${esc(verifyValue)}"></div><button class="scan-open" onclick="openScanner(\'verify\')">▣ Leer etiqueta con cámara</button><button class="btn" onclick="confirmLocation(false)">Verificar código →</button><div style="height:11px"></div><button class="btn btn-light" onclick="confirmLocation(true)">Confirmar visualmente</button><p id="verifyError" class="muted" style="margin-top:9px"></p></div>`,`<button class="back" onclick="go('locations')">← Ubicaciones del pasillo</button>`);$('locationBarcode').addEventListener('keydown',e=>{if(e.key==='Enter')confirmLocation(false)});}
+function renderVerify(){place(`<div class="vis-title"><h1>${activeLoc}</h1><p class="vis-help">PASO 1 · UBICACIÓN · Comprueba que estás delante de la ubicación correcta. Puedes leer su etiqueta con un escáner que escriba el código, o confirmarla visualmente.</p></div><div class="vis-card"><div class="vis-field"><label for="locationBarcode">Código de ubicación</label><input class="vis-control" id="locationBarcode" autocapitalize="characters" autocomplete="off" placeholder="${activeLoc}" value="${esc(verifyValue)}"></div><button class="vis-button-primary" onclick="openScanner(\'verify\')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-scan-barcode"/></svg> Leer etiqueta con cámara</button><button class="vis-button-primary" onclick="confirmLocation(false)">Verificar código <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></button><button class="vis-button-secondary" onclick="confirmLocation(true)">Confirmar visualmente</button><p id="verifyError" class="vis-help"></p></div>`,`<button class="back" onclick="go('locations')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> Ubicaciones del pasillo</button>`);$('locationBarcode').addEventListener('keydown',e=>{if(e.key==='Enter')confirmLocation(false)});}
 function confirmLocation(manual){if(!manual&&$('locationBarcode').value.trim().toUpperCase()!==activeLoc){$('verifyError').textContent='El código no coincide con '+activeLoc+'. Revisa la ubicación.';return;}const d=getLoc(activeLoc);d.verified=true;data.events.push({what:'Ubicación confirmada',loc:activeLoc,mode:manual?'visual':'código',at:new Date().toISOString()});save();go('articles');}
-function renderArticles(){const d=getLoc(activeLoc),a=items(activeLoc),p=progress(activeLoc);place(`${savedFeedback?`<div class="alert ${savedFeedback.startsWith('⚠')?'':'green'}" role="status">${savedFeedback}</div>`:""}<div class="title"><div class="overline">PASO 2 · ARTÍCULOS</div><div class="between"><h1>${activeLoc}</h1><span class="tag ${p.done===p.total?'ok':''}">${p.done}/${p.total} contados</span></div><p class="muted">Pulsa un artículo o busca su código. Sin cantidades teóricas.</p></div><p class="article-legend"><b>■ Verde</b>: recuento válido · <span style="color:#ad6e18">■ Naranja</span>: incidencia pendiente</p><button class="scan-open" onclick="openScanner(\'article\')">▣ Escanear artículo</button><div class="field"><input class="input" id="articleSearch" placeholder="Buscar por código o nombre" oninput="filterArticles(this.value)"></div><div id="articleList"></div><div class="card"><button class="btn-outline" style="width:100%" onclick="showModal('unexpected')">+ Artículo que no aparece en la lista</button></div>${a.length===0?'<div class="alert">No hay artículos previstos. Si la ubicación está realmente vacía, puedes confirmarlo abajo.</div>':''}`,`<div class="stack"><button class="btn" onclick="${p.done<p.total?'nextPending()':'closeLocation()'}">${p.done<p.total?'Contar siguiente artículo pendiente →':a.length===0?'Revisar ubicación vacía →':'Revisar y cerrar ubicación →'}</button><button class="back" onclick="go('locations')">← Ubicaciones de ${activeAisle}</button></div>`);filterArticles('');}
+function renderArticles(){const d=getLoc(activeLoc),a=items(activeLoc),p=progress(activeLoc);place(`${savedFeedback?`<div class="vis-notice inventory-notice ${savedFeedback.startsWith('⚠')?'':'green'}" role="status">${iconFeedback(savedFeedback)}</div>`:""}<div class="vis-title"><div class="between"><h1>${activeLoc}</h1><span class="vis-chip inventory-chip ${p.done===p.total?'ok':''}">${p.done}/${p.total} contados</span></div><p class="vis-help">PASO 2 · ARTÍCULOS · Pulsa un artículo o busca su código. Sin cantidades teóricas.</p></div><p class="article-legend"><b><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-square"/></svg> Verde</b>: recuento válido · <span class="inventory-warning-text"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-square"/></svg> Naranja</span>: incidencia pendiente</p><button class="vis-button-primary" onclick="openScanner(\'article\')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-scan-barcode"/></svg> Escanear artículo</button><div class="vis-field"><input class="vis-control" id="articleSearch" aria-label="Buscar por código o nombre" placeholder="Buscar por código o nombre" oninput="filterArticles(this.value)"></div><div id="articleList" class="vis-stack"></div><div class="vis-card"><button class="vis-button-secondary" onclick="showModal('unexpected')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-plus"/></svg> Artículo que no aparece en la lista</button></div>${a.length===0?'<div class="vis-notice inventory-notice">No hay artículos previstos. Si la ubicación está realmente vacía, puedes confirmarlo abajo.</div>':''}`,`<div class="vis-stack"><button class="vis-button-primary" onclick="${p.done<p.total?'nextPending()':'closeLocation()'}">${p.done<p.total?'Contar siguiente artículo pendiente':a.length===0?'Revisar ubicación vacía':'Revisar y cerrar ubicación'} ${homeIcon('arrow-right')}</button><button class="back" onclick="go('locations')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> Ubicaciones de ${activeAisle}</button></div>`);filterArticles('');}
 function filterArticles(query){
  const a=items(activeLoc).filter(p=>(p.id+' '+p.name).toLowerCase().includes(String(query).toLowerCase()));
  $('articleList').innerHTML=a.length?a.map(p=>{
@@ -871,8 +981,8 @@ function filterArticles(query){
   const style=accepted?'counted-article':'';
   const warning=hasIssue?'issue-article':'';
   const label=hasIssue?'⚠ Pendiente de revisión':accepted?'✓ Contado':'Pendiente';
-  return '<button class="item article-item '+style+' '+warning+'" onclick="openArticle(\''+esc(p.id)+'\')"><span><strong style="font-size:16px">'+esc(p.name)+'</strong><small>'+esc(p.id)+(p.extra?' · Artículo añadido':'')+'</small></span><span class="tag '+(hasIssue?'warn':accepted?'ok':'')+'">'+label+'</span><span class="chev">›</span></button>';
- }).join(''):'<div class="alert">No se han encontrado artículos con ese texto.</div>';
+  return '<button class="vis-list-item article-item '+style+' '+warning+'" onclick="openArticle(\''+esc(p.id)+'\')">'+(accepted?homeIcon('check').replace('class="vis-icon"','class="vis-icon vis-counted-mark"'):'')+'<span class="vis-list-copy"><strong>'+esc(p.name)+'</strong><small>'+esc(p.id)+(p.extra?' · Artículo añadido':'')+'</small></span><span class="vis-chip inventory-chip '+(hasIssue?'warn':accepted?'ok':'')+'">'+iconFeedback(label)+'</span><span class="vis-list-chevron"><svg class="vis-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-chevron-right"/></svg></span></button>';
+ }).join(''):'<div class="vis-empty">No se han encontrado artículos con ese texto.</div>';
 }
 function openArticle(id){
  if(!items(activeLoc).some(p=>p.id===id))return;
@@ -914,7 +1024,7 @@ function entryDescription(e){
  return e.detail||((e.kind||'Apunte')+' · '+fmt(e.amount||0)+' unidades');
 }
 function entryRows(entries,editable=false){
- if(!entries.length)return '<p class="muted">Todavía no hay cantidades añadidas.</p>';
+ if(!entries.length)return '<p class="vis-help">Todavía no hay cantidades añadidas.</p>';
  return entries.map((e,i)=>{
   const isPallet=Array.isArray(e.factors)&&e.factors.length===4;
   const original=(getLoc(activeLoc).counts[activeArticle]?.entries||[])[i];
@@ -925,12 +1035,12 @@ function entryRows(entries,editable=false){
    if(isPallet){
     const labels=['Nº palés','Cajas por base','Alturas','Unidades por caja'];
     editor='<div class="inline-entry-editor"><div class="entry-factor-grid">'+e.factors.map((n,j)=>
-      '<label>'+labels[j]+'<input id="editFactor'+i+'_'+j+'" class="input" type="number" inputmode="numeric" min="1" max="99999999" step="1" value="'+n+'"></label>').join('')+'</div><p id="editEntryError" class="edit-reason-error"></p><button class="btn" onclick="applyEntryEdit('+i+')">Guardar cambio de este palé</button><button class="back" onclick="closeEntryEdit()">Cancelar edición</button></div>';
+      '<label>'+labels[j]+'<input id="editFactor'+i+'_'+j+'" class="vis-control" type="number" inputmode="numeric" min="1" max="99999999" step="1" value="'+n+'"></label>').join('')+'</div><p id="editEntryError" class="edit-reason-error"></p><button class="vis-button-primary" onclick="applyEntryEdit('+i+')">Guardar cambio de este palé</button><button class="back" onclick="closeEntryEdit()">Cancelar edición</button></div>';
    }else{
-    editor='<div class="inline-entry-editor"><label>Unidades de este apunte<input id="editNumber'+i+'" class="input" type="number" inputmode="numeric" min="1" max="99999999" step="1" value="'+e.amount+'"></label><p id="editEntryError" class="edit-reason-error"></p><button class="btn" onclick="applyEntryEdit('+i+')">Guardar cambio de esta cantidad</button><button class="back" onclick="closeEntryEdit()">Cancelar edición</button></div>';
+    editor='<div class="inline-entry-editor"><label>Unidades de este apunte<input id="editNumber'+i+'" class="vis-control" type="number" inputmode="numeric" min="1" max="99999999" step="1" value="'+e.amount+'"></label><p id="editEntryError" class="edit-reason-error"></p><button class="vis-button-primary" onclick="applyEntryEdit('+i+')">Guardar cambio de esta cantidad</button><button class="back" onclick="closeEntryEdit()">Cancelar edición</button></div>';
    }
   }
-  return '<div class="entry-detail '+(changed?'entry-changed':'')+'" id="entryRow'+i+'"><div class="entry-index">'+(i+1)+'</div><div class="entry-main"><b>'+esc(isPallet?'Palés':e.kind==='directa'?'Cantidad directa':e.kind==='palé'?'Palé anterior':(e.kind||'Apunte'))+'</b><small>'+esc(entryDescription(e))+'</small>'+(changed?'<span class="entry-change-label">MODIFICADO · antes '+fmt(original.amount)+'</span>':'')+'</div><strong>+'+fmt(e.amount)+'</strong>'+(editable?'<button class="entry-edit" onclick="openEntryEdit('+i+')">Modificar</button>':'')+editor+'</div>';
+  return '<div class="entry-detail '+(changed?'entry-changed':'')+'" id="entryRow'+i+'"><div class="entry-index">'+(i+1)+'</div><div class="vis-list-copy entry-main"><b>'+esc(isPallet?'Palés':e.kind==='directa'?'Cantidad directa':e.kind==='palé'?'Palé anterior':(e.kind||'Apunte'))+'</b><small>'+esc(entryDescription(e))+'</small>'+(changed?'<span class="entry-change-label">MODIFICADO · antes '+fmt(original.amount)+'</span>':'')+'</div><strong>+'+fmt(e.amount)+'</strong>'+(editable?'<button class="entry-edit vis-button-secondary" onclick="openEntryEdit('+i+')">Modificar</button>':'')+editor+'</div>';
  }).join('');
 }
 function startEditDetail(){
@@ -1018,22 +1128,22 @@ function renderEditDetail(){
  const historical=saved?(rec.corrections||[]).slice(-6).reverse().map(c=>
   '<div class="audit-line"><b>'+fmt(c.oldAmount)+' → '+fmt(c.newAmount)+' unidades</b><small>'+esc(c.reason||'Sin motivo')+' · '+esc(c.worker||'Operario')+' · '+esc(c.at||'')+'</small></div>').join(''):'';
  const total=countTotal();
- const title='<div class="title"><div class="overline">'+(saved?'MODIFICACIÓN JUSTIFICADA':'DESGLOSE DEL RECUENTO')+'</div><h1>'+esc(p.name)+'</h1><p class="muted">'+esc(activeLoc)+' · '+esc(p.id)+'</p></div>';
- const original=saved?'<div class="card original-record"><h2>Recuento original guardado</h2><p class="muted">Este desglose no se modifica ni se borra.</p>'+entryRows(originalEntries)+'<div class="original-total">TOTAL ORIGINAL <strong>'+fmt(rec.amount)+' unidades</strong></div></div>':'';
- const proposed='<div class="card proposed-record"><h2>'+(saved?'Recuento propuesto':'Detalle de las cantidades')+'</h2><p class="muted">Modifica cada apunte directamente; no se elimina ninguna línea.</p>'+entryRows(pendingEntries,true)
+ const title='<div class="vis-title"><h1>'+esc(p.name)+'</h1><p class="vis-help">'+(saved?'MODIFICACIÓN JUSTIFICADA':'DESGLOSE DEL RECUENTO')+' · '+esc(activeLoc)+' · '+esc(p.id)+'</p></div>';
+ const original=saved?'<div class="vis-card original-record"><h2>Recuento original guardado</h2><p class="vis-help">Este desglose no se modifica ni se borra.</p>'+entryRows(originalEntries)+'<div class="original-total">TOTAL ORIGINAL <strong>'+fmt(rec.amount)+' unidades</strong></div></div>':'';
+ const proposed='<div class="vis-card proposed-record"><h2>'+(saved?'Recuento propuesto':'Detalle de las cantidades')+'</h2><p class="vis-help">Modifica cada apunte directamente; no se elimina ninguna línea.</p>'+entryRows(pendingEntries,true)
   +'<div class="proposed-total">TOTAL ACUMULADO <strong>'+fmt(total)+' unidades</strong></div>'
   +(saved?'<div class="change-total">Diferencia respecto al original: <b>'+(total>rec.amount?'+':'')+fmt(total-rec.amount)+' unidades</b></div>':'')+'</div>';
- const reason=saved?'<div class="card"><h2>Motivo de la modificación</h2><label class="reason-label" for="editReasonSelect">Selecciona el motivo (obligatorio)</label>'
-  +'<select class="input" id="editReasonSelect" onchange="changeEditReason()"><option value="">Elegir motivo…</option>'+reasons.map(r=>'<option value="'+esc(r)+'"'+(editReasonChoice===r?' selected':'')+'>'+esc(r)+'</option>').join('')+'</select>'
-  +'<div id="editReasonWrap" '+(editReasonChoice==='Otro motivo'?'':'hidden')+'><label class="reason-label" for="editReasonNote">Explica qué ha sucedido</label><textarea class="input edit-note" id="editReasonNote" oninput="captureEditReason()" placeholder="Ej.: apareció una unidad en otra ubicación">'+esc(editReasonNote)+'</textarea></div>'
+ const reason=saved?'<div class="vis-card"><h2>Motivo de la modificación</h2><label class="reason-label" for="editReasonSelect">Selecciona el motivo (obligatorio)</label>'
+  +'<select class="vis-control" id="editReasonSelect" onchange="changeEditReason()"><option value="">Elegir motivo…</option>'+reasons.map(r=>'<option value="'+esc(r)+'"'+(editReasonChoice===r?' selected':'')+'>'+esc(r)+'</option>').join('')+'</select>'
+  +'<div id="editReasonWrap" '+(editReasonChoice==='Otro motivo'?'':'hidden')+'><label class="reason-label" for="editReasonNote">Explica qué ha sucedido</label><textarea class="vis-control edit-note" id="editReasonNote" oninput="captureEditReason()" placeholder="Ej.: apareció una unidad en otra ubicación">'+esc(editReasonNote)+'</textarea></div>'
   +'<p id="editReasonError" class="edit-reason-error"></p></div>':'';
- const audit=entryEdits.length?'<div class="card"><h2>Correcciones de esta sesión</h2>'+entryEdits.map(x=>'<div class="audit-line"><b>Apunte '+(x.index+1)+': '+fmt(x.oldAmount)+' → '+fmt(x.newAmount)+' unidades</b><small>'+esc(x.oldDetail)+' → '+esc(x.newDetail)+'</small></div>').join('')+'</div>':'';
+ const audit=entryEdits.length?'<div class="vis-card"><h2>Correcciones de esta sesión</h2>'+entryEdits.map(x=>'<div class="audit-line"><b>Apunte '+(x.index+1)+': '+fmt(x.oldAmount)+' → '+fmt(x.newAmount)+' unidades</b><small>'+esc(x.oldDetail)+' → '+esc(x.newDetail)+'</small></div>').join('')+'</div>':'';
  place(title+original+proposed+reason+audit
- +(historical?'<div class="card"><h2>Historial de correcciones anteriores</h2>'+historical+'</div>':'')
- +'<p class="muted">'+(saved?'El original se conserva hasta confirmar. Una diferencia queda como incidencia pendiente.':'Cada corrección queda vinculada a su apunte antes de guardar el recuento.')+'</p>',
- '<div class="stack"><button class="btn" onclick="resumeEditCounter()">+ Añadir unidades o palés</button>'
- +'<button class="btn-outline" onclick="finishEditDetail()">Revisar y confirmar cantidades →</button>'
- +'<button class="back" onclick="cancelEditDetail()">← '+(saved?'Salir sin guardar los cambios':'Volver al teclado')+'</button></div>');
+ +(historical?'<div class="vis-card"><h2>Historial de correcciones anteriores</h2>'+historical+'</div>':'')
+ +'<p class="vis-help">'+(saved?'El original se conserva hasta confirmar. Una diferencia queda como incidencia pendiente.':'Cada corrección queda vinculada a su apunte antes de guardar el recuento.')+'</p>',
+ '<div class="vis-stack"><button class="vis-button-primary" onclick="resumeEditCounter()"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-plus"/></svg> Añadir unidades o palés</button>'
+ +'<button class="vis-button-secondary" onclick="finishEditDetail()">Revisar y confirmar cantidades <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></button>'
+ +'<button class="back" onclick="cancelEditDetail()"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> '+(saved?'Salir sin guardar los cambios':'Volver al teclado')+'</button></div>');
 }
 
 function finishEditDetail(){
@@ -1059,7 +1169,7 @@ function getProduct(){return items(activeLoc).find(p=>p.id===activeArticle)}
 function countedUnit(){return 'unidades';}
 function countedUnitUpper(){return 'UNIDADES';}
 function countTotal(){return pendingEntries.reduce((sum,e)=>sum+e.amount,0)}
-function renderCount(){const p=getProduct();const rec=getLoc(activeLoc).counts[p.id];place(`<div class="cproduct"><span>${esc(activeLoc)} · ${esc(p.id)}</span><b>${esc(p.name)}</b><small>Unidad de recuento: <strong>UNIDADES</strong></small></div><div class="modebar"><button id="modeDirect" onclick="setMode('direct')">+ CANTIDAD</button><button id="modePallet" onclick="setMode('pallet')">▦ CÁLCULO DE PALÉS</button></div><div class="reuse-row" id="reusePalletRow" hidden><button onclick="repeatLastPallet()">↻ Repetir el último palé</button></div><div class="between" style="margin-bottom:7px"><span class="muted" id="cStep" style="color:#b9cadd"></span><span id="cProgress" class="tag"></span></div><div class="display"><div class="caption"><span id="cCaption">Cantidad directa</span><span id="cUnit">${countedUnitUpper(p)}</span></div><div class="digits" id="cDigits">0</div><div class="desc" id="cDesc"></div></div><div class="keypad"><button onclick="digit('1')">1</button><button onclick="digit('2')">2</button><button onclick="digit('3')">3</button><button onclick="digit('4')">4</button><button onclick="digit('5')">5</button><button onclick="digit('6')">6</button><button onclick="digit('7')">7</button><button onclick="digit('8')">8</button><button onclick="digit('9')">9</button><button class="ctl" onclick="clearDigit()">BORRAR</button><button onclick="digit('0')">0</button><button class="ctl" onclick="backDigit()">⌫</button></div><button id="cAction" class="addbtn" onclick="actionDigit()">+ AÑADIR AL TOTAL</button><div class="count-feedback" id="countFeedback" role="status" aria-live="polite">Aún no has sumado cantidades.</div><div class="c-tools"><span id="cEntries">0 apuntes</span><button onclick="openBreakdown()">VER / CORREGIR ›</button></div>`,`<div class="counter-total"><div class="total-heading">TOTAL ACUMULADO</div><div class="total-reading"><strong id="liveTotal">${fmt(countTotal())}</strong><span class="total-unit">${countedUnitUpper(p)}</span></div><div class="total-staged">● PROVISIONAL · SIN GUARDAR</div></div><div class="counter-footer"><button onclick="cancelCount()">${editOriginal!==null?"← Desglose":"← Artículos"}</button><button onclick="openBreakdown()">✎ Corregir</button><button onclick="prepareReview()">IR A CONFIRMAR →</button></div>`);drawCount();}
+function renderCount(){const p=getProduct();const rec=getLoc(activeLoc).counts[p.id];place(`<div class="cproduct vis-title"><h1>${esc(p.name)}</h1><p>${esc(activeLoc)} · ${esc(p.id)} · Unidad de recuento: <strong>UNIDADES</strong></p></div><div class="modebar vis-segment"><button id="modeDirect" aria-pressed="true" onclick="setMode('direct')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-plus"/></svg> CANTIDAD</button><button id="modePallet" aria-pressed="false" onclick="setMode('pallet')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-calculator"/></svg> CÁLCULO DE PALÉS</button></div><div class="reuse-row" id="reusePalletRow" hidden><button onclick="repeatLastPallet()"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-refresh-cw"/></svg> Repetir el último palé</button></div><div class="between" ><span class="vis-help" id="cStep" ></span><span id="cProgress" class="vis-chip inventory-chip"></span></div><div class="display vis-card"><div class="caption"><span id="cCaption">Cantidad directa</span><span id="cUnit">${countedUnitUpper(p)}</span></div><div class="digits" id="cDigits">0</div><div class="desc" id="cDesc"></div></div><div class="keypad"><button onclick="digit('1')">1</button><button onclick="digit('2')">2</button><button onclick="digit('3')">3</button><button onclick="digit('4')">4</button><button onclick="digit('5')">5</button><button onclick="digit('6')">6</button><button onclick="digit('7')">7</button><button onclick="digit('8')">8</button><button onclick="digit('9')">9</button><button class="ctl" onclick="clearDigit()">BORRAR</button><button onclick="digit('0')">0</button><button class="ctl" onclick="backDigit()" aria-label="Borrar último dígito"><svg class="vis-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-delete"/></svg></button></div><button id="cAction" class="addbtn vis-button-primary" onclick="actionDigit()"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-plus"/></svg> AÑADIR AL TOTAL</button><div class="count-feedback" id="countFeedback" role="status" aria-live="polite">Aún no has sumado cantidades.</div><div class="c-tools"><span id="cEntries">0 apuntes</span><button class="vis-button-secondary" onclick="openBreakdown()">VER / CORREGIR <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-chevron-right"/></svg></button></div>`,`<div class="counter-total vis-card"><div class="total-heading">TOTAL ACUMULADO</div><div class="total-reading"><strong id="liveTotal">${fmt(countTotal())}</strong><span class="total-unit">${countedUnitUpper(p)}</span></div><div class="total-staged"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-circle"/></svg> PROVISIONAL · SIN GUARDAR</div></div><div class="counter-footer"><button class="vis-button-secondary" onclick="cancelCount()">${homeIcon('arrow-left')} ${editOriginal!==null?"Desglose":"Artículos"}</button><button class="vis-button-secondary" onclick="openBreakdown()"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-pencil"/></svg> Corregir</button><button class="vis-button-primary" onclick="prepareReview()">IR A CONFIRMAR <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></button></div>`);drawCount();}
 function setMode(v){cMode=v;cStep=0;cInput='';cParts=[0,0,0,0];repeatMode=false;overwriteInput=false;countFeedback='';drawCount();}
 function digit(n){if(overwriteInput){cInput='';overwriteInput=false;}if(cInput.length>=8)return;cInput=(cInput+n).replace(/^0+(?=\d)/,'');if(cInput==='0')cInput='';drawCount();}
 function clearDigit(){cInput='';overwriteInput=false;drawCount()};function backDigit(){cInput=cInput.slice(0,-1);overwriteInput=false;drawCount()};
@@ -1077,6 +1187,7 @@ function drawCount(){
  const units=['PALÉS','CAJAS','ALTURAS','UNIDADES'];
  $('modeDirect').classList.toggle('on',cMode==='direct');
  $('modePallet').classList.toggle('on',cMode==='pallet');
+ $('modeDirect').setAttribute('aria-pressed',String(cMode==='direct'));$('modePallet').setAttribute('aria-pressed',String(cMode==='pallet'));
  $('cDigits').textContent=cInput||'0';
  $('cCaption').textContent=cMode==='direct'?'Unidades contadas':labels[cStep];
  $('cUnit').textContent=cMode==='direct'?'UNIDADES':units[cStep];
@@ -1100,14 +1211,14 @@ function drawCount(){
    $('cDesc').textContent=[...cParts.slice(0,3),n].join(' × ')+' = '+fmt(product)+' unidades';
   }else{$('cDesc').textContent=guide[cStep];}
  }
- $('cAction').textContent=cMode==='direct'?'+ AÑADIR CANTIDAD':repeatMode?'+ SUMAR PALÉS REPETIDOS':cStep<3?'SIGUIENTE ›':'+ SUMAR PALÉS AL TOTAL';
+ $('cAction').innerHTML=cMode==='direct'?homeIcon('plus')+' AÑADIR CANTIDAD':repeatMode?homeIcon('plus')+' SUMAR PALÉS REPETIDOS':cStep<3?'SIGUIENTE '+homeIcon('chevron-right'):homeIcon('plus')+' SUMAR PALÉS AL TOTAL';
  const finalProduct=cMode==='pallet'&&(repeatMode||cStep===3);
  const tooLarge=finalProduct&&n&&(!Number.isSafeInteger(product)||product>99999999);
  $('cAction').disabled=!n||!!tooLarge;
  if(tooLarge)$('cDesc').textContent='Resultado demasiado grande. Revisa los factores.';
  $('cEntries').textContent=pendingEntries.length+' '+(pendingEntries.length===1?'apunte':'apuntes')+' realizados';
  $('liveTotal').textContent=fmt(countTotal());
- $('countFeedback').textContent=countFeedback||'Cantidad aún no guardada. Pulsa AÑADIR para incorporarla al total.';
+ $('countFeedback').innerHTML=iconFeedback(countFeedback||'Cantidad aún no guardada. Pulsa AÑADIR para incorporarla al total.',true);
  saveDraft();
 }
 function actionDigit(){
@@ -1138,7 +1249,7 @@ function actionDigit(){
 function undoEntry(){openBreakdown();}
 function cancelCount(){if(editOriginal!==null){countFeedback='';go('edit-detail');return;}if((pendingEntries.length||cInput||cParts.some(Boolean)||repeatMode)&&!confirm('Hay un recuento en curso. ¿Quieres descartarlo y volver al listado?'))return;clearDraft();go('articles');}
 function prepareReview(){if(countTotal()===0){showModal('emptycount');return;}pendingResult='counted';go('review');}
-function renderReview(){const p=getProduct();place(`<div class="title"><div class="overline">PASO 4 · REVISIÓN</div><h1>Confirmar recuento</h1><p class="muted">${esc(activeLoc)} · ${esc(p.name)}</p></div><div class="card" style="text-align:center"><div class="overline">TOTAL CONTADO</div><div style="font-size:48px;font-weight:950;color:#142f4f">${fmt(countTotal())}</div><div class="muted">${countedUnit(p)} · ${pendingEntries.length} apuntes</div></div><div class="card"><h2>Detalle</h2>${pendingEntries.map(e=>`<div class="between" style="border-bottom:1px solid #edf0f5;padding:8px 0"><span class="muted">${esc(e.kind)}: ${esc(e.detail)}</span><b>+${fmt(e.amount)}</b></div>`).join('')}</div><div class="alert">Al confirmar, INVENTA exige coincidencia exacta. Si hay diferencia, se registrará una incidencia pendiente y nunca se marcará el recuento como válido.</div>`,`<div class="stack"><button class="btn" onclick="validateCount()">CONFIRMAR Y GUARDAR ARTÍCULO →</button><button class="back" onclick="openBreakdown()">← Modificar cantidades</button></div>`);}
+function renderReview(){const p=getProduct();place(`<div class="vis-title"><h1>Confirmar recuento</h1><p class="vis-help">PASO 4 · REVISIÓN · ${esc(activeLoc)} · ${esc(p.name)}</p></div><div class="vis-card inventory-centered"><div class="inventory-stage">TOTAL CONTADO</div><div class="inventory-total">${fmt(countTotal())}</div><div class="vis-help">${countedUnit(p)} · ${pendingEntries.length} apuntes</div></div><div class="vis-card"><h2>Detalle</h2>${pendingEntries.map(e=>`<div class="between inventory-detail-line"><span class="vis-help">${esc(e.kind)}: ${esc(e.detail)}</span><b>+${fmt(e.amount)}</b></div>`).join('')}</div><div class="vis-notice inventory-notice">Al confirmar, INVENTA exige coincidencia exacta. Si hay diferencia, se registrará una incidencia pendiente y nunca se marcará el recuento como válido.</div>`,`<div class="vis-stack"><button class="vis-button-primary" onclick="validateCount()">CONFIRMAR Y GUARDAR ARTÍCULO <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></button><button class="back" onclick="openBreakdown()"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> Modificar cantidades</button></div>`);}
 const tolerance=expected=>Math.max(2,Math.floor(expected*.05));
 function validateCount(){
  const p=getProduct(),amount=countTotal();
@@ -1148,11 +1259,11 @@ function validateCount(){
 }
 function renderWarning(){
  const p=getProduct();
- place('<div class="title"><div class="overline">CONTROL · TOLERANCIA CERO</div><h1>⚠️ Diferencia detectada</h1><p class="muted">'+esc(p.name)+'</p></div>'
- +'<div class="alert red"><b>No se acepta este recuento como correcto.</b> La cantidad introducida no coincide con el registro de control. Las existencias teóricas no se muestran al operario.</div>'
- +'<div class="card" style="text-align:center"><div class="overline">CANTIDAD CONTADA</div><div style="font-size:48px;font-weight:950">'+fmt(countTotal())+'</div><span class="muted">unidades</span></div>'
- +'<p class="muted">Puedes volver a contar o registrar una incidencia pendiente de revisión. Una incidencia no equivale a un recuento validado.</p>',
- '<div class="stack"><button class="btn" onclick="go(\'count\')">Volver a contar</button><button class="btn-outline" onclick="registerDiscrepancy(false)">Registrar incidencia pendiente</button></div>');
+ place('<div class="vis-title"><h1><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-triangle-alert"/></svg> Diferencia detectada</h1><p class="vis-help">CONTROL · TOLERANCIA CERO · '+esc(p.name)+'</p></div>'
+ +'<div class="vis-notice inventory-notice red"><b>No se acepta este recuento como correcto.</b> La cantidad introducida no coincide con el registro de control. Las existencias teóricas no se muestran al operario.</div>'
+ +'<div class="vis-card inventory-centered"><div class="inventory-stage">CANTIDAD CONTADA</div><div class="inventory-total">'+fmt(countTotal())+'</div><span class="vis-help">unidades</span></div>'
+ +'<p class="vis-help">Puedes volver a contar o registrar una incidencia pendiente de revisión. Una incidencia no equivale a un recuento validado.</p>',
+ '<div class="vis-stack"><button class="vis-button-primary" onclick="go(\'count\')">Volver a contar</button><button class="vis-button-secondary" onclick="registerDiscrepancy(false)">Registrar incidencia pendiente</button></div>');
 }
 function registerDiscrepancy(notFound=false){
  const p=getProduct();if(!p)return;
@@ -1202,15 +1313,15 @@ function renderLocationReview(){
   const rec=c[p.id];
   const issue=rec&&(rec.notFound||rec.warning||rec.amount!==p.theoretical||p.extra);
   const status=!rec?'Pendiente':rec.notFound?'No encontrado':issue?'Con aviso':'Contado';
-  return '<div class="location-review-item '+(issue?'review-issue':'')+'"><div><b>'+esc(p.name)+'</b><small>'+esc(p.id)+'</small></div><span class="tag '+(issue?'warn':'ok')+'">'+status+'</span></div>';
+  return '<div class="location-review-item '+(issue?'review-issue':'')+'"><div><b>'+esc(p.name)+'</b><small>'+esc(p.id)+'</small></div><span class="vis-chip inventory-chip '+(issue?'warn':'ok')+'">'+status+'</span></div>';
  }).join('');
- place('<div class="title"><div class="overline">REVISIÓN ANTES DEL CIERRE</div><h1>'+esc(activeLoc)+'</h1><p class="muted">Comprueba los estados. Las cantidades teóricas siguen ocultas.</p></div>'
+ place('<div class="vis-title"><h1>'+esc(activeLoc)+'</h1><p class="vis-help">REVISIÓN ANTES DEL CIERRE · Comprueba los estados. Las cantidades teóricas siguen ocultas.</p></div>'
  +'<div class="review-metrics"><div><strong>'+(a.length-pending.length)+'/'+a.length+'</strong><span>Revisados</span></div><div><strong>'+pending.length+'</strong><span>Pendientes</span></div><div><strong>'+issues+'</strong><span>Incidencias</span></div></div>'
- +(issues?'<div class="alert">Hay '+issues+' referencias con diferencias o incidencias. El responsable las revisará después.</div>':'<div class="alert green">No hay incidencias registradas en esta ubicación.</div>')
- +(missing.length?'<p class="muted">Artículos no encontrados: '+missing.length+'</p>':'')
- +(added.length?'<p class="muted">Artículos no previstos: '+added.length+'</p>':'')
- +'<div class="card"><h2>Artículos de la ubicación</h2>'+(rows||'<p class="muted">Ubicación sin referencias previstas.</p>')+'</div>',
- '<div class="stack"><button class="btn" onclick="confirmCloseLocation()">Confirmar cierre de ubicación →</button><button class="back" onclick="go(\'articles\')">← Volver a los artículos</button></div>');
+ +(issues?'<div class="vis-notice inventory-notice">Hay '+issues+' referencias con diferencias o incidencias. El responsable las revisará después.</div>':'<div class="vis-notice inventory-notice green">No hay incidencias registradas en esta ubicación.</div>')
+ +(missing.length?'<p class="vis-help">Artículos no encontrados: '+missing.length+'</p>':'')
+ +(added.length?'<p class="vis-help">Artículos no previstos: '+added.length+'</p>':'')
+ +'<div class="vis-card"><h2>Artículos de la ubicación</h2>'+(rows||'<p class="vis-help">Ubicación sin referencias previstas.</p>')+'</div>',
+ '<div class="vis-stack"><button class="vis-button-primary" onclick="confirmCloseLocation()">Confirmar cierre de ubicación <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></button><button class="back" onclick="go(\'articles\')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> Volver a los artículos</button></div>');
 }
 function confirmCloseLocation(){
  const p=progress(activeLoc);
@@ -1220,22 +1331,22 @@ function confirmCloseLocation(){
  d.closed=true;data.events.push({what:'Ubicación cerrada',loc:activeLoc,worker:data.worker,...sessionAudit(),at:new Date().toISOString()});
  save();go('closed');
 }
-function renderClosed(){const p=progress(activeLoc);place(`<div class="card" style="text-align:center;padding:25px 15px"><div class="bigcheck">✅</div><h1 style="margin:9px 0">Ubicación finalizada</h1><h2>${activeLoc}</h2><p class="muted" style="margin-top:7px">${p.done} artículos revisados. La información permanece en esta demo local y NO se ha sincronizado.</p></div><div class="alert">En la app real el responsable tendrá que autorizar cualquier reapertura y revisar todas las diferencias, incluso las inferiores a la tolerancia.</div>`,`<button class="btn" onclick="go('locations')">Ir a otra ubicación →</button>`);}
+function renderClosed(){const p=progress(activeLoc);place(`<div class="vis-card inventory-centered"><div class="bigcheck"><svg class="vis-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-circle-check"/></svg></div><div class="vis-title"><h1>Ubicación finalizada</h1><p>${activeLoc}</p></div><p class="vis-help">${p.done} artículos revisados. La información permanece en esta demo local y NO se ha sincronizado.</p></div><div class="vis-notice inventory-notice">En la app real el responsable tendrá que autorizar cualquier reapertura y revisar todas las diferencias, incluso las inferiores a la tolerancia.</div>`,`<button class="vis-button-primary" onclick="go('locations')">Ir a otra ubicación <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></button>`);}
 function showModal(m){modal=m;let body='';if(m==='history'){hideModal();openBreakdown();return;}else if(m==='already-counted'){
  const p=getProduct(),rec=getLoc(activeLoc).counts[activeArticle];
- body='<h2>⚠ Artículo ya contado</h2><p class="muted">Este artículo tiene apuntes guardados. Puedes revisar el desglose original antes de proponer cualquier cambio.</p>'
- +'<div class="card" style="margin-top:12px"><b>'+esc(p.name)+'</b><p class="muted">Recuento guardado: <b>'+fmt(rec.amount)+' unidades</b></p></div>'
- +'<div class="stack"><button class="btn" onclick="startEditDetail()">Ver desglose y modificar</button><button class="btn-outline" onclick="hideModal()">Cancelar, no modificar</button></div>';
+ body='<h2><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-triangle-alert"/></svg> Artículo ya contado</h2><p class="vis-help">Este artículo tiene apuntes guardados. Puedes revisar el desglose original antes de proponer cualquier cambio.</p>'
+ +'<div class="vis-card"><b>'+esc(p.name)+'</b><p class="vis-help">Recuento guardado: <b>'+fmt(rec.amount)+' unidades</b></p></div>'
+ +'<div class="vis-stack"><button class="vis-button-primary" onclick="startEditDetail()">Ver desglose y modificar</button><button class="vis-button-secondary" onclick="hideModal()">Cancelar, no modificar</button></div>';
 }else if(m==='reason'){
  const p=getProduct();
  const reasons=['Unidad encontrada tras el recuento y reubicada','Corrección de una ubicación equivocada','Error detectado en el recuento inicial','Mercancía movida tras contar','Otro motivo'];
- body='<h2>Motivo de modificación</h2><p class="muted">Vas a corregir el recuento de <b>'+esc(p.name)+'</b>. El cambio se registrará con operario, hora y cantidades anterior y nueva.</p>'
- +'<div class="field" style="margin-top:13px"><label for="reasonSelect">Selecciona el motivo (obligatorio)</label><select class="input" id="reasonSelect" onchange="toggleReasonDetails()"><option value="">Seleccionar…</option>'+reasons.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></div>'
- +'<div class="field" id="reasonDetailsWrap" hidden><label for="reasonDetails">Explica el motivo</label><textarea id="reasonDetails" class="input" style="min-height:90px" placeholder="Qué ha sucedido y por qué se corrige"></textarea></div>'
- +'<p id="reasonError" class="muted" style="color:#b32836"></p>'
- +'<div class="stack"><button class="btn" onclick="acceptEditReason()">Continuar con la modificación</button><button class="btn-outline" onclick="hideModal()">Cancelar</button></div>';
-}else if(m==='menu'){body=`<h2>Opciones de prueba</h2><p class="muted">Versión instalada: v${APP_VERSION}. Usuario: ${esc(data.worker)}. Los recuentos se guardan en este dispositivo.</p><div class="stack" style="margin-top:12px"><button class="btn-outline" onclick="hideModal();checkForUpdates(true)">↻ Buscar actualizaciones</button><button class="btn-outline" onclick="hideModal();forceUpdateInventa()">↻ Forzar nueva carga</button><button class="btn-outline" onclick="exportBarcodeCatalog()">Exportar base de códigos (JSON)</button><button class="btn-outline" onclick="hideModal();$(\'scanImportFile\').click()">Importar base de códigos (JSON)</button><button class="btn-outline" onclick="changeSession()">Cambiar modalidad / pareja</button><button class="btn-outline" onclick="installHelp()">Cómo instalar INVENTA</button><button class="btn-outline" onclick="resetDemo()">Restablecer datos de prueba</button><button class="btn-outline" onclick="logout()">Cambiar operario</button><button class="btn" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='help'){body=`<h2>Instalar INVENTA</h2><p class="muted">En iPhone: abre esta dirección desde Safari, pulsa Compartir y elige <b>Añadir a pantalla de inicio</b>. Después abre el icono INVENTA. En Android: menú de Chrome → Instalar aplicación.</p><p class="muted" style="margin-top:10px">Los archivos básicos se guardan tras la primera carga. Los datos de prueba son solo locales.</p><button class="btn" style="margin-top:12px" onclick="hideModal()">Entendido</button>`;}else if(m==='unexpected'){body=`<h2>Artículo no listado</h2><p class="muted">Registra provisionalmente un artículo encontrado en ${activeLoc}. En la aplicación definitiva se comunicará una incidencia al responsable.</p><div class="field" style="margin-top:11px"><label for="unknownCode">Código de artículo</label><input class="input" id="unknownCode" placeholder="Ej. PRD0009999"></div><div class="field"><label for="unknownName">Descripción (opcional)</label><input class="input" id="unknownName" placeholder="Artículo encontrado"></div><button class="btn" onclick="addUnexpected()">Añadir a esta ubicación</button><button class="back" onclick="hideModal()">Cancelar</button><p id="modalError" class="muted"></p>`;}else if(m==='missing'){const rem=items(activeLoc).filter(p=>!getLoc(activeLoc).counts[p.id]).length;body=`<h2>Quedan artículos sin revisar</h2><p class="muted">Debes contar o marcar «No encontrado» en ${rem} artículo(s) antes de cerrar ${activeLoc}.</p><button class="btn" style="margin-top:11px" onclick="hideModal()">Seguir contando</button>`;}else if(m==='emptycount'){body=`<h2>Sin cantidades</h2><p class="muted">Todavía no hay unidades apuntadas. Si el producto no está en esta ubicación, utiliza «No encontrado».</p><button class="btn" style="margin-top:10px" onclick="markNotFound()">No encontrado</button><button class="btn-outline" style="width:100%;margin-top:8px" onclick="hideModal()">Seguir contando</button>`;}
-$('overlay').innerHTML=`<div class="modalback" onclick="if(event.target===this)hideModal()"><div class="modal">${body}</div></div>`;}
+ body='<h2>Motivo de modificación</h2><p class="vis-help">Vas a corregir el recuento de <b>'+esc(p.name)+'</b>. El cambio se registrará con operario, hora y cantidades anterior y nueva.</p>'
+ +'<div class="vis-field"><label for="reasonSelect">Selecciona el motivo (obligatorio)</label><select class="vis-control" id="reasonSelect" onchange="toggleReasonDetails()"><option value="">Seleccionar…</option>'+reasons.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></div>'
+ +'<div class="vis-field" id="reasonDetailsWrap" hidden><label for="reasonDetails">Explica el motivo</label><textarea id="reasonDetails" class="vis-control edit-note" placeholder="Qué ha sucedido y por qué se corrige"></textarea></div>'
+ +'<p id="reasonError" class="edit-reason-error"></p>'
+ +'<div class="vis-stack"><button class="vis-button-primary" onclick="acceptEditReason()">Continuar con la modificación</button><button class="vis-button-secondary" onclick="hideModal()">Cancelar</button></div>';
+}else if(m==='menu'){body=`<div class="vis-title"><h2 id="generalDialogTitle">Opciones de prueba</h2></div><p class="vis-help">Versión instalada: v${APP_VERSION}. Usuario: ${esc(data.worker)}. Los recuentos se guardan en este dispositivo.</p><div class="vis-stack"><button class="vis-button-secondary" onclick="hideModal();checkForUpdates(true)"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-refresh-cw"/></svg> Buscar actualizaciones</button><button class="vis-button-secondary" onclick="hideModal();forceUpdateInventa()"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-refresh-cw"/></svg> Forzar nueva carga</button><button class="vis-button-secondary" onclick="exportBarcodeCatalog()">Exportar base de códigos (JSON)</button><button class="vis-button-secondary" onclick="hideModal();$(\'scanImportFile\').click()">Importar base de códigos (JSON)</button><button class="vis-button-secondary" onclick="changeSession()">Cambiar modalidad / pareja</button><button class="vis-button-secondary" onclick="installHelp()">Cómo instalar INVENTA</button><button class="vis-button-secondary" onclick="resetDemo()">Restablecer datos de prueba</button><button class="vis-button-secondary" onclick="logout()">Cambiar operario</button><button class="vis-button-primary" onclick="hideModal()">Cerrar</button></div>`;}else if(m==='help'){body=`<div class="vis-title"><h2 id="generalDialogTitle">Instalar INVENTA</h2></div><p class="vis-help">En iPhone: abre esta dirección desde Safari, pulsa Compartir y elige <b>Añadir a pantalla de inicio</b>. Después abre el icono INVENTA. En Android: menú de Chrome → Instalar aplicación.</p><p class="vis-help">Los archivos básicos se guardan tras la primera carga. Los datos de prueba son solo locales.</p><button class="vis-button-primary" onclick="hideModal()">Entendido</button>`;}else if(m==='unexpected'){body=`<h2>Artículo no listado</h2><p class="vis-help">Registra provisionalmente un artículo encontrado en ${activeLoc}. En la aplicación definitiva se comunicará una incidencia al responsable.</p><div class="vis-field"><label for="unknownCode">Código de artículo</label><input class="vis-control" id="unknownCode" placeholder="Ej. PRD0009999"></div><div class="vis-field"><label for="unknownName">Descripción (opcional)</label><input class="vis-control" id="unknownName" placeholder="Artículo encontrado"></div><button class="vis-button-primary" onclick="addUnexpected()">Añadir a esta ubicación</button><button class="vis-button-secondary" onclick="hideModal()">Cancelar</button><p id="modalError" class="vis-help"></p>`;}else if(m==='missing'){const rem=items(activeLoc).filter(p=>!getLoc(activeLoc).counts[p.id]).length;body=`<h2>Quedan artículos sin revisar</h2><p class="vis-help">Debes contar o marcar «No encontrado» en ${rem} artículo(s) antes de cerrar ${activeLoc}.</p><button class="vis-button-primary" onclick="hideModal()">Seguir contando</button>`;}else if(m==='emptycount'){body=`<h2>Sin cantidades</h2><p class="vis-help">Todavía no hay unidades apuntadas. Si el producto no está en esta ubicación, utiliza «No encontrado».</p><button class="vis-button-primary" onclick="markNotFound()">No encontrado</button><button class="vis-button-secondary" onclick="hideModal()">Seguir contando</button>`;}
+$('overlay').innerHTML=`<div class="modalback" onclick="if(event.target===this)hideModal()"><div class="${['already-counted','reason','unexpected','missing','emptycount'].includes(m)?'inventory-dialog vis-card':'general-dialog vis-card vis-stack'}"${['menu','help'].includes(m)?' role="dialog" aria-modal="true" aria-labelledby="generalDialogTitle"':''}>${body}</div></div>`;}
 function hideModal(){$('overlay').innerHTML='';modal='';if(pendingUnknownArticleCode&&screen!=='scanner-saving')pendingUnknownArticleCode='';}
 function removeEntry(i){hideModal();openBreakdown();if(i>=0&&i<pendingEntries.length)openEntryEdit(i);}
 function addUnexpected(){const code=$('unknownCode').value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,28);if(!code){$('modalError').textContent='Introduce un código.';return;}if(items(activeLoc).some(p=>p.id===code)){$('modalError').textContent='Ese artículo ya existe en la ubicación.';return;}const pending=pendingUnknownArticleCode;const associated=pending?codeForArticle(pending):null;if(associated&&associated!==code){$('modalError').textContent='El código escaneado ya está vinculado a '+associated+'. Requiere revisión.';return;}const name=$('unknownName').value.trim().slice(0,90);getLoc(activeLoc).extras[code]={name:name||'Artículo encontrado no previsto'};const at=new Date().toISOString();if(pending){catalog()[barcodeKey(pending)]={articleId:code,code:pending,source:'INVENTA',createdAt:at,createdBy:data.worker,updatedAt:at};}data.events.push({what:'Artículo provisional',loc:activeLoc,article:code,barcode:pending||null,at});pendingUnknownArticleCode='';save();hideModal();go('articles');}

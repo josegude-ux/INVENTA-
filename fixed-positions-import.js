@@ -100,7 +100,7 @@ function loadExcel(){
 }
 function status(message,err){
  var el=document.getElementById('fixedExcelStatus');
- if(el)el.innerHTML='<div class="'+(err?'alert red':'alert')+'" role="status" style="margin-top:10px">'+esc(message)+'</div>';
+ if(el)el.innerHTML='<div class="'+(err?'vis-notice management-error':'vis-notice')+'" role="status">'+esc(message)+'</div>';
 }
 function fileSelected(input){
  selected=null;lastResult='';
@@ -115,42 +115,42 @@ function fileSelected(input){
 function preview(){
  if(!selected)return '';
  var x=selected;
- var html='<div class="card" style="margin-top:12px"><h3>Vista previa · '+esc(x.fileName)+'</h3>'
+ var html='<div class="vis-card"><h3>Vista previa · '+esc(x.fileName)+'</h3>'
   +'<p><b>'+x.sourceRows+'</b> líneas analizadas · <b>'+x.fixedRows+'</b> con Fijo = 1 · <b>'+x.uniquePositions+'</b> posiciones únicas.</p>'
   +'<p>'+x.products+' artículos · '+x.locations+' ubicaciones · '+x.zones+' zonas · Almacén <b>'+esc(x.warehouse)+'</b>.</p>'
-  +'<p class="muted">Los artículos y ubicaciones que falten se añadirán como datos maestros. <b>Las existencias calculadas y los recuentos no cambiarán.</b></p>';
- if(x.errors.length)html+='<div class="alert red"><b>Errores: no se puede importar</b><ul>'+x.errors.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div>';
- if(x.warnings.length)html+='<div class="alert"><b>Advertencias</b><ul>'+x.warnings.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div>';
- html+='<div style="overflow-x:auto"><table style="width:100%;font-size:12px;text-align:left"><thead><tr><th>Artículo</th><th>Ubicación</th><th>Descripción</th></tr></thead><tbody>'
+  +'<p class="vis-help">Los artículos y ubicaciones que falten se añadirán como datos maestros. <b>Las existencias calculadas y los recuentos no cambiarán.</b></p>';
+ if(x.errors.length)html+='<div class="vis-notice management-error"><b>Errores: no se puede importar</b><ul>'+x.errors.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div>';
+ if(x.warnings.length)html+='<div class="vis-notice"><b>Advertencias</b><ul>'+x.warnings.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div>';
+ html+='<div class="management-table"><table><thead><tr><th>Artículo</th><th>Ubicación</th><th>Descripción</th></tr></thead><tbody>'
   +x.sample.map(function(v){return '<tr><td>'+esc(v.product_code)+'</td><td>'+esc(v.location_code)+'</td><td>'+esc(v.description)+'</td></tr>';}).join('')
   +'</tbody></table></div>';
  if(!x.errors.length){
-  html+='<label style="display:flex;gap:9px;align-items:start;margin:15px 0"><input id="fixedImportConfirm" type="checkbox" style="width:22px;height:22px;flex:none">'
+  html+='<label class="management-check"><input id="fixedImportConfirm" type="checkbox">'
    +'<span>Confirmo que he revisado las posiciones Fijo = 1 y que quiero importarlas en INVENTA.</span></label>';
-  html+='<label style="display:flex;gap:9px;align-items:start;margin:15px 0"><input id="fixedImportReplace" type="checkbox" style="width:22px;height:22px;flex:none">'
+  html+='<label class="management-check"><input id="fixedImportReplace" type="checkbox">'
    +'<span><b>Solo si es una exportación completa:</b> eliminar asignaciones BC anteriores que ya no aparezcan. Las marcadas manualmente se conservarán.</span></label>';
-  html+='<button class="btn" style="width:100%" onclick="INVENTA_FIXED_IMPORT.commit()">Importar posiciones fijas en Supabase</button>';
+  html+='<button class="vis-button-primary" onclick="INVENTA_FIXED_IMPORT.commit()">Importar posiciones fijas en Supabase</button>';
  }
  return html+'</div>';
 }
 function panel(imports){
  imports=Array.isArray(imports)?imports:[];
- var html='<div class="card"><h2>Importar posiciones fijas desde Excel BC</h2>'
- +'<p class="muted">Archivo recomendado: <b>Base unificada ubicaciones almacén.xlsx</b>. Solo se importan las filas con <b>Fijo = 1</b>. No se usa Cantidad (base) como stock.</p>'
- +'<label for="fixedExcelFile" style="display:block;margin-top:12px;font-size:14px;font-weight:800">1. Elegir archivo Excel (.xlsx)</label>'
- +'<input id="fixedExcelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="input" aria-describedby="fixedExcelSelected" onchange="INVENTA_FIXED_IMPORT.fileSelected(this)" style="display:block;width:100%;height:auto;min-height:56px;margin:8px 0;line-height:1.4;font-size:16px">'
- +'<p id="fixedExcelSelected" class="muted" role="status" style="margin:8px 0 14px;overflow-wrap:anywhere">Ningún archivo seleccionado todavía.</p>'
- +'<button type="button" class="btn-outline" style="width:100%;min-height:54px" onclick="INVENTA_FIXED_IMPORT.analyse()">2. Analizar Excel seleccionado</button>'
- +'<div id="fixedExcelStatus" aria-live="polite">'+(lastResult?'<div class="alert">'+esc(lastResult)+'</div>':'')+'</div>'
+ var html='<div class="vis-card"><h2>Importar posiciones fijas desde Excel BC</h2>'
+ +'<p class="vis-help">Archivo recomendado: <b>Base unificada ubicaciones almacén.xlsx</b>. Solo se importan las filas con <b>Fijo = 1</b>. No se usa Cantidad (base) como stock.</p>'
+ +'<label for="fixedExcelFile">1. Elegir archivo Excel (.xlsx)</label>'
+ +'<input id="fixedExcelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="vis-control management-file" aria-describedby="fixedExcelSelected" onchange="INVENTA_FIXED_IMPORT.fileSelected(this)">'
+ +'<p id="fixedExcelSelected" class="vis-help" role="status">Ningún archivo seleccionado todavía.</p>'
+ +'<button type="button" class="vis-button-secondary" onclick="INVENTA_FIXED_IMPORT.analyse()">2. Analizar Excel seleccionado</button>'
+ +'<div id="fixedExcelStatus" aria-live="polite">'+(lastResult?'<div class="vis-notice">'+esc(lastResult)+'</div>':'')+'</div>'
  +'<div id="fixedExcelPreview">'+preview()+'</div></div>';
- html+='<div class="card"><h2>Historial de importación de posiciones fijas</h2>';
+ html+='<div class="vis-card"><h2>Historial de importación de posiciones fijas</h2>';
  html+=imports.length?imports.map(function(v){
-  return '<div style="border-top:1px solid #e5eaf0;padding:10px 0">'
-    +'<b>'+esc(v.file_name)+'</b><div class="muted">'
+  return '<div class="management-row">'
+    +'<b>'+esc(v.file_name)+'</b><div class="vis-help">'
     +esc(new Date(v.imported_at).toLocaleString('es-ES'))+' · '+v.unique_positions+' posiciones · '
     +'+'+v.new_products+' artículos · +'+v.new_locations+' ubicaciones'
     +(v.removed_fixed?' · -'+v.removed_fixed+' posiciones BC anteriores':'')+'</div></div>';
- }).join(''):'<p class="muted">Todavía no hay importaciones de posiciones fijas.</p>';
+ }).join(''):'<p class="vis-help">Todavía no hay importaciones de posiciones fijas.</p>';
  return html+'</div>';
 }
 async function analyse(){
