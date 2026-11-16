@@ -80,14 +80,17 @@ function tabs(){return [
  ['movements','Movimientos'],
  ['history','Auditoría']
  ].concat(isAdmin()?[['fixed','Posiciones fijas'],['users','Usuarios y permisos']]:[]).map(function(pair){
-  return '<button class="vis-chip" aria-pressed="'+(section===pair[0]?'true':'false')+'" onclick="INVENTA_MGMT.open(\''+pair[0]+'\')">'+pair[1]+'</button>';
+  return '<button class="management-tab" type="button" id="management-tab-'+pair[0]+'" role="tab" aria-controls="managementPanel" aria-selected="'+(section===pair[0]?'true':'false')+'" onclick="INVENTA_MGMT.open(\''+pair[0]+'\')"><span>'+pair[1]+'</span></button>';
  }).join('');}
 function shell(body){
- return '<div class="vis-title"><h1>Gestión almacén</h1><p>'+safe(profile.display_name+' · '+(isAdmin()?'Administración completa':'Supervisión'))+'</p></div>'
-  +'<div class="vis-card"><div class="management-connection"><small class="vis-help">Conectado a INVENTA · Supabase</small><button class="vis-button-secondary" onclick="INVENTA_MGMT.logout()">Salir</button></div><div class="vis-chips" aria-label="Secciones de Gestión">'+tabs()+'</div></div>'
-  +(notice?'<div class="vis-notice" role="status">'+safe(notice)+'</div>':'')+body
-  +'<div class="vis-notice">No se modifica Business Central automáticamente. Los datos locales de la demo no se envían al servidor.</div>';
+ return '<div class="vis-title"><div class="management-title"><h1>Gestión almacén</h1><span class="management-dot" role="img" aria-label="Sesión conectada a INVENTA · Supabase"></span></div><p>'+safe(profile.display_name+' · '+(isAdmin()?'Administración completa':'Supervisión'))+'</p></div>'
+  +'<div class="management-tabs" role="tablist" aria-label="Secciones de Gestión">'+tabs()+'</div>'
+  +(notice?'<div class="vis-notice management-notice'+(notice==='Sesión iniciada. Los permisos se verifican también en Supabase.'?' management-notice--session':/^(No se ha podido guardar:|No se pudo cambiar la posición fija:|Error CSV:|Para evitar bloquear el único administrador)/.test(notice)?'':' vis-notice--info')+'" role="status">'+safe(notice)+'</div>':'')
+  +'<div class="management-panel vis-stack" id="managementPanel" role="tabpanel" aria-labelledby="management-tab-'+section+'">'+body+'</div>'
+  +'<div class="vis-notice vis-notice--info">No se modifica Business Central automáticamente. Los datos locales de la demo no se envían al servidor.</div>';
 }
+function metric(label,icon,value,detail,attention=false){return '<div class="vis-card management-metric'+(attention?' management-metric--attention':'')+'"><div class="management-metric-label"><svg class="vis-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-'+safe(icon)+'"/></svg><span>'+safe(label)+'</span></div><strong>'+safe(value)+'</strong><span class="management-metric-detail">'+safe(detail)+'</span></div>';}
+function recentCampaign(x){return '<div class="vis-card management-campaign"><div class="management-campaign-top"><strong>'+safe(x.name)+'</strong><span class="management-campaign-state'+(x.status==='active'?' management-campaign-state--active':'')+'">'+safe(x.status==='active'?'Activa':x.status==='closed'?'Cerrada':x.status==='draft'?'Borrador':x.status)+'</span></div><p class="management-campaign-meta">'+safe(x.kind)+' · <time>'+safe(ftime(x.created_at))+'</time></p></div>';}
 function row(label,detail){return '<div class="management-row"><div><b>'+safe(label)+'</b><div class="vis-help">'+safe(detail)+'</div></div></div>';}
 function small(text){return '<p class="vis-help">'+safe(text)+'</p>';}
 function empty(rows,text){return rows.length?rows.map(function(x){return x;}).join(''):'<div class="vis-empty">'+safe(text||'Todavía no hay datos.')+'</div>';}
@@ -195,13 +198,13 @@ async function dataFor(tab){
 }
 function contentFor(tab,d){
  if(tab==='dashboard'){
-  return mgmtCard('Estado general',
-  row('Campañas',d.campaigns.length+' registradas · '+(curr(d.campaigns)?'1 activa':'Ninguna activa'))
-  +row('Ubicaciones',d.locations.length+' registradas')
-  +row('Artículos',d.products.length+' registrados')
-  +row('Incidencias pendientes',d.incidents.length+' entre las diez últimas')
-  +row('Asignaciones recientes',d.assignments.length+' entre las diez últimas'))
-  +mgmtCard('Campañas recientes',empty(d.campaigns.map(function(x){return row(x.name,x.kind+' · '+x.status+' · '+ftime(x.created_at));}),'Crea una campaña desde la pestaña Campañas.'));
+  return '<section class="management-summary"><h2>Estado general</h2><div class="management-metrics">'
+  +metric('Campañas','list-checks',d.campaigns.length,'Registradas · '+(curr(d.campaigns)?'1 activa':'Ninguna activa'))
+  +metric('Ubicaciones','map-pin',d.locations.length,'Registradas')
+  +metric('Artículos','package',d.products.length,'Registrados')
+  +metric('Incidencias pendientes','triangle-alert',d.incidents.length,'Pendientes · hasta 10',d.incidents.length>0)
+  +metric('Asignaciones recientes','users',d.assignments.length,'Últimas 10')+'</div></section>'
+  +'<section class="management-summary"><h2>Campañas recientes</h2><div class="management-campaigns">'+empty(d.campaigns.map(recentCampaign),'Aún no hay campañas')+'</div></section>';
  }
  if(tab==='fixed'){
   if(!isAdmin())return mgmtCard('Sin permiso','Solo Administración puede consultar el informe.');
@@ -389,7 +392,7 @@ function backCatalog(){
 }
 async function render(){
  var serial=++renderSerial;
- try{await loadProfile();}catch(e){if(serial===renderSerial)show(mgmtCard('Sin conexión verificada',small(e.message)));return;}
+ try{await loadProfile();}catch(e){if(serial===renderSerial)show(mgmtCard('Sin conexión verificada','<div class="management-title"><span class="management-dot management-dot--error" role="img" aria-label="Sin conexión verificada"></span>'+small(e.message)+'</div>'));return;}
  if(serial!==renderSerial)return;
  if(!check())return;
  var s=section;
