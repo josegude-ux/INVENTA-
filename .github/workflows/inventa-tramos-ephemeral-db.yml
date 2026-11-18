@@ -6,6 +6,7 @@ on:
     paths:
       - 'supabase/migrations/**'
       - 'tests/tramos-lab/**'
+      - 'supabase/propuestas-000/**'
       - '.github/workflows/inventa-tramos-ephemeral-db.yml'
 permissions:
   contents: read
@@ -47,3 +48,5 @@ jobs:
           grep -q 'INVENTA TRAMOS LAB ONLY' /tmp/tramos-reject.log
       - name: Migraciones, tramos, pareja, solapes, RLS y concurrencia
         run: bash tests/tramos-lab/run.sh
+      - name: Reversión propuesta a 000 (supabase/propuestas-000)
+        run: bash tests/tramos-lab/040_propuestas_000.sh
