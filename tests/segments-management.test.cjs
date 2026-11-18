@@ -7,7 +7,7 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const code=fs.readFileSync(path.join(root,'warehouse-management.js'),'utf8');
 const realCounts=fs.readFileSync(path.join(root,'real-counts.js'),'utf8');
-const migration=fs.readFileSync(path.join(root,'supabase/visura-unificado-pendiente/20261118140000_inventa_tramos.sql'),'utf8');
+const migration=fs.readFileSync(path.join(root,'supabase/visura-unificado/20261118221403_inventa_tramos.sql'),'utf8');
 
 const CAMP='00000000-0000-4000-8000-00000000ca01';
 const SEG={id:'seg-1',campaign_id:CAMP,from_code:'K00-P01',to_code:'K09-P08',cycle:1,operator_id:'op-1',operator_name:'Operario Uno',

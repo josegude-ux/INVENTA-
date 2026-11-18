@@ -2,7 +2,9 @@
 
 Proyecto: **control-cargas-movil** (`oevetnszmfxeukcncwji`), esquema `inventa`.
 
-Estos archivos **NO están aplicados**. Por decisión D2 de 000 (checkpoint VISURA-000-CP-PONTE-AL-DIA-20261118-011):
+**`20261118140000_inventa_tramos.sql` YA ESTÁ APLICADA** (18/11/2026 23:14, versión `20261118221403`) y se ha movido a `supabase/visura-unificado/20261118221403_inventa_tramos.sql`. Aquí solo queda la reversión.
+
+Lo que sigue documenta el plan original. Por decisión D2 de 000 (checkpoint VISURA-000-CP-PONTE-AL-DIA-20261118-011):
 
 1. Primero se homologa y publica INVENTA unificado 0.31.x.
 2. Después, `20261118140000_inventa_tramos.sql` se aplica **solo en la misma ventana** que la publicación de INVENTA 0.32.0, con «AUTORIZO» y con `reversion_tramos.sql` preparada.
