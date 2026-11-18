@@ -10,6 +10,7 @@ do $$ begin
  end if;
 end $$;
 
+drop function inventa.my_segments();
 drop function inventa.list_segments(uuid);
 drop function inventa.release_segment(uuid,uuid,text,bigint);
 drop function inventa.reassign_segment(uuid,uuid,uuid,uuid,text,bigint);

@@ -35,5 +35,7 @@ Asignar, reasignar y liberar llevan `p_mutation_id`. Si se pierde la respuesta y
 - `PGDATABASE=inventa_tramos_test bash tests/tramos-lab/run.sh` y `tests/tramos-lab/040_reversion.sh` sobre PostgreSQL desechable con las 5 migraciones de la unificación (CI con PostgreSQL 17).
 - `node --test tests/segments-management.test.cjs`.
 
-## Pendiente (siguiente PR)
-Recuento real en pareja dentro de «Mi tramo»: identificación de las dos personas, autoría por apunte y relevo.
+## «Mi tramo» y pareja (0.32.1)
+- En Mis recuentos, cada persona ve sus tramos activos: recuento, pareja, avance y siguientes ubicaciones en orden.
+- Un móvil y un único recuento: el autor de cada apunte es quien tiene la sesión abierta; el servidor pone como pareja a la otra persona del tramo.
+- Relevo: se envía todo lo pendiente y la otra persona inicia sesión en el mismo móvil. Si queda algo sin confirmar, no se hace el relevo y la cola se conserva.

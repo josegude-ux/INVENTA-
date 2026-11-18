@@ -1,5 +1,13 @@
 # Registro de cambios · VISURA INVENTA
 
+## 0.32.1 · 2026-11-18 · PROBADO LAB (rama lab/100-pareja-20261118, línea 100)
+
+- «Mi tramo» en Mis recuentos: tramo, recuento (primero o segundo ciego), pareja con nombres, avance «N de M», siguientes ubicaciones en orden de recorrido y preselección de la siguiente pendiente.
+- Pareja: un móvil y un único recuento. Cada apunte queda a nombre de quien tiene la sesión abierta, y el servidor fija la pareja desde el tramo (el navegador no la envía ni puede falsearla).
+- Relevo: solo si no quedan apuntes sin confirmar; entonces se cierra la sesión para que entre la otra persona. La cola del móvil nunca se borra.
+- Servidor (migración pendiente): `inventa.my_segments()` (lectura por GET, sin cantidades) y pareja automática en `counts`.
+- Pruebas: laboratorio 91 comprobaciones + concurrencia; reversión 7/7; interfaz 72/72.
+
 ## 0.32.0 · 2026-11-18 · PROBADO LAB (rama lab/100-tramos-unificado-20261118, línea 100)
 
 - Tramos de la línea 100 (0.30.14, PR #27) trasladados a la unificación, según D2 de 000: esquema `inventa` / `inventa_internal`.

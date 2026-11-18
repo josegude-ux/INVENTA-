@@ -438,3 +438,55 @@ grant execute on function inventa.assign_segment(uuid,uuid,text,text,smallint,uu
 grant execute on function inventa.reassign_segment(uuid,uuid,uuid,uuid,text,bigint) to authenticated;
 grant execute on function inventa.release_segment(uuid,uuid,text,bigint) to authenticated;
 grant execute on function inventa.list_segments(uuid) to authenticated;
+
+-- 6. Pareja en «Mi tramo» (0.32.0). Un móvil y un único recuento: el autor de cada apunte
+-- es quien tiene la sesión abierta; la pareja la fija el servidor desde el tramo activo
+-- (la otra persona del tramo). El navegador no puede elegir ni falsear la pareja.
+create or replace function inventa_internal.counts_set_cycle() returns trigger
+language plpgsql security definer set search_path='' as $$
+declare s inventa.segments;
+begin
+ select sg.* into s from inventa.assignments a join inventa.segments sg on sg.id=a.segment_id
+  where a.campaign_id=new.campaign_id and a.location_code=new.location_code
+    and a.operator_id=new.actor_id and a.active limit 1;
+ if found then
+  new.cycle=s.cycle;
+  new.partner_id=case when s.partner_id is null then null
+                      when new.actor_id=s.operator_id then s.partner_id else s.operator_id end;
+ else
+  new.cycle=1;
+ end if;
+ return new;
+end; $$;
+revoke all on function inventa_internal.counts_set_cycle() from public,anon,authenticated;
+
+-- «Mi tramo»: tramos activos de quien tiene la sesión, con su pareja y el avance por
+-- ubicación (solo si ya tiene recuento en ese ciclo; nunca cantidades ni teórico).
+create or replace function inventa.my_segments() returns jsonb
+language plpgsql stable security definer set search_path='' as $$
+declare v_me uuid:=(select auth.uid());
+begin
+ if not (select inventa_internal.is_enabled()) then raise exception 'Cuenta no habilitada' using errcode='42501'; end if;
+ return coalesce((
+  select jsonb_agg(x.obj order by x.cycle,x.k collate "C") from (
+   select s.cycle,inventa_internal.location_sort_key(s.from_code) as k,
+    jsonb_build_object(
+     'id',s.id,'campaign_id',s.campaign_id,'campaign_name',c.name,'from',s.from_code,'to',s.to_code,'cycle',s.cycle,
+     'me_name',(select display_name from inventa.profiles where user_id=v_me),
+     'partner_id',p.other,
+     'partner_name',(select display_name from inventa.profiles where user_id=p.other),
+     'locations',coalesce((select jsonb_agg(jsonb_build_object('code',sl.location_code,'position',sl.position,
+        'counted',exists(select 1 from inventa.counts x where x.campaign_id=s.campaign_id
+          and x.location_code=sl.location_code and x.cycle=s.cycle
+          and (x.actor_id=s.operator_id or x.actor_id=s.partner_id))) order by sl.position)
+       from inventa.segment_locations sl where sl.segment_id=s.id and sl.active),'[]'::jsonb)
+    ) as obj
+   from inventa.segments s
+   join inventa.campaigns c on c.id=s.campaign_id
+   cross join lateral (select case when s.partner_id is null then null
+          when s.operator_id=v_me then s.partner_id else s.operator_id end as other) p
+   where s.status='active' and c.status='active' and v_me in (s.operator_id,s.partner_id)
+  ) x),'[]'::jsonb);
+end; $$;
+revoke all on function inventa.my_segments() from public,anon;
+grant execute on function inventa.my_segments() to authenticated;

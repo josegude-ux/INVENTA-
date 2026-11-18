@@ -112,15 +112,24 @@ reset role;
 -- ── 7. La pareja cuenta en su tramo ──
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-0000000000c1',false);
 set role authenticated;
+-- El navegador intenta poner como pareja a Operario Tres: el servidor pone la pareja real del tramo.
 insert into inventa.counts(campaign_id,location_code,product_code,quantity,actor_id,partner_id,client_mutation_id)
- values('00000000-0000-4000-8000-00000000ca01','K00-P01','ART-LAB-1',5,'00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c2',gen_random_uuid());
-select lab.ok(true,'Operario Uno cuenta K00-P01 con su pareja');
+ values('00000000-0000-4000-8000-00000000ca01','K00-P01','ART-LAB-1',5,'00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c3',gen_random_uuid());
+select lab.ok((select partner_id from inventa.counts where location_code='K00-P01' and actor_id='00000000-0000-4000-8000-0000000000c1')='00000000-0000-4000-8000-0000000000c2','Operario Uno cuenta K00-P01; la pareja la fija el servidor (Operario Dos), no el navegador');
 reset role;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-0000000000c2',false);
 set role authenticated;
-insert into inventa.counts(campaign_id,location_code,product_code,quantity,actor_id,partner_id,client_mutation_id)
- values('00000000-0000-4000-8000-00000000ca01','K00-P02','ART-LAB-1',3,'00000000-0000-4000-8000-0000000000c2','00000000-0000-4000-8000-0000000000c1',gen_random_uuid());
-select lab.ok(true,'Operario Dos toma el relevo en K00-P02');
+-- Relevo: ahora la sesión es de Operario Dos; no envía pareja y el servidor la completa.
+insert into inventa.counts(campaign_id,location_code,product_code,quantity,actor_id,client_mutation_id)
+ values('00000000-0000-4000-8000-00000000ca01','K00-P02','ART-LAB-1',3,'00000000-0000-4000-8000-0000000000c2',gen_random_uuid());
+select lab.ok((select partner_id from inventa.counts where location_code='K00-P02' and actor_id='00000000-0000-4000-8000-0000000000c2')='00000000-0000-4000-8000-0000000000c1','relevo: Operario Dos cuenta K00-P02 como autor, con Operario Uno de pareja');
+do $$ declare t jsonb; begin
+ t=inventa.my_segments();
+ perform lab.ok(jsonb_array_length(t)=1 and t->0->>'partner_name'='Operario Uno' and t->0->>'me_name'='Operario Dos','«Mi tramo» de Operario Dos: su tramo y su pareja');
+ perform lab.ok(jsonb_array_length(t->0->'locations')=79 and t->0->'locations'->0->>'code'='K00-P01','79 ubicaciones en orden de recorrido');
+ perform lab.ok((select count(*) from jsonb_array_elements(t->0->'locations') l where (l->>'counted')::boolean)=2,'avance de la pareja: K00-P01 (Uno) y K00-P02 (Dos)');
+ perform lab.ok(not (t::text ~* 'quantity|stock'),'«Mi tramo» no contiene cantidades');
+end $$;
 reset role;
 
 -- ── 8. Reasignar: sale Operario Dos, entra Operario Tres ──
@@ -226,6 +235,14 @@ insert into inventa.counts(campaign_id,location_code,product_code,quantity,actor
  values('00000000-0000-4000-8000-00000000ca01','K00-P03','ART-LAB-1',2,'00000000-0000-4000-8000-0000000000c1',2,gen_random_uuid());
 reset role;
 select lab.ok((select cycle from inventa.counts where actor_id='00000000-0000-4000-8000-0000000000c4')=2,'el recuento del segundo contador queda como ciclo 2');
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-0000000000c4',false);
+set role authenticated;
+do $$ declare t jsonb; begin
+ t=inventa.my_segments();
+ perform lab.ok(jsonb_array_length(t)=1 and (t->0->>'cycle')::int=2 and t->0->'partner_id'='null'::jsonb,'«Mi tramo» del segundo contador: ciclo 2, sin pareja');
+ perform lab.ok((t->0->'locations'->0->>'counted')::boolean and not (t->0->'locations'->1->>'counted')::boolean,'ciego: solo cuenta su propio ciclo 2 (K00-P02 sigue pendiente aunque tenga primer recuento)');
+end $$;
+reset role;
 select lab.ok((select cycle from inventa.counts where location_code='K00-P03')=1,'el navegador no puede forzar el ciclo 2');
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-0000000000b1',false);
 set role authenticated;
@@ -233,6 +250,10 @@ select lab.ok((select counted from inventa.list_segments('00000000-0000-4000-800
 select lab.ok((select count(*) from inventa.list_segments('00000000-0000-4000-8000-00000000ca01') where status='active' and cycle=1 and from_code='K00-P01' and counted=3)=1,'el primer recuento cuenta solo ciclo 1 (3 ubicaciones)');
 reset role;
 
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-0000000000d1',false);
+set role authenticated;
+select lab.fails($q$select inventa.my_segments()$q$,'no habilitada','una cuenta deshabilitada no ve «Mi tramo»');
+reset role;
 -- ── 11. Anónimo sin acceso ──
 set role anon;
 select lab.fails($q$select count(*) from inventa.segments$q$,'permission denied|permiso','anon no lee tramos');
