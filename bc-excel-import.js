@@ -166,7 +166,7 @@ async function analyse(){
  busy=true;state=null;status('Leyendo Excel y comprobando líneas…');
  try{
   var ExcelJS=await loadExcelJS(),book=new ExcelJS.Workbook();
-  await book.xlsx.load(await f.arrayBuffer());
+  var raw=await f.arrayBuffer();if(root.INVENTA_XLSX)raw=(await root.INVENTA_XLSX.normalize(raw)).buffer;await book.xlsx.load(raw);
   var sheet=book.worksheets[0];if(!sheet)throw Error('No hay ninguna hoja en este Excel.');
   state=parseRows(sheetToMatrix(sheet),f.name);renderPreview();
  }catch(e){status('No se pudo analizar: '+e.message,'error');}

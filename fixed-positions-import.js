@@ -163,7 +163,7 @@ async function analyse(){
  try{
   status('Leyendo «'+file.name+'» y comprobando las filas Fijo = 1…');
   var Excel=await loadExcel(),workbook=new Excel.Workbook();
-  await workbook.xlsx.load(await file.arrayBuffer());
+  var raw=await file.arrayBuffer();if(root.INVENTA_XLSX)raw=(await root.INVENTA_XLSX.normalize(raw)).buffer;await workbook.xlsx.load(raw);
   var sheet=workbook.worksheets[0];if(!sheet)throw Error('Excel sin hojas.');
   var matrix=[],width=Math.min(sheet.columnCount||28,85);
   sheet.eachRow({includeEmpty:true},function(row){

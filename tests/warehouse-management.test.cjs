@@ -186,7 +186,7 @@ test('El Operario no puede entrar en el catálogo de gestión',async()=>{
 
 test('cada script publicado tiene versión y está precargado en la misma caché',()=>{
  const scripts=[...index.matchAll(/src="(\.\/[^"]+\.js\?v=[^"]+)"/g)].map(x=>x[1]);
- assert.equal(scripts.length,6);
+ assert.equal(scripts.length,7);
  scripts.forEach(src=>assert.ok(worker.includes("'"+src+"'")));
 });
 
