@@ -1,5 +1,13 @@
 # Registro de cambios · VISURA INVENTA
 
+## 0.32.0 · 2026-11-18 · PROBADO LAB (rama lab/100-tramos-unificado-20261118, línea 100)
+
+- Tramos de la línea 100 (0.30.14, PR #27) trasladados a la unificación, según D2 de 000: esquema `inventa` / `inventa_internal`.
+- Gestión almacén → Tramos: rango en un paso para una o dos personas, vista previa, sin solapes, segundo recuento ciego, idempotencia; reasignar y liberar con motivo y versión.
+- El recuento real solo usa asignaciones activas.
+- Migración **pendiente** en `supabase/visura-unificado-pendiente/` (no aplicada) y su reversión.
+- Laboratorio: las 5 migraciones de la unificación + tramos, 84 comprobaciones + concurrencia; reversión 7/7. CI con PostgreSQL 17.
+
 ## Sin cambio de versión · 2026-11-18 · PROBADO LAB · CI «INVENTA checks» en verde (rama lab/100-ci-previos-20261118, línea 100)
 
 - Se corrigen los 12 fallos previos de las pruebas; no cambia código de la aplicación, solo `tests/`.

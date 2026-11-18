@@ -77,7 +77,7 @@ async function diagnose(){
  try{
   await m().refreshProfile();
   if(ticket!==diagnosticSerial||uid!==m().getUserId()||!m().isAuthenticated())throw Error('La sesión cambió o fue revocada.');
-  var active=await m().realApi('assignments','select=id,campaigns!inner(status)&campaigns.status=eq.active&operator_id=eq.'+encodeURIComponent(uid)+'&limit=500');
+  var active=await m().realApi('assignments','select=id,campaigns!inner(status)&campaigns.status=eq.active&active=eq.true&operator_id=eq.'+encodeURIComponent(uid)+'&limit=500');
   if(ticket!==diagnosticSerial||uid!==m().getUserId()||!m().isAuthenticated())return false;
   var history=await m().realApi('counts','select=id&limit=1');
   if(ticket!==diagnosticSerial||uid!==m().getUserId()||!m().isAuthenticated())return false;
@@ -96,7 +96,7 @@ async function reload(){
   await m().refreshProfile();
   if(!m().isAuthenticated())throw Error('Cuenta pendiente o deshabilitada.');
   var data=await Promise.all([
-   m().realApi('assignments','select=*,campaigns!inner(name,status)&campaigns.status=eq.active&operator_id=eq.'+encodeURIComponent(uid)+'&order=created_at.desc&limit=500'),
+   m().realApi('assignments','select=*,campaigns!inner(name,status)&campaigns.status=eq.active&active=eq.true&operator_id=eq.'+encodeURIComponent(uid)+'&order=created_at.desc&limit=500'),
    m().realApi('counts','select=*&order=created_at.desc,id.desc&limit=100')
   ]);
   if(ticket!==serial||uid!==m().getUserId())return;

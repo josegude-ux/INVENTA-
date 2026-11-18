@@ -242,6 +242,8 @@ main:has(.consult-view,.rest-view){padding-top:var(--space);}
 @media(min-width:1000px){.management-tabs{margin-inline:calc(-1 * var(--legacy-space-32));padding-inline:var(--legacy-space-32);scroll-padding-inline:var(--legacy-space-32);}}
 .management-row{display:grid;gap:var(--space-xs);min-width:0;padding-block:var(--space-xs);border-top:1px solid var(--color-divider);}
 .management-row:first-child{border-top:0;padding-top:0;}
+.segment-progress{width:100%;height:8px;accent-color:var(--color-primary);}
+.segment-row--released{opacity:.72;}
 .management-between{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-xs);flex-wrap:wrap;min-width:0;}
 .management-between>div{min-width:0;overflow-wrap:anywhere;}
 .management-right{text-align:right;}
@@ -415,11 +417,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     </div>
   </div>
 </div>
-<script src="./warehouse-management.js?v=0.31.0"></script>
+<script src="./warehouse-management.js?v=0.32.0"></script>
 <script src="./xlsx-normalize.js?v=0.31.1"></script>
 <script src="./bc-excel-import.js?v=0.31.2"></script>
 <script src="./fixed-positions-import.js?v=0.31.1"></script>
-<script src="./real-counts.js?v=0.31.0"></script>
+<script src="./real-counts.js?v=0.32.0"></script>
 <script src="./consultation-core.js?v=0.30.5"></script>
 <script src="./consultation-ui.js?v=0.30.11"></script>
 <script>
@@ -433,7 +435,7 @@ const TEST={
  'L00-P02':[{id:'PRD0008812',name:'GALLETAS SURTIDAS',theoretical:36}],
  'M00-P01':[{id:'PRD0004012',name:'LECHE ENTERA 1 L',theoretical:48}]};
 const AISLES={'Operario 1':['K','L'],'Operario 2':['K','M']};
-const APP_VERSION='0.31.2';
+const APP_VERSION='0.32.0';
 const KEY='inventa-demo-operario-v015';
 // Conserva asociaciones de códigos entre versiones y recuentos de prueba.
 const DRAFT_KEY='inventa-demo-draft-v020:';
