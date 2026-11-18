@@ -11,7 +11,7 @@ assign() { # $1 persona, $2 espera dentro de la transacción
 select set_config('request.jwt.claim.sub','$SUP',false);
 set role authenticated;
 begin;
-select public.assign_segment('$CAMP','K10-P01','K10-P08','$1',null,'$FP');
+select public.assign_segment(gen_random_uuid(),'$CAMP','K10-P01','K10-P08',1::smallint,'$1',null,'$FP');
 select pg_sleep($2);
 commit;
 SQL
@@ -24,7 +24,7 @@ wait $A; A_RC=$?
 set -e
 cat /tmp/tramos-a.log /tmp/tramos-b.log
 [ $A_RC -eq 0 ] || { echo "FALLO: la primera asignación debía completarse"; exit 1; }
-[ $B -ne 0 ] && grep -q 'ya están asignadas' /tmp/tramos-b.log || { echo "FALLO: la segunda debía rechazarse por solape"; exit 1; }
+[ $B -ne 0 ] && grep -q 'ya están asignadas en este recuento' /tmp/tramos-b.log || { echo "FALLO: la segunda debía rechazarse por solape"; exit 1; }
 N=$(psql -X -qAt -c "select count(*) from public.segment_locations where campaign_id='$CAMP' and active and location_code like 'K10-%'")
 [ "$N" = "8" ] || { echo "FALLO: se esperaban 8 ubicaciones K10 activas, hay $N"; exit 1; }
 echo "OK: dos asignaciones simultáneas solapadas → una gana, la otra se rechaza sin duplicar"

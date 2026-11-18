@@ -9,7 +9,7 @@ var STORE='inventa-real-auth-v1';
 var session=null,profile=null,section='dashboard',pending=false,notice='';
 var catalogView='aisles',catalogAisle='',catalogLocation='',renderSerial=0,refreshTask=null;
 var permissionVersions={},fixedReportRows=[];
-var segState={campaign:'',from:'',to:'',op:'',partner:'',preview:null,action:null,list:[]};
+var segState={campaign:'',cycle:'1',from:'',to:'',op:'',partner:'',preview:null,action:null,list:[]};
 function safe(s){return String(s===null||s===undefined?'':s).replace(/[&<>"']/g,function(k){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[k];});}
 function val(id){var e=document.getElementById(id);return e?e.value.trim():'';}
 function show(html,footer){if(typeof place==='function')place(html,footer||'<button class="back" onclick="go(\'home\')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> Menú principal</button>');}
@@ -54,7 +54,7 @@ async function register(){
 }
 async function loadProfile(){var u=session&&session.user;if(!u)return;var arr=await api('profiles','user_id=eq.'+encodeURIComponent(u.id)+'&select=*');profile=arr&&arr[0]||null;}
 async function restore(){try{session=JSON.parse(localStorage.getItem(STORE)||'null');if(!session)return;if(session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();if(session)await loadProfile();if(isManager()&&typeof managerUser!=='undefined')managerUser=profile.display_name||profile.role;}catch(e){session=null;profile=null;}}
-async function logout(){fixedReportRows=[];segState={campaign:'',from:'',to:'',op:'',partner:'',preview:null,action:null,list:[]};try{if(session)await request('/auth/v1/logout',{method:'POST'});}catch(e){}session=null;profile=null;localStorage.removeItem(STORE);if(typeof managerUser!=='undefined')managerUser='';if(typeof consultUser!=='undefined')consultUser='';notice='';go('home');}
+async function logout(){fixedReportRows=[];segState={campaign:'',cycle:'1',from:'',to:'',op:'',partner:'',preview:null,action:null,list:[]};try{if(session)await request('/auth/v1/logout',{method:'POST'});}catch(e){}session=null;profile=null;localStorage.removeItem(STORE);if(typeof managerUser!=='undefined')managerUser='';if(typeof consultUser!=='undefined')consultUser='';notice='';go('home');}
 function renderLogin(){
  show('<div class="vis-title"><h1>Acceso seguro</h1><p>INVENTA usa cuentas personales y permisos de Supabase.</p></div>'
   +mgmtCard('Iniciar sesión',
@@ -424,12 +424,16 @@ var SEG_STATUS={pending:'Pendiente',in_progress:'En curso',completed:'Contada',r
 function hasField(id){return !!(typeof document!=='undefined'&&document.getElementById&&document.getElementById(id));}
 function readSegForm(){
  if(hasField('segCampaign'))segState.campaign=val('segCampaign');
+ if(hasField('segCycle'))segState.cycle=val('segCycle')==='2'?'2':'1';
  if(hasField('segFrom'))segState.from=val('segFrom');
  if(hasField('segTo'))segState.to=val('segTo');
  if(hasField('segOp'))segState.op=val('segOp');
  if(hasField('segPartner'))segState.partner=val('segPartner');
 }
-function segKey(){return [segState.campaign,segState.from.toUpperCase(),segState.to.toUpperCase()].join('|');}
+function segKey(){return [segState.campaign,segState.cycle,segState.from.toUpperCase(),segState.to.toUpperCase()].join('|');}
+/* Identificador de orden (idea de F2 CP012): se reutiliza si hay que reintentar, para no duplicar. */
+function newMutationId(){return crypto.randomUUID();}
+function cycleLabel(c){return Number(c)===2?'Segundo recuento':'Primer recuento';}
 function segPeople(d,selected,blank){return (blank?'<option value="">'+safe(blank)+'</option>':'<option value="">Seleccionar…</option>')+d.profiles.map(function(p){return '<option value="'+safe(p.user_id)+'"'+(p.user_id===selected?' selected':'')+'>'+safe(p.display_name||'Sin nombre')+'</option>';}).join('');}
 function segSelect(id,label,inner,extra){return '<div class="vis-field"><label for="'+id+'">'+safe(label)+'</label><select class="vis-control" id="'+id+'"'+(extra||'')+'>'+inner+'</select></div>';}
 function segInput(id,label,value,placeholder){return '<div class="vis-field"><label for="'+id+'">'+safe(label)+'</label><input class="vis-control" id="'+id+'" list="segLocations" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="'+safe(placeholder)+'" value="'+safe(value)+'"></div>';}
@@ -437,18 +441,21 @@ function segPercent(s){return s.total?Math.round(s.counted*100/s.total):0;}
 function segmentPreviewCard(){
  var pv=segState.preview;if(!pv||pv.key!==segKey())return '';
  var p=pv.result||{},ex=p.excluded_format||{count:0,codes:[]},cf=p.conflicts||{count:0,items:[]},sample=p.sample||[];
- var body=row((p.total||0)+' ubicaciones',p.total?'De '+p.first+' a '+p.last:'No hay ubicaciones habilitadas en ese rango')
+ var body=row(cycleLabel(p.cycle)+' · '+(p.total||0)+' ubicaciones',p.total?'De '+p.first+' a '+p.last:'No hay ubicaciones habilitadas en ese rango')
+  +(Number(p.cycle)===2?small('Recuento ciego: no pueden hacerlo quienes participaron en el primero, y no verán sus cantidades.'):'')
   +(sample.length?small('Orden de recorrido: '+sample.join(', ')+(p.total>sample.length?'…':'')):'');
  if(ex.count)body+='<p class="vis-help management-warning" role="note">'+safe(ex.count+(ex.count===1?' con otro formato queda fuera: ':' con otro formato quedan fuera: ')+ex.codes.join(', ')+(ex.count>ex.codes.length?'…':''))+'</p>';
+ var nf=p.without_first_count||{count:0,codes:[]};
+ if(nf.count)body+='<p class="vis-help management-warning" role="note">'+safe(nf.count+(nf.count===1?' sin primer recuento queda fuera: ':' sin primer recuento quedan fuera: ')+nf.codes.join(', ')+(nf.count>nf.codes.length?'…':''))+'</p>';
  if(p.disabled)body+='<p class="vis-help management-warning" role="note">'+safe(p.disabled+(p.disabled===1?' deshabilitada queda fuera.':' deshabilitadas quedan fuera.'))+'</p>';
- if(cf.count)body+='<div class="vis-notice management-error" role="alert">'+safe(cf.count+' ubicaciones ya están asignadas en esta campaña: '+cf.items.slice(0,8).map(function(c){return c.location_code+' ('+c.people+')';}).join(', ')+(cf.count>8?'…':'')+'. Ajusta el rango, o libera o reasigna ese tramo antes.')+'</div>';
+ if(cf.count)body+='<div class="vis-notice management-error" role="alert">'+safe(cf.count+' ubicaciones ya están asignadas en este recuento: '+cf.items.slice(0,8).map(function(c){return c.location_code+' ('+c.people+')';}).join(', ')+(cf.count>8?'…':'')+'. Ajusta el rango, o libera o reasigna ese tramo antes.')+'</div>';
  var ok=p.total>0&&!cf.count;
  return mgmtCard('Vista previa del tramo',body+(ok?mgmtButton('Asignar tramo ('+p.total+' ubicaciones)','confirmSegment()',true):'')+mgmtButton('Descartar vista previa','discardSegmentPreview()'));
 }
 function segmentRow(d,s){
  var active=s.status==='active',pct=segPercent(s);
  var people=(s.operator_name||'Sin nombre')+(s.partner_name?' + '+s.partner_name:'');
- var html='<div class="management-row segment-row'+(active?'':' segment-row--released')+'"><div class="management-between"><div><b>'+safe(s.from_code+' → '+s.to_code)+'</b><div class="vis-help">'+safe(people)+'</div></div><span class="management-campaign-state'+(active?' management-campaign-state--active':'')+'">'+(active?'Activo':'Liberado')+'</span></div>'
+ var html='<div class="management-row segment-row'+(active?'':' segment-row--released')+'"><div class="management-between"><div><b>'+safe(s.from_code+' → '+s.to_code)+'</b><div class="vis-help">'+safe(cycleLabel(s.cycle)+' · '+people)+'</div></div><span class="management-campaign-state'+(active?' management-campaign-state--active':'')+'">'+(active?'Activo':'Liberado')+'</span></div>'
   +'<progress class="segment-progress" max="'+safe(s.total)+'" value="'+safe(s.counted)+'" aria-label="'+safe('Avance de '+s.from_code+' a '+s.to_code)+'"></progress>'
   +small(s.counted+' de '+s.total+' ubicaciones con algún recuento ('+pct+' %)'+(active?'':' · liberado '+ftime(s.released_at)))
   +(s.last_change_reason?small('Último cambio: '+s.last_change_reason):'');
@@ -463,6 +470,7 @@ function segmentRow(d,s){
 function segmentsView(d){
  if(!d.campaigns.length)return mgmtCard('Tramos','<div class="vis-empty">No hay campañas abiertas. Crea una campaña antes de asignar tramos.</div>');
  var form=segSelect('segCampaign','Campaña',d.campaigns.map(function(c){return '<option value="'+safe(c.id)+'"'+(c.id===segState.campaign?' selected':'')+'>'+safe(c.name+(c.status==='active'?' · activa':' · borrador'))+'</option>';}).join(''),' onchange="INVENTA_MGMT.segmentCampaign()"')
+  +segSelect('segCycle','Recuento','<option value="1"'+(segState.cycle!=='2'?' selected':'')+'>Primer recuento</option><option value="2"'+(segState.cycle==='2'?' selected':'')+'>Segundo recuento (ciego, otras personas)</option>',' onchange="INVENTA_MGMT.segmentCampaign()"')
   +'<datalist id="segLocations">'+d.locations.map(function(l){return '<option value="'+safe(l.code)+'"></option>';}).join('')+'</datalist>'
   +'<div class="management-between">'+segInput('segFrom','Desde',segState.from,'K00-P01')+segInput('segTo','Hasta',segState.to,'K09-P08')+'</div>'
   +segSelect('segOp','Persona 1',segPeople(d,segState.op))
@@ -483,7 +491,7 @@ async function previewSegment(){
  if(pending)return;readSegForm();
  if(!segState.campaign||!segState.from||!segState.to){notice='No se ha podido guardar: indica campaña, «Desde» y «Hasta».';return render();}
  pending=true;notice='';
- try{var r=await api('rpc/preview_segment','', 'POST',{p_campaign:segState.campaign,p_from:segState.from,p_to:segState.to});segState.preview={key:segKey(),result:r||{}};}
+ try{var r=await api('rpc/preview_segment','', 'POST',{p_campaign:segState.campaign,p_from:segState.from,p_to:segState.to,p_cycle:Number(segState.cycle)});segState.preview={key:segKey(),result:r||{},mutationId:newMutationId()};}
  catch(e){segState.preview=null;notice='No se ha podido guardar: '+e.message;}
  finally{pending=false;}
  await render();
@@ -496,11 +504,12 @@ function confirmSegment(){
  if(segState.partner&&segState.partner===segState.op){notice='No se ha podido guardar: la pareja debe ser otra persona.';return render();}
  var p=pv.result;
  return mutate(async function(){
-  await api('rpc/assign_segment','', 'POST',{p_campaign:segState.campaign,p_from:segState.from,p_to:segState.to,p_operator:segState.op,p_partner:segState.partner||null,p_fingerprint:p.fingerprint});
+  await api('rpc/assign_segment','', 'POST',{p_mutation_id:pv.mutationId,p_campaign:segState.campaign,p_from:segState.from,p_to:segState.to,p_cycle:Number(segState.cycle),p_operator:segState.op,p_partner:segState.partner||null,p_fingerprint:p.fingerprint});
   segState.preview=null;segState.from='';segState.to='';segState.op='';segState.partner='';
  },'Tramo asignado: '+p.total+' ubicaciones de '+p.first+' a '+p.last+'.');
 }
-function segmentAction(id,kind){readSegForm();segState.action=id?{id:id,kind:kind}:null;return render();}
+function segmentAction(id,kind){readSegForm();segState.action=id?{id:id,kind:kind,mutationId:newMutationId()}:null;return render();}
+function segActionId(id){if(!segState.action||segState.action.id!==id)segState.action={id:id,kind:'',mutationId:newMutationId()};return segState.action.mutationId;}
 function findSegment(id){var s=segState.list.find(function(x){return x.id===id;});if(!s)throw Error('El tramo ya no está en la lista. Recarga.');return s;}
 function reassignSegment(id){
  var op=val('segOp_'+id),partner=val('segPartner_'+id),reason=val('segReason_'+id);readSegForm();
@@ -509,7 +518,7 @@ function reassignSegment(id){
   if(!op)throw Error('Elige la persona 1.');
   if(partner&&partner===op)throw Error('La pareja debe ser otra persona.');
   if(reason.length<5)throw Error('Explica el motivo con al menos cinco caracteres.');
-  await api('rpc/reassign_segment','', 'POST',{p_segment:id,p_operator:op,p_partner:partner||null,p_reason:reason,p_version:s.version});
+  await api('rpc/reassign_segment','', 'POST',{p_mutation_id:segActionId(id),p_segment:id,p_operator:op,p_partner:partner||null,p_reason:reason,p_version:s.version});
   segState.action=null;
  },'Tramo reasignado. Las personas anteriores ya no pueden contar en él.');
 }
@@ -518,7 +527,7 @@ function releaseSegment(id){
  return mutate(async function(){
   var s=findSegment(id);
   if(reason.length<5)throw Error('Explica el motivo con al menos cinco caracteres.');
-  await api('rpc/release_segment','', 'POST',{p_segment:id,p_reason:reason,p_version:s.version});
+  await api('rpc/release_segment','', 'POST',{p_mutation_id:segActionId(id),p_segment:id,p_reason:reason,p_version:s.version});
   segState.action=null;
  },'Tramo liberado. Lo ya contado se conserva.');
 }

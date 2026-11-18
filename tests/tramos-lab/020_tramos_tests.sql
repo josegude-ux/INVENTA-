@@ -18,6 +18,13 @@ begin
  raise exception 'FALLO: % → no dio error',msg;
 end $$;
 create table lab.state(k text primary key,v text);
+-- Envoltorios de prueba: generan un identificador de orden nuevo en cada llamada (primer recuento).
+create function lab.assign(c uuid,f text,t text,op uuid,pa uuid,fp text) returns uuid language sql as $$
+ select (public.assign_segment(gen_random_uuid(),c,f,t,1::smallint,op,pa,fp)->>'segment_id')::uuid $$;
+create function lab.reassign(s uuid,op uuid,pa uuid,r text,v bigint) returns bigint language sql as $$
+ select (public.reassign_segment(gen_random_uuid(),s,op,pa,r,v)->>'version')::bigint $$;
+create function lab.release(s uuid,r text,v bigint) returns void language plpgsql as $$
+begin perform public.release_segment(gen_random_uuid(),s,r,v); end $$;
 grant select,insert,update on lab.state to authenticated;
 grant execute on all functions in schema lab to authenticated,anon;
 
@@ -32,7 +39,7 @@ select lab.ok(internal.location_shape('K00-P01')<>internal.location_shape('K03-P
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-0000000000c3',false);
 set role authenticated;
 select lab.fails($q$select public.preview_segment('00000000-0000-4000-8000-00000000ca01','K00-P01','K09-P08')$q$,'Supervisor o Administrador','Operario no previsualiza tramos');
-select lab.fails($q$select public.assign_segment('00000000-0000-4000-8000-00000000ca01','K00-P01','K09-P08','00000000-0000-4000-8000-0000000000c3',null,'x')$q$,'Supervisor o Administrador','Operario no asigna tramos');
+select lab.fails($q$select lab.assign('00000000-0000-4000-8000-00000000ca01','K00-P01','K09-P08','00000000-0000-4000-8000-0000000000c3',null,'x')$q$,'Supervisor o Administrador','Operario no asigna tramos');
 select lab.fails($q$insert into public.assignments(campaign_id,location_code,operator_id,assigned_by) values('00000000-0000-4000-8000-00000000ca01','K00-P01','00000000-0000-4000-8000-0000000000c3','00000000-0000-4000-8000-0000000000c3')$q$,'permission denied|permiso','Operario no inserta asignaciones');
 select lab.fails($q$select * from public.list_segments('00000000-0000-4000-8000-00000000ca01')$q$,'Supervisor o Administrador','Operario no ve el seguimiento');
 reset role;
@@ -58,11 +65,11 @@ select lab.fails($q$select public.preview_segment('00000000-0000-4000-8000-00000
 select lab.fails($q$select public.preview_segment('00000000-0000-4000-8000-00000000ca02','K00-P01','K00-P02')$q$,'cerrada','campaña cerrada se rechaza');
 
 -- ── 4. Asignación en un paso a una pareja ──
-select lab.fails($q$select public.assign_segment('00000000-0000-4000-8000-00000000ca01','K00-P01','K09-P08','00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c1',(select v from lab.state where k='fp1'))$q$,'otra persona','la pareja no puede ser la misma persona');
-select lab.fails($q$select public.assign_segment('00000000-0000-4000-8000-00000000ca01','K00-P01','K09-P08','00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000d1',(select v from lab.state where k='fp1'))$q$,'no es una cuenta habilitada','cuenta deshabilitada rechazada');
-select lab.fails($q$select public.assign_segment('00000000-0000-4000-8000-00000000ca01','K00-P01','K09-P08','00000000-0000-4000-8000-0000000000c1',null,'huella-antigua')$q$,'han cambiado','vista previa obsoleta rechazada');
+select lab.fails($q$select lab.assign('00000000-0000-4000-8000-00000000ca01','K00-P01','K09-P08','00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c1',(select v from lab.state where k='fp1'))$q$,'otra persona','la pareja no puede ser la misma persona');
+select lab.fails($q$select lab.assign('00000000-0000-4000-8000-00000000ca01','K00-P01','K09-P08','00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000d1',(select v from lab.state where k='fp1'))$q$,'no es una cuenta habilitada','cuenta deshabilitada rechazada');
+select lab.fails($q$select lab.assign('00000000-0000-4000-8000-00000000ca01','K00-P01','K09-P08','00000000-0000-4000-8000-0000000000c1',null,'huella-antigua')$q$,'han cambiado','vista previa obsoleta rechazada');
 do $$ declare v_id uuid; begin
- v_id=public.assign_segment('00000000-0000-4000-8000-00000000ca01','K00-P01','K09-P08',
+ v_id=lab.assign('00000000-0000-4000-8000-00000000ca01','K00-P01','K09-P08',
    '00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c2',(select v from lab.state where k='fp1'));
  insert into lab.state values('seg1',v_id::text);
  perform lab.ok((select count(*) from public.segment_locations where segment_id=v_id)=79,'79 ubicaciones guardadas en el tramo');
@@ -78,12 +85,12 @@ do $$ declare p jsonb; begin
  perform lab.ok(p->'conflicts'->'items'->0->>'people' ~ 'Operario','el aviso indica quién la tiene');
  insert into lab.state values('fp_overlap',p->>'fingerprint');
 end $$;
-select lab.fails($q$select public.assign_segment('00000000-0000-4000-8000-00000000ca01','K09-P01','K10-P08','00000000-0000-4000-8000-0000000000c3',null,(select v from lab.state where k='fp_overlap'))$q$,'ya están asignadas','un tramo solapado se rechaza');
+select lab.fails($q$select lab.assign('00000000-0000-4000-8000-00000000ca01','K09-P01','K10-P08','00000000-0000-4000-8000-0000000000c3',null,(select v from lab.state where k='fp_overlap'))$q$,'ya están asignadas en este recuento','un tramo solapado se rechaza');
 reset role;
 select lab.fails($q$do $x$ declare s uuid; begin
  insert into public.segments(campaign_id,from_code,to_code,operator_id,created_by)
   values('00000000-0000-4000-8000-00000000ca01','K00-P01','K00-P01','00000000-0000-4000-8000-0000000000c3','00000000-0000-4000-8000-0000000000a1') returning id into s;
- insert into public.segment_locations(segment_id,campaign_id,location_code,position) values(s,'00000000-0000-4000-8000-00000000ca01','K00-P01',1);
+ insert into public.segment_locations(segment_id,campaign_id,location_code,cycle,position) values(s,'00000000-0000-4000-8000-00000000ca01','K00-P01',1,1);
 end $x$$q$,'segment_location_single_active','índice único: ni escribiendo directo hay dos tramos activos en una ubicación');
 
 -- ── 6. Lectura del Operario: solo lo suyo y sin teórico ──
@@ -119,9 +126,9 @@ reset role;
 -- ── 8. Reasignar: sale Operario Dos, entra Operario Tres ──
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-0000000000b1',false);
 set role authenticated;
-select lab.fails($q$select public.reassign_segment((select v::uuid from lab.state where k='seg1'),'00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c3','cambio de turno',99)$q$,'otro dispositivo','versión obsoleta rechazada');
-select lab.fails($q$select public.reassign_segment((select v::uuid from lab.state where k='seg1'),'00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c3','',0)$q$,'motivo','reasignar exige motivo');
-select lab.ok(public.reassign_segment((select v::uuid from lab.state where k='seg1'),'00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c3','cambio de turno',0)=1,'reasignación aplicada, versión 1');
+select lab.fails($q$select lab.reassign((select v::uuid from lab.state where k='seg1'),'00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c3','cambio de turno',99)$q$,'otro dispositivo','versión obsoleta rechazada');
+select lab.fails($q$select lab.reassign((select v::uuid from lab.state where k='seg1'),'00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c3','',0)$q$,'motivo','reasignar exige motivo');
+select lab.ok(lab.reassign((select v::uuid from lab.state where k='seg1'),'00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c3','cambio de turno',0)=1,'reasignación aplicada, versión 1');
 reset role;
 select lab.ok((select count(*) from public.assignments where operator_id='00000000-0000-4000-8000-0000000000c2' and active)=0,'Operario Dos ya no tiene asignaciones activas');
 select lab.ok((select count(*) from public.assignments where operator_id='00000000-0000-4000-8000-0000000000c2')=79,'pero sus filas se conservan (sin borrar)');
@@ -148,15 +155,15 @@ update public.assignments set status='in_progress' where segment_id=(select v::u
 select lab.ok(true,'el estado sí se puede actualizar');
 
 -- ── 10. Liberar el tramo y volver a crearlo (partir = liberar + crear dos) ──
-select lab.fails($q$select public.release_segment((select v::uuid from lab.state where k='seg1'),'no',1)$q$,'motivo','liberar exige motivo');
-select public.release_segment((select v::uuid from lab.state where k='seg1'),'partir en dos tramos',1);
-select lab.fails($q$select public.release_segment((select v::uuid from lab.state where k='seg1'),'otra vez más',2)$q$,'ya está liberado','no se libera dos veces');
+select lab.fails($q$select lab.release((select v::uuid from lab.state where k='seg1'),'no',1)$q$,'motivo','liberar exige motivo');
+select lab.release((select v::uuid from lab.state where k='seg1'),'partir en dos tramos',1);
+select lab.fails($q$select lab.release((select v::uuid from lab.state where k='seg1'),'otra vez más',2)$q$,'ya está liberado','no se libera dos veces');
 do $$ declare p jsonb; a uuid; b uuid; begin
  p=public.preview_segment('00000000-0000-4000-8000-00000000ca01','K00-P01','K04-P08');
  perform lab.ok((p->'conflicts'->>'count')::int=0,'tras liberar ya no hay solapes');
- a=public.assign_segment('00000000-0000-4000-8000-00000000ca01','K00-P01','K04-P08','00000000-0000-4000-8000-0000000000c1',null,p->>'fingerprint');
+ a=lab.assign('00000000-0000-4000-8000-00000000ca01','K00-P01','K04-P08','00000000-0000-4000-8000-0000000000c1',null,p->>'fingerprint');
  p=public.preview_segment('00000000-0000-4000-8000-00000000ca01','K05-P01','K09-P08');
- b=public.assign_segment('00000000-0000-4000-8000-00000000ca01','K05-P01','K09-P08','00000000-0000-4000-8000-0000000000c2','00000000-0000-4000-8000-0000000000c3',p->>'fingerprint');
+ b=lab.assign('00000000-0000-4000-8000-00000000ca01','K05-P01','K09-P08','00000000-0000-4000-8000-0000000000c2','00000000-0000-4000-8000-0000000000c3',p->>'fingerprint');
  perform lab.ok((select count(*) from public.list_segments('00000000-0000-4000-8000-00000000ca01') where status='active')=2,'dos tramos activos tras partir');
  perform lab.ok((select counted from public.list_segments('00000000-0000-4000-8000-00000000ca01') where id=a)=2,'lo ya contado sigue contando en el tramo nuevo');
  perform lab.ok((select count(*) from public.assignments where segment_id=a and active)=39,'K00..K04: 40 − 1 deshabilitada = 39');
@@ -166,6 +173,65 @@ reset role;
 select lab.ok((select count(*) from public.counts)=2,'ningún recuento se ha borrado');
 select lab.ok((select count(*) from public.audit_events where relation_name='segments')>=5,'altas, reasignación y liberación de tramos auditadas');
 select lab.ok((select count(*) from public.audit_events where relation_name='assignments' and operation='UPDATE')>0,'cambios de asignaciones auditados');
+
+-- ── 12. Idempotencia por identificador de orden (idea de F2 CP012) ──
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-0000000000b1',false);
+set role authenticated;
+do $$ declare p jsonb; r1 jsonb; r2 jsonb; m uuid:='00000000-0000-4000-8000-0000000000e1'; begin
+ p=public.preview_segment('00000000-0000-4000-8000-00000000ca01','Z2-P1','Z10-P1');
+ perform lab.ok((p->>'total')::int=2 and p->>'first'='Z2-P1' and p->>'last'='Z10-P1','orden natural en el rango Z2-P1 → Z10-P1');
+ r1=public.assign_segment(m,'00000000-0000-4000-8000-00000000ca01','Z2-P1','Z10-P1',1::smallint,'00000000-0000-4000-8000-0000000000c3',null,p->>'fingerprint');
+ r2=public.assign_segment(m,'00000000-0000-4000-8000-00000000ca01','Z2-P1','Z10-P1',1::smallint,'00000000-0000-4000-8000-0000000000c3',null,p->>'fingerprint');
+ perform lab.ok(r1->>'segment_id'=r2->>'segment_id' and (r1->>'replayed')::boolean=false and (r2->>'replayed')::boolean,'la misma orden repetida devuelve el mismo tramo sin duplicar');
+ perform lab.ok((select count(*) from public.segments where from_code='Z2-P1')=1,'solo existe un tramo Z2-P1');
+ insert into lab.state values('segz',r1->>'segment_id');
+end $$;
+select lab.fails($q$select public.assign_segment('00000000-0000-4000-8000-0000000000e1','00000000-0000-4000-8000-00000000ca01','Z2-P1','Z10-P1',1::smallint,'00000000-0000-4000-8000-0000000000c1',null,'otra')$q$,'otros datos','reutilizar el identificador con otros datos se rechaza');
+do $$ declare r1 jsonb; r2 jsonb; m uuid:='00000000-0000-4000-8000-0000000000e2'; s uuid:=(select v::uuid from lab.state where k='segz'); begin
+ r1=public.reassign_segment(m,s,'00000000-0000-4000-8000-0000000000c1',null,'cambio de turno',0);
+ r2=public.reassign_segment(m,s,'00000000-0000-4000-8000-0000000000c1',null,'cambio de turno',0);
+ perform lab.ok((r1->>'version')::int=1 and (r2->>'version')::int=1 and (r2->>'replayed')::boolean,'reasignación repetida: misma respuesta');
+ perform lab.ok((select version from public.segments where id=s)=1,'y la versión solo sube una vez');
+end $$;
+
+-- ── 13. Segundo recuento ciego (ciclo 2) ──
+do $$ declare p jsonb; begin
+ p=public.preview_segment('00000000-0000-4000-8000-00000000ca01','K00-P01','K00-P08',2::smallint);
+ perform lab.ok((p->>'total')::int=2 and p->>'first'='K00-P01' and p->>'last'='K00-P02','ciclo 2 solo incluye ubicaciones con primer recuento (2)');
+ perform lab.ok((p->'without_first_count'->>'count')::int=6,'avisa de 6 ubicaciones sin primer recuento');
+ perform lab.ok((p->'conflicts'->>'count')::int=0,'el tramo del primer recuento no bloquea el segundo');
+ insert into lab.state values('fp_c2',p->>'fingerprint');
+end $$;
+select lab.fails($q$select public.assign_segment(gen_random_uuid(),'00000000-0000-4000-8000-00000000ca01','K00-P01','K00-P08',2::smallint,'00000000-0000-4000-8000-0000000000c1',null,(select v from lab.state where k='fp_c2'))$q$,'participó en el primer recuento','quien contó el primer recuento no hace el segundo');
+select lab.fails($q$select public.assign_segment(gen_random_uuid(),'00000000-0000-4000-8000-00000000ca01','K00-P01','K00-P08',2::smallint,'00000000-0000-4000-8000-0000000000c4','00000000-0000-4000-8000-0000000000c2',(select v from lab.state where k='fp_c2'))$q$,'participó en el primer recuento','tampoco quien fue pareja en el primero');
+select lab.fails($q$select public.assign_segment(gen_random_uuid(),'00000000-0000-4000-8000-00000000ca01','K00-P01','K00-P08',2::smallint,'00000000-0000-4000-8000-0000000000c3',null,(select v from lab.state where k='fp_c2'))$q$,'participó en el primer recuento','ni quien tuvo asignado el primer recuento aunque se liberara');
+do $$ declare r jsonb; begin
+ r=public.assign_segment(gen_random_uuid(),'00000000-0000-4000-8000-00000000ca01','K00-P01','K00-P08',2::smallint,
+   '00000000-0000-4000-8000-0000000000c4',null,(select v from lab.state where k='fp_c2'));
+ perform lab.ok((r->>'cycle')::int=2 and (r->>'total')::int=2,'segundo recuento asignado a otra persona (2 ubicaciones)');
+ insert into lab.state values('segc2',r->>'segment_id');
+end $$;
+select lab.fails($q$select public.assign_segment(gen_random_uuid(),'00000000-0000-4000-8000-00000000ca01','K00-P01','K00-P08',2::smallint,'00000000-0000-4000-8000-0000000000a1',null,(select v from lab.state where k='fp_c2'))$q$,'ya están asignadas en este recuento','no hay dos segundos recuentos de la misma ubicación');
+reset role;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-0000000000c4',false);
+set role authenticated;
+select lab.ok((select count(*) from public.counts)=0,'el segundo contador no ve el primer recuento (ciego)');
+select lab.ok((select count(*) from public.stock_snapshot)=0,'ni el teórico');
+insert into public.counts(campaign_id,location_code,product_code,quantity,actor_id,client_mutation_id)
+ values('00000000-0000-4000-8000-00000000ca01','K00-P01','ART-LAB-1',6,'00000000-0000-4000-8000-0000000000c4',gen_random_uuid());
+reset role;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-0000000000c1',false);
+set role authenticated;
+insert into public.counts(campaign_id,location_code,product_code,quantity,actor_id,cycle,client_mutation_id)
+ values('00000000-0000-4000-8000-00000000ca01','K00-P03','ART-LAB-1',2,'00000000-0000-4000-8000-0000000000c1',2,gen_random_uuid());
+reset role;
+select lab.ok((select cycle from public.counts where actor_id='00000000-0000-4000-8000-0000000000c4')=2,'el recuento del segundo contador queda como ciclo 2');
+select lab.ok((select cycle from public.counts where location_code='K00-P03')=1,'el navegador no puede forzar el ciclo 2');
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-0000000000b1',false);
+set role authenticated;
+select lab.ok((select counted from public.list_segments('00000000-0000-4000-8000-00000000ca01') where id=(select v::uuid from lab.state where k='segc2'))=1,'avance del segundo recuento: 1 de 2');
+select lab.ok((select count(*) from public.list_segments('00000000-0000-4000-8000-00000000ca01') where status='active' and cycle=1 and from_code='K00-P01' and counted=3)=1,'el primer recuento cuenta solo ciclo 1 (3 ubicaciones)');
+reset role;
 
 -- ── 11. Anónimo sin acceso ──
 set role anon;

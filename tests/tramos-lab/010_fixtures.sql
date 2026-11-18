@@ -9,12 +9,13 @@ insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data) values
  ('00000000-0000-4000-8000-0000000000c1','op1@lab.invalid',now(),'{"display_name":"Operario Uno"}'),
  ('00000000-0000-4000-8000-0000000000c2','op2@lab.invalid',now(),'{"display_name":"Operario Dos"}'),
  ('00000000-0000-4000-8000-0000000000c3','op3@lab.invalid',now(),'{"display_name":"Operario Tres"}'),
+ ('00000000-0000-4000-8000-0000000000c4','op4@lab.invalid',now(),'{"display_name":"Operario Cuatro"}'),
  ('00000000-0000-4000-8000-0000000000d1','baja@lab.invalid',now(),'{"display_name":"Cuenta Deshabilitada"}');
 -- El trigger de alta crea perfiles Operario deshabilitados; se habilitan con motivo.
 update public.profiles set role='admin',enabled=true,permission_reason='alta de laboratorio' where user_id='00000000-0000-4000-8000-0000000000a1';
 update public.profiles set role='supervisor',enabled=true,permission_reason='alta de laboratorio' where user_id='00000000-0000-4000-8000-0000000000b1';
 update public.profiles set enabled=true,permission_reason='alta de laboratorio'
- where user_id in ('00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c2','00000000-0000-4000-8000-0000000000c3');
+ where user_id in ('00000000-0000-4000-8000-0000000000c1','00000000-0000-4000-8000-0000000000c2','00000000-0000-4000-8000-0000000000c3','00000000-0000-4000-8000-0000000000c4');
 
 -- K00..K10 × P01..P08, con formato K##-P##.
 insert into public.locations(code,aisle)
