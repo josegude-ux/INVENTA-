@@ -1,5 +1,11 @@
 # Registro de cambios · VISURA INVENTA
 
+## 0.31.2 · 2026-11-18 · PROGRAMADO (rama lab/000-unificacion-inventa-20261118)
+
+- La importación de existencias BC ignora las líneas vacías del diario de Business Central (sin artículo, ubicación, descripción, lote ni unidad, y con stock 0), avisando con una advertencia. Antes bloqueaban toda la carga («Fila 2: … inválidos»).
+- Cualquier fila con algún dato pero incompleta, o vacía con stock distinto de 0, sigue siendo un error.
+- Prueba nueva con datos ficticios.
+
 ## 0.31.1 · 2026-11-18 · PROGRAMADO (rama lab/000-unificacion-inventa-20261118)
 
 - Lectura de los Excel exportados directamente desde Business Central. BC genera el .xlsx con el espacio de nombres prefijado (`<x:workbook>`) y rutas absolutas (`/xl/...`), y ExcelJS fallaba con «undefined is not an object (evaluating 'e.sheets')».

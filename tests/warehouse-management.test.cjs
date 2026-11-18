@@ -211,6 +211,20 @@ test('importador BC utiliza Stock calculado, conserva lotes y detecta negativos'
  const mixed=importer.parseRows([head,r1,[...r2.slice(0,1),'OTRO_ALMACEN',...r2.slice(2)]],'BC.xlsx');
  assert.ok(mixed.errors.some(x=>x.includes('mezcla almacenes')));
 });
+test('importador ignora líneas vacías del diario BC pero rechaza filas incompletas',()=>{
+ const head=['Nombre sección','Cód. almacén','Nº documento almacén','Nº producto','Cód. ubicación','Descripción','Nº lote','Fecha caducidad','Stock calculado','Cant. (stock físico)','Cantidad','Cód. zona','Cód. unidad medida'];
+ const blank=['SECCION-PRUEBA','COR_01_COR','','','','','',null,0,0,0,'',''];
+ const r1=['SECCION-PRUEBA','COR_01_COR','H','PRD001','K17-P02','ARTÍCULO','L1',null,5,0,0,'10-PAS-K','CAJA'];
+ const ok=importer.parseRows([head,blank,r1],'BC.xlsx');
+ assert.equal(ok.errors.length,0);
+ assert.equal(ok.rows.length,1);
+ assert.equal(ok.rows[0].row_number,1);
+ assert.ok(ok.warnings.some(x=>/1 línea vacía/.test(x)));
+ const noLocation=['SECCION-PRUEBA','COR_01_COR','H','PRD002','','ARTÍCULO','',null,0,0,0,'','CAJA'];
+ assert.ok(importer.parseRows([head,noLocation,r1],'BC.xlsx').errors.some(x=>x.includes('Fila 2')));
+ const blankWithStock=['SECCION-PRUEBA','COR_01_COR','','','','','',null,7,0,0,'',''];
+ assert.ok(importer.parseRows([head,blankWithStock,r1],'BC.xlsx').errors.some(x=>x.includes('Fila 2')));
+});
 test('importador ignora filas de título y nunca toma Cantidad física como stock',()=>{
  const title=['Diario de inventario físico de almacén'];
  const blank=[];
