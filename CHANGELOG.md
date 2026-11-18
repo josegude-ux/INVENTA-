@@ -1,5 +1,13 @@
 # Registro de cambios · VISURA INVENTA
 
+## Sin cambio de versión · 2026-11-18 · PROBADO LAB · CI «INVENTA checks» en verde (rama lab/100-ci-previos-20261118, línea 100)
+
+- Se corrigen los 12 fallos previos de las pruebas; no cambia código de la aplicación, solo `tests/`.
+- 9 fallaban porque los entornos de prueba no tenían `homeIcon`, que la app real define en `index.html`: se simula en los arneses.
+- 2 comprobaban versiones fijas antiguas (`?v=0.30.5`): ahora se comprueba que cada script que carga `index.html` está en la caché del service worker con la misma versión, sea cual sea.
+- 1 expresión de CSS admite el `;` final que añadió la fase A.
+- Resultado: 51/51.
+
 ## Sin cambio de versión · 2026-11-18 · migraciones de la unificación
 
 - `supabase/visura-unificado/`: las 5 migraciones ya aplicadas en el Supabase unificado (control-cargas-movil), incluida la retirada de F2. Sin datos personales; ver el README de la carpeta. La aplicación no cambia (sigue en 0.31.2).

@@ -18,7 +18,10 @@ test('archivos JavaScript válidos y versión de caché coherente',()=>{
  const version=/APP_VERSION='(\d+\.\d+\.\d+)'/.exec(index)?.[1];
  assert.ok(version,'Debe existir APP_VERSION en index.html');
  assert.ok(worker.includes('inventa-demo-v'+version.replace(/\./g,'')+'-01'),'La caché debe corresponder a la versión de la app');
- assert.match(worker,/'\.\/warehouse-management\.js\?v=0\.30\.5'/);
+ // Cada script local que carga index.html debe estar en la caché del service worker con la misma versión.
+ const scripts=[...index.matchAll(/src="\.\/([a-z0-9-]+\.js)\?v=(\d+\.\d+\.\d+)"/g)];
+ assert.ok(scripts.length>=5,'index.html debe cargar sus scripts versionados');
+ for(const [,file,v] of scripts)assert.ok(worker.includes("'./"+file+'?v='+v+"'"),file+'?v='+v+' debe estar en la caché del service worker');
  assert.match(index,/warehouse-management\.js/);
  assert.match(index,/consultation-core\.js/);
  assert.match(index,/consultation-ui\.js/);
@@ -55,10 +58,11 @@ function harness(role,fixtures={}){
   return {ok:true,status:200,text:async()=>JSON.stringify(data)};
  };
  const mockWindow={addEventListener(){}};
- const factory=new Function('window','document','fetch','localStorage','crypto','place','go','managerUser','consultUser','screen','confirm',code+';\nreturn window.INVENTA_MGMT;');
+ // homeIcon lo define index.html en la app real; en la prueba se simula.
+ const factory=new Function('window','document','fetch','localStorage','crypto','place','go','managerUser','consultUser','screen','confirm','homeIcon',code+';\nreturn window.INVENTA_MGMT;');
  const obj=factory(mockWindow,{getElementById(id){return {value:values[id]||'',files:[],textContent:'',checked:true};}},
  mockFetch,{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},
- {randomUUID:()=> 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'},html=>seen.push(html),dest=>routes.push(dest),'','','home',()=>true);
+ {randomUUID:()=> 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'},html=>seen.push(html),dest=>routes.push(dest),'','','home',()=>true,name=>'<svg class="vis-icon" data-icon="'+name+'"></svg>');
  return {obj,seen,routes,queries,storage};
 }
 test('autenticación del Administrador y dashboard contra API',async()=>{
@@ -346,7 +350,7 @@ test('Consulta: Volver recupera resultados filtrados y no marca artículos no fi
  view.back();
  assert.equal(el('consultSearch').value,'K00-P02');
  assert.match(el('consultResults').innerHTML,/K00-P02/);
- assert.match(index,/#topNavigation\[hidden\]\{display:none!important\}/);
+ assert.match(index,/#topNavigation\[hidden\]\{display:none!important;?\}/);
 });
 
 
@@ -447,8 +451,9 @@ test('Informe de fijos se pagina para mostrar el inventario completo, sin cargar
  assert.match(code,/records\.slice\(0,100\)/);
  assert.match(code,/fixedReportRows\.filter/);
  assert.match(code,/INVENTA_FIXED_IMPORT\.panel/);
- assert.match(index,/fixed-positions-import\.js\?v=0\.30\.5/);
- assert.match(worker,/fixed-positions-import\.js\?v=0\.30\.5/);
+ const fixedV=/fixed-positions-import\.js\?v=(\d+\.\d+\.\d+)/.exec(index)?.[1];
+ assert.ok(fixedV,'index.html carga fixed-positions-import.js versionado');
+ assert.ok(worker.includes('fixed-positions-import.js?v='+fixedV),'la caché usa la misma versión de fixed-positions-import.js');
 });
 
 test('Ubicaciones especiales RET y CADCAP no se confunden con pasillos R/C',()=>{
