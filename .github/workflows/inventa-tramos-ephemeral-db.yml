@@ -6,6 +6,7 @@ on:
     paths:
       - 'supabase/visura-unificado/**'
       - 'supabase/visura-unificado-pendiente/**'
+      - 'supabase/homologacion/**'
       - 'tests/tramos-lab/**'
       - '.github/workflows/inventa-tramos-ephemeral-db.yml'
 permissions:
@@ -46,7 +47,7 @@ jobs:
             echo "ERROR: el laboratorio se ejecutó fuera de inventa_tramos_test"; exit 1
           fi
           grep -q 'INVENTA TRAMOS LAB ONLY' /tmp/tramos-reject.log
-      - name: Unificación + tramos, pareja, ciclo 2, idempotencia, RLS y concurrencia
+      - name: Unificación + tramos, pareja, ciclo 2, idempotencia, RLS, concurrencia y ensayo de homologación
         run: bash tests/tramos-lab/run.sh
       - name: Versión de PostgreSQL (debe ser 17, como Supabase)
         run: psql -X -qAt -c "show server_version" | grep -E '^17\.'

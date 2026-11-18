@@ -1,5 +1,12 @@
 # Registro de cambios · VISURA INVENTA
 
+## Sin cambio de versión · 2026-11-18 · guion de homologación de «Mi tramo» (rama lab/100-homologacion-mi-tramo-20261118, línea 100)
+
+- `docs/HOMOLOGACION_MI_TRAMO.md`: guion H01–H17 para el móvil (pareja, relevo, segundo recuento ciego, solapes, idempotencia, reasignación y cierre) con datos ficticios.
+- `supabase/homologacion/ficticio_mi_tramo.sql`: 10 ubicaciones ZZH, 2 artículos ZZHOM, campaña en borrador y teórico ficticio. Se puede repetir sin duplicar y **se niega si hay otra campaña activa**, para no mezclarse con un inventario real.
+- `tests/tramos-lab/050_ensayo_homologacion.sql`: ensayo de H02–H16 en PostgreSQL desechable (también en CI).
+- Hallazgo: solo puede haber una campaña activa. En el unificado ya está activa la real, así que la homologación va al entorno LAB (D3).
+
 ## 0.32.1 · 2026-11-18 · PROBADO LAB (rama lab/100-pareja-20261118, línea 100)
 
 - «Mi tramo» en Mis recuentos: tramo, recuento (primero o segundo ciego), pareja con nombres, avance «N de M», siguientes ubicaciones en orden de recorrido y preselección de la siguiente pendiente.
