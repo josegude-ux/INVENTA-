@@ -129,6 +129,6 @@ async function save(){
 }
 root.INVENTA_REAL={isBusy:function(){return busy;},leave:function(){visible=false;serial++;diagnosticSerial++;diagnostic='';},open:function(){visible=true;assignments=[];counts=[];lastRead='';diagnostic='';draw();return reload();},close:function(){visible=false;serial++;diagnosticSerial++;diagnostic='';go('home');},reload:reload,sync:sync,diagnose:diagnose,save:save,flush:flush,payloadEqual:payloadEqual};
 root.addEventListener('online',function(){if(m().isAuthenticated())sync();});
-root.addEventListener('storage',function(e){if(e.key==='inventa-real-auth-v1'){visible=false;serial++;diagnosticSerial++;diagnostic='';assignments=[];counts=[];}else status();});
+root.addEventListener('storage',function(e){if(e.key==='visura-inventa-auth-v2'){visible=false;serial++;diagnosticSerial++;diagnostic='';assignments=[];counts=[];}else status();});
 })(window);
 

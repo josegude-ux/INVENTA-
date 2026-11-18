@@ -1,0 +1,11 @@
+{
+  "app": "VISURA INVENTA",
+  "version": "0.31.0",
+  "estado": "PROGRAMADO",
+  "rama": "lab/000-unificacion-inventa-20261118",
+  "fecha": "2026-11-18",
+  "supabase": {
+    "proyecto": "oevetnszmfxeukcncwji",
+    "esquema": "inventa"
+  }
+}

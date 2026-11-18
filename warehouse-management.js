@@ -3,9 +3,10 @@
    Nunca usar claves secretas ni service_role en el navegador. */
 (function(){
 'use strict';
-var BASE='https://wlejxnpphysogrzcxjfh.supabase.co';
-var KEY='sb_publishable_gPeof-fUW3yITvNXqsjHVw_-PjB1Fyd';
-var STORE='inventa-real-auth-v1';
+var BASE='https://oevetnszmfxeukcncwji.supabase.co'; // VISURA unificado (control-cargas-movil), esquema inventa
+var KEY='sb_publishable_HH9O16zA-hT7ElScoYOSUQ_u-tcD-ei';
+var DB_SCHEMA='inventa';
+var STORE='visura-inventa-auth-v2';
 var session=null,profile=null,section='dashboard',pending=false,notice='';
 var catalogView='aisles',catalogAisle='',catalogLocation='',renderSerial=0,refreshTask=null;
 var permissionVersions={},fixedReportRows=[];
@@ -27,7 +28,7 @@ async function refresh(){
  })();
  try{return await refreshTask;}finally{refreshTask=null;}
 }
-async function api(table,params,method,body){if(session&&session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();var opts={method:method||'GET',headers:method&&method!=='GET'?{'Prefer':'return=representation'}:{}};if(body!==undefined)opts.body=JSON.stringify(body);return request('/rest/v1/'+table+(params?'?'+params:''),opts);}
+async function api(table,params,method,body){if(session&&session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();var opts={method:method||'GET',headers:method&&method!=='GET'?{'Prefer':'return=representation'}:{}};if(body!==undefined)opts.body=JSON.stringify(body);opts.headers['Accept-Profile']=DB_SCHEMA;opts.headers['Content-Profile']=DB_SCHEMA;return request('/rest/v1/'+table+(params?'?'+params:''),opts);}
 function isManager(){return !!(session&&profile&&profile.enabled&&['supervisor','admin'].includes(profile.role));}
 function isAdmin(){return isManager()&&profile.role==='admin';}
 function check(){if(!isManager()){if(typeof go==='function')go('manager-login');return false;}return true;}
