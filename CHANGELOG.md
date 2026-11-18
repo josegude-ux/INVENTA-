@@ -1,5 +1,9 @@
 # Registro de cambios · VISURA INVENTA
 
+## Sin cambio de versión · 2026-11-18 · migraciones de la unificación
+
+- `supabase/visura-unificado/`: las 5 migraciones ya aplicadas en el Supabase unificado (control-cargas-movil), incluida la retirada de F2. Sin datos personales; ver el README de la carpeta. La aplicación no cambia (sigue en 0.31.2).
+
 ## 0.31.2 · 2026-11-18 · PROGRAMADO (rama lab/000-unificacion-inventa-20261118)
 
 - La importación de existencias BC ignora las líneas vacías del diario de Business Central (sin artículo, ubicación, descripción, lote ni unidad, y con stock 0), avisando con una advertencia. Antes bloqueaban toda la carga («Fila 2: … inválidos»).
