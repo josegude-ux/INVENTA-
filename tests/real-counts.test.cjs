@@ -13,7 +13,7 @@ function setup(){
   return [];
  }};
  const window={INVENTA_MGMT:mgmt,addEventListener(){},navigator:{}};
- vm.runInNewContext(source,{window,localStorage:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)},document:{getElementById:id=>elements.get(id)||null},crypto:{randomUUID:()=> 'qa-new-mutation'},place(){},go(){}});
+ vm.runInNewContext(source,{window,localStorage:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)},document:{getElementById:id=>elements.get(id)||null},crypto:{randomUUID:()=> 'qa-new-mutation'},place(){},go(){},homeIcon:name=>'<svg class="vis-icon" data-icon="'+name+'"></svg>'});
  return {api:window.INVENTA_REAL,body,memory,elements,queries,seed(){memory.set('inventa-count-outbox-v1:qa-user-a',JSON.stringify([{body}]))},queue:()=>JSON.parse(memory.get('inventa-count-outbox-v1:qa-user-a')||'[]'),posts:()=>posts,mode:v=>mode=v,user:v=>uid=v,active:v=>active=v,stored:()=>stored};
 }
 test('offline retry retains one mutation and confirms it once',async()=>{

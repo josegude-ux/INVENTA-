@@ -1,7 +1,9 @@
-/* INVENTA: authenticated individual counts. Demo data never enters this queue. */
+/* INVENTA: authenticated counts, individual or in pair («Mi tramo»). Demo data never enters this queue.
+   Pair rule: one phone, one count. The author of each entry is whoever has the session open;
+   the server fills in the partner from the active tramo. Relevo = send pending, the other person signs in. */
 (function(root){
 'use strict';
-var visible=false,busy=false,serial=0,assignments=[],counts=[],message='',lastRead='',diagnostic='',diagnosticBusy=false,diagnosticSerial=0;
+var visible=false,busy=false,serial=0,assignments=[],counts=[],segments=[],message='',lastRead='',diagnostic='',diagnosticBusy=false,diagnosticSerial=0;
 function m(){return root.INVENTA_MGMT;}
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function value(id){var el=document.getElementById(id);return el?el.value.trim():'';}
@@ -48,16 +50,33 @@ function status(){
  if(d)d.textContent=diagnostic||'Comprobación de acceso pendiente.';
 }
 function option(v,t){return '<option value="'+esc(v)+'">'+esc(t)+'</option>';}
+function isPair(){return segments.some(function(s){return !!s.partner_id;});}
+function cycleName(c){return Number(c)===2?'Segundo recuento (ciego)':'Primer recuento';}
+/* Orden de recorrido: posición dentro de su tramo; lo que no es de un tramo va al final. */
+function order(){var pos={};segments.forEach(function(s,si){(s.locations||[]).forEach(function(l){pos[s.campaign_id+'|'+l.code]=si*100000+l.position;});});return pos;}
+function sortedAssignments(){var pos=order();return assignments.slice().sort(function(a,b){var x=pos[a.campaign_id+'|'+a.location_code],y=pos[b.campaign_id+'|'+b.location_code];x=x==null?1e9:x;y=y==null?1e9:y;return x-y||String(a.location_code).localeCompare(String(b.location_code));});}
+function nextPending(s){return (s.locations||[]).filter(function(l){return !l.counted;});}
+function tramoCard(s){
+ var done=(s.locations||[]).filter(function(l){return l.counted;}).length,total=(s.locations||[]).length,next=nextPending(s);
+ var people=s.partner_id?'Pareja: '+(s.me_name||'Tú')+' + '+(s.partner_name||'Sin nombre'):'Individual: '+(s.me_name||'Tú');
+ return '<section class="real-counts-card real-tramo vis-card" aria-label="'+esc('Mi tramo '+s.from+' a '+s.to)+'"><h2>Mi tramo · '+esc(s.from+' → '+s.to)+'</h2>'
+  +'<p class="real-counts-help vis-help">'+esc(cycleName(s.cycle)+' · '+(s.campaign_name||'')+' · '+people)+'</p>'
+  +'<progress class="segment-progress" max="'+esc(total)+'" value="'+esc(done)+'" aria-label="'+esc('Avance de '+s.from+' a '+s.to)+'"></progress>'
+  +'<p class="real-counts-help vis-help">'+esc(done+' de '+total+' ubicaciones con recuento'+(next.length?' · siguiente: '+next[0].code:' · tramo completo'))+'</p>'
+  +(next.length?'<div class="real-tramo-next">'+next.slice(0,6).map(function(l){return '<button type="button" class="vis-button-secondary" onclick="INVENTA_REAL.pick(\''+esc(s.campaign_id)+'\',\''+esc(l.code)+'\')">'+esc(l.code)+'</button>';}).join('')+'</div>':'')
+  +(s.partner_id?'<p class="real-counts-help vis-help">Cada apunte queda a nombre de quien tiene la sesión abierta. Para el relevo, envía lo pendiente y que '+esc(s.partner_name||'tu pareja')+' inicie sesión en este móvil.</p><button type="button" class="vis-button-secondary" onclick="INVENTA_REAL.handover()">'+esc('Relevo: pasar a '+(s.partner_name||'la pareja'))+'</button>':'')
+  +'</section>';
+}
 function draw(){
  if(!visible)return;
  var uid=m().getUserId(),latest=counts.filter(function(c){return !counts.some(function(n){return n.previous_id===c.id;});});
  var chevron=homeIcon('chevron-down');
  var refresh=homeIcon('refresh-cw');
  var scan=homeIcon('scan-barcode');
- var html='<div class="real-counts-view vis-stack"><div class="real-counts-intro vis-title"><h1>Mis recuentos</h1><p>'+esc(m().profile.display_name)+' · Stock teórico oculto</p><span class="real-counts-chip vis-chip">CUENTA REAL · RECUENTO INDIVIDUAL</span></div>'
+ var html='<div class="real-counts-view vis-stack"><div class="real-counts-intro vis-title"><h1>Mis recuentos</h1><p>'+esc(m().profile.display_name)+' · Stock teórico oculto</p><span class="real-counts-chip vis-chip">'+(isPair()?'CUENTA REAL · RECUENTO EN PAREJA':'CUENTA REAL · RECUENTO INDIVIDUAL')+'</span></div>'+segments.map(tramoCard).join('')
  +'<section class="real-counts-card real-sync-card vis-card" aria-label="Sincronización"><div class="real-sync-line"><p id="realSyncStatus" role="status" aria-live="polite"></p><button type="button" class="real-counts-icon vis-icon-button vis-icon-button--outline" onclick="INVENTA_REAL.reload()" aria-label="Actualizar lecturas" title="Actualizar lecturas">'+refresh+'</button></div><button type="button" class="real-counts-primary vis-button-primary" onclick="INVENTA_REAL.sync()">Sincronizar y comprobar servidor</button><details class="real-counts-details real-diagnostic vis-accordion"><summary>Diagnóstico'+chevron+'</summary><button type="button" class="real-counts-secondary vis-button-secondary" onclick="INVENTA_REAL.diagnose()">Comprobar acceso REAL · solo lectura</button><p id="realDiagStatus" role="status" aria-live="polite"></p><p class="real-counts-help vis-help">Esta comprobación no guarda recuentos ni modifica la base de datos.</p></details></section>'
- +'<section class="real-counts-card real-counts-form vis-card vis-card--form"><h2>Registrar recuento</h2><p class="real-counts-help vis-help">Selecciona una asignación activa. El registro es individual; la pareja continúa en demostración.</p>'
- +'<div class="real-field vis-field"><label for="realAssignment">Ubicación asignada</label><div class="real-control-wrap vis-control-wrap"><select class="real-field-control vis-control" id="realAssignment">'+option('','Seleccionar…')+assignments.map(function(a){return option(a.id,a.location_code+' · '+a.campaigns.name);}).join('')+'</select>'+chevron+'</div></div>'
+ +'<section class="real-counts-card real-counts-form vis-card vis-card--form"><h2>Registrar recuento</h2><p class="real-counts-help vis-help">'+(segments.length?'Elige la ubicación (por defecto, la siguiente de tu tramo).':'Selecciona una asignación activa.')+(isPair()?' Recuento en pareja: un móvil y un único recuento.':'')+'</p>'
+ +'<div class="real-field vis-field"><label for="realAssignment">Ubicación asignada</label><div class="real-control-wrap vis-control-wrap"><select class="real-field-control vis-control" id="realAssignment">'+option('','Seleccionar…')+sortedAssignments().map(function(a){return option(a.id,a.location_code+' · '+a.campaigns.name);}).join('')+'</select>'+chevron+'</div></div>'
  +'<div class="real-field vis-field"><label for="realProduct">Código del artículo del catálogo</label><div class="real-control-wrap vis-control-wrap"><input id="realProduct" class="real-field-control vis-control" autocomplete="off">'+scan+'</div></div>'
  +'<div class="real-field vis-field"><label for="realLot">Lote (si corresponde)</label><input id="realLot" class="real-field-control vis-control" autocomplete="off"></div>'
  +'<div class="real-field vis-field"><label for="realQty">Unidades sueltas</label><input id="realQty" class="real-field-control vis-control" inputmode="decimal" type="text"></div>'
@@ -77,7 +96,7 @@ async function diagnose(){
  try{
   await m().refreshProfile();
   if(ticket!==diagnosticSerial||uid!==m().getUserId()||!m().isAuthenticated())throw Error('La sesión cambió o fue revocada.');
-  var active=await m().realApi('assignments','select=id,campaigns!inner(status)&campaigns.status=eq.active&operator_id=eq.'+encodeURIComponent(uid)+'&limit=500');
+  var active=await m().realApi('assignments','select=id,campaigns!inner(status)&campaigns.status=eq.active&active=eq.true&operator_id=eq.'+encodeURIComponent(uid)+'&limit=500');
   if(ticket!==diagnosticSerial||uid!==m().getUserId()||!m().isAuthenticated())return false;
   var history=await m().realApi('counts','select=id&limit=1');
   if(ticket!==diagnosticSerial||uid!==m().getUserId()||!m().isAuthenticated())return false;
@@ -96,12 +115,28 @@ async function reload(){
   await m().refreshProfile();
   if(!m().isAuthenticated())throw Error('Cuenta pendiente o deshabilitada.');
   var data=await Promise.all([
-   m().realApi('assignments','select=*,campaigns!inner(name,status)&campaigns.status=eq.active&operator_id=eq.'+encodeURIComponent(uid)+'&order=created_at.desc&limit=500'),
-   m().realApi('counts','select=*&order=created_at.desc,id.desc&limit=100')
+   m().realApi('assignments','select=*,campaigns!inner(name,status)&campaigns.status=eq.active&active=eq.true&operator_id=eq.'+encodeURIComponent(uid)+'&order=created_at.desc&limit=500'),
+   m().realApi('counts','select=*&order=created_at.desc,id.desc&limit=100'),
+   m().realApi('rpc/my_segments','','GET').catch(function(){return [];})
   ]);
   if(ticket!==serial||uid!==m().getUserId())return;
-  assignments=data[0];counts=data[1];lastRead=new Date().toLocaleString('es-ES');message='Lectura actualizada.';draw();
+  assignments=data[0];counts=data[1];segments=Array.isArray(data[2])?data[2]:[];lastRead=new Date().toLocaleString('es-ES');message='Lectura actualizada.';draw();preselect();
  }catch(e){message=e.message;status();if(!lastRead)draw();}
+}
+function selectAssignment(campaign,code){var a=assignments.find(function(x){return x.campaign_id===campaign&&x.location_code===code;});var el=document.getElementById('realAssignment');if(a&&el){el.value=a.id;return true;}return false;}
+function preselect(){for(var s of segments){var n=nextPending(s);if(n.length&&selectAssignment(s.campaign_id,n[0].code))return;}}
+function pick(campaign,code){if(!selectAssignment(campaign,code)){message='Esa ubicación ya no está asignada a esta cuenta. Pulsa Actualizar.';status();}}
+async function handover(){
+ try{
+  var uid=m().getUserId();if(!uid)throw Error('No hay sesión abierta.');
+  var pair=segments.find(function(s){return s.partner_id;});if(!pair)throw Error('Este tramo no es en pareja.');
+  await flush();
+  if(read(uid).length)throw Error('Quedan apuntes sin confirmar; el relevo se hace cuando todo esté enviado.');
+  message='Relevo: '+(pair.partner_name||'tu pareja')+' debe iniciar sesión en este móvil.';
+  visible=false;serial++;segments=[];assignments=[];counts=[];
+  await m().logout();
+  return true;
+ }catch(e){message='Relevo no hecho: '+e.message;status();return false;}
 }
 async function sync(){try{await flush();await reload();}catch(e){message='Pendiente: '+e.message;status();}}
 async function save(){
@@ -127,8 +162,8 @@ async function save(){
   message='Guardado en este dispositivo; pendiente de confirmación.';draw();await sync();
  }catch(e){message=e.message;status();}
 }
-root.INVENTA_REAL={isBusy:function(){return busy;},leave:function(){visible=false;serial++;diagnosticSerial++;diagnostic='';},open:function(){visible=true;assignments=[];counts=[];lastRead='';diagnostic='';draw();return reload();},close:function(){visible=false;serial++;diagnosticSerial++;diagnostic='';go('home');},reload:reload,sync:sync,diagnose:diagnose,save:save,flush:flush,payloadEqual:payloadEqual};
+root.INVENTA_REAL={pick:pick,handover:handover,isBusy:function(){return busy;},leave:function(){visible=false;serial++;diagnosticSerial++;diagnostic='';},open:function(){visible=true;assignments=[];counts=[];segments=[];lastRead='';diagnostic='';draw();return reload();},close:function(){visible=false;serial++;diagnosticSerial++;diagnostic='';go('home');},reload:reload,sync:sync,diagnose:diagnose,save:save,flush:flush,payloadEqual:payloadEqual};
 root.addEventListener('online',function(){if(m().isAuthenticated())sync();});
-root.addEventListener('storage',function(e){if(e.key==='inventa-real-auth-v1'){visible=false;serial++;diagnosticSerial++;diagnostic='';assignments=[];counts=[];}else status();});
+root.addEventListener('storage',function(e){if(e.key==='visura-inventa-auth-v2'){visible=false;serial++;diagnosticSerial++;diagnostic='';assignments=[];counts=[];segments=[];}else status();});
 })(window);
 

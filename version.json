@@ -1,0 +1,11 @@
+{
+  "app": "VISURA INVENTA",
+  "version": "0.32.1",
+  "estado": "PROBADO LAB",
+  "rama": "lab/100-pareja-20261118",
+  "fecha": "2026-11-18",
+  "supabase": {
+    "proyecto": "oevetnszmfxeukcncwji",
+    "esquema": "inventa"
+  }
+}

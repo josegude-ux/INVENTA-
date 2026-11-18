@@ -1,0 +1,54 @@
+name: INVENTA tramos — PostgreSQL 17 descartable (esquema inventa)
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/visura-unificado/**'
+      - 'supabase/visura-unificado-pendiente/**'
+      - 'tests/tramos-lab/**'
+      - '.github/workflows/inventa-tramos-ephemeral-db.yml'
+permissions:
+  contents: read
+jobs:
+  tramos-db:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: inventa_tramos_ephemeral_not_a_secret
+          POSTGRES_DB: inventa_tramos_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: inventa_tramos_test
+      PGPASSWORD: inventa_tramos_ephemeral_not_a_secret
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar cliente PostgreSQL en runner desechable
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+      - name: Rechazar una base con otro nombre
+        env:
+          PGDATABASE: postgres
+        run: |
+          if bash tests/tramos-lab/run.sh >/tmp/tramos-reject.log 2>&1; then
+            echo "ERROR: el laboratorio se ejecutó fuera de inventa_tramos_test"; exit 1
+          fi
+          grep -q 'INVENTA TRAMOS LAB ONLY' /tmp/tramos-reject.log
+      - name: Unificación + tramos, pareja, ciclo 2, idempotencia, RLS y concurrencia
+        run: bash tests/tramos-lab/run.sh
+      - name: Versión de PostgreSQL (debe ser 17, como Supabase)
+        run: psql -X -qAt -c "show server_version" | grep -E '^17\.'
+      - name: Reversión de tramos (supabase/visura-unificado-pendiente)
+        run: bash tests/tramos-lab/040_reversion.sh

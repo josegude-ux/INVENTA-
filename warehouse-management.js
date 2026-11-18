@@ -3,12 +3,14 @@
    Nunca usar claves secretas ni service_role en el navegador. */
 (function(){
 'use strict';
-var BASE='https://wlejxnpphysogrzcxjfh.supabase.co';
-var KEY='sb_publishable_gPeof-fUW3yITvNXqsjHVw_-PjB1Fyd';
-var STORE='inventa-real-auth-v1';
+var BASE='https://oevetnszmfxeukcncwji.supabase.co'; // VISURA unificado (control-cargas-movil), esquema inventa
+var KEY='sb_publishable_HH9O16zA-hT7ElScoYOSUQ_u-tcD-ei';
+var DB_SCHEMA='inventa';
+var STORE='visura-inventa-auth-v2';
 var session=null,profile=null,section='dashboard',pending=false,notice='';
 var catalogView='aisles',catalogAisle='',catalogLocation='',renderSerial=0,refreshTask=null;
 var permissionVersions={},fixedReportRows=[];
+var segState={campaign:'',cycle:'1',from:'',to:'',op:'',partner:'',preview:null,action:null,list:[]};
 function safe(s){return String(s===null||s===undefined?'':s).replace(/[&<>"']/g,function(k){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[k];});}
 function val(id){var e=document.getElementById(id);return e?e.value.trim():'';}
 function show(html,footer){if(typeof place==='function')place(html,footer||'<button class="back" onclick="go(\'home\')"><svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-left"/></svg> Menú principal</button>');}
@@ -27,7 +29,7 @@ async function refresh(){
  })();
  try{return await refreshTask;}finally{refreshTask=null;}
 }
-async function api(table,params,method,body){if(session&&session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();var opts={method:method||'GET',headers:method&&method!=='GET'?{'Prefer':'return=representation'}:{}};if(body!==undefined)opts.body=JSON.stringify(body);return request('/rest/v1/'+table+(params?'?'+params:''),opts);}
+async function api(table,params,method,body){if(session&&session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();var opts={method:method||'GET',headers:method&&method!=='GET'?{'Prefer':'return=representation'}:{}};if(body!==undefined)opts.body=JSON.stringify(body);opts.headers['Accept-Profile']=DB_SCHEMA;opts.headers['Content-Profile']=DB_SCHEMA;return request('/rest/v1/'+table+(params?'?'+params:''),opts);}
 function isManager(){return !!(session&&profile&&profile.enabled&&['supervisor','admin'].includes(profile.role));}
 function isAdmin(){return isManager()&&profile.role==='admin';}
 function check(){if(!isManager()){if(typeof go==='function')go('manager-login');return false;}return true;}
@@ -53,7 +55,7 @@ async function register(){
 }
 async function loadProfile(){var u=session&&session.user;if(!u)return;var arr=await api('profiles','user_id=eq.'+encodeURIComponent(u.id)+'&select=*');profile=arr&&arr[0]||null;}
 async function restore(){try{session=JSON.parse(localStorage.getItem(STORE)||'null');if(!session)return;if(session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();if(session)await loadProfile();if(isManager()&&typeof managerUser!=='undefined')managerUser=profile.display_name||profile.role;}catch(e){session=null;profile=null;}}
-async function logout(){fixedReportRows=[];try{if(session)await request('/auth/v1/logout',{method:'POST'});}catch(e){}session=null;profile=null;localStorage.removeItem(STORE);if(typeof managerUser!=='undefined')managerUser='';if(typeof consultUser!=='undefined')consultUser='';notice='';go('home');}
+async function logout(){fixedReportRows=[];segState={campaign:'',cycle:'1',from:'',to:'',op:'',partner:'',preview:null,action:null,list:[]};try{if(session)await request('/auth/v1/logout',{method:'POST'});}catch(e){}session=null;profile=null;localStorage.removeItem(STORE);if(typeof managerUser!=='undefined')managerUser='';if(typeof consultUser!=='undefined')consultUser='';notice='';go('home');}
 function renderLogin(){
  show('<div class="vis-title"><h1>Acceso seguro</h1><p>INVENTA usa cuentas personales y permisos de Supabase.</p></div>'
   +mgmtCard('Iniciar sesión',
@@ -73,7 +75,7 @@ function mgmtHeading(k,t,sub){return '<div class="vis-title"><h2>'+safe(t)+'</h2
 function tabs(){return [
  ['dashboard','Resumen'],
  ['campaigns','Campañas'],
- ['assignments','Asignaciones'],
+ ['assignments','Tramos'],
  ['incidents','Incidencias'],
  ['catalog','Ubicaciones'],
  ['snapshot','Existencias BC'],
@@ -169,7 +171,14 @@ async function dataFor(tab){
  }
  if(tab==='campaigns')return {campaigns:await api('campaigns','select=*&order=created_at.desc&limit=100')};
  if(tab==='users'){var people=await api('rpc/admin_user_directory','', 'POST',{});people.forEach(function(p){permissionVersions[p.user_id]=p.version;});return {profiles:people};}
- if(tab==='assignments'){var a=await Promise.all([api('assignments','select=*&order=created_at.desc&limit=200'),api('campaigns','select=*&order=created_at.desc&limit=100'),api('locations','select=*&order=code&limit=1500'),api('profiles','select=*&order=display_name&limit=500')]);return {assignments:a[0],campaigns:a[1],locations:a[2],profiles:a[3]};}
+ if(tab==='assignments'){
+  var base=await Promise.all([api('campaigns','select=id,name,kind,status&status=neq.closed&order=created_at.desc&limit=100'),api('profiles','select=user_id,display_name,role,enabled&enabled=eq.true&order=display_name&limit=500'),allConsultRows('locations','select=code&enabled=eq.true&order=code')]);
+  if(!base[0].some(function(c){return c.id===segState.campaign;})){var act=base[0].find(function(c){return c.status==='active';});segState.campaign=act?act.id:(base[0][0]?base[0][0].id:'');segState.preview=null;segState.action=null;}
+  var segs=[],loose=[];
+  if(segState.campaign){var r=await Promise.all([api('rpc/list_segments','', 'POST',{p_campaign:segState.campaign}),api('assignments','select=id,location_code,operator_id,status,created_at&campaign_id=eq.'+encodeURIComponent(segState.campaign)+'&segment_id=is.null&active=eq.true&order=location_code&limit=200')]);segs=Array.isArray(r[0])?r[0]:[];loose=Array.isArray(r[1])?r[1]:[];}
+  segState.list=segs;
+  return {campaigns:base[0],profiles:base[1],locations:base[2],segments:segs,loose:loose};
+ }
  if(tab==='incidents'){var a=await Promise.all([api('incidents','select=*&order=created_at.desc&limit=100'),api('campaigns','select=*&order=created_at.desc&limit=100'),api('locations','select=code&order=code&limit=1500')]);return {incidents:a[0],campaigns:a[1],locations:a[2]};}
  if(tab==='catalog'){
   var locations=await allConsultRows('locations','select=code,aisle,zone,description,enabled&order=code');
@@ -252,13 +261,7 @@ function contentFor(tab,d){
    +mgmtField('reason_'+u.user_id,'Motivo del cambio','Explica el alta o cambio de permisos')
    +mgmtButton('Guardar permisos','updateUser(\''+u.user_id+'\')',true)+'</div>'; })));
  }
- if(tab==='assignments'){
-  return mgmtCard('Nueva asignación',mgmtSelect('assCamp','Campaña',d.campaigns,'id','name')
-  +mgmtSelect('assLoc','Ubicación',d.locations,'code','code')
-  +mgmtSelect('assUser','Operario',d.profiles.filter(function(p){return p.enabled;}),'user_id','display_name')
-  +mgmtButton('Asignar ubicación','newAssignment()',true))
-  +mgmtCard('Asignaciones recientes',empty(d.assignments.map(function(a){var user=d.profiles.find(function(p){return p.user_id===a.operator_id;});return row(a.location_code+' · '+(user?user.display_name:short(a.operator_id)),a.status+' · '+ftime(a.created_at)) +'<select class="vis-control" aria-label="Estado de asignación" id="assStatus_'+a.id+'"><option>pending</option><option>in_progress</option><option>completed</option><option>review</option></select>'+mgmtButton('Actualizar estado','updateAssignment(\''+a.id+'\')',true);})));
- }
+ if(tab==='assignments')return segmentsView(d);
  if(tab==='incidents'){
   return mgmtCard('Registrar incidencia',mgmtSelect('incCamp','Campaña',d.campaigns,'id','name')
    +mgmtSelect('incLoc','Ubicación',d.locations,'code','code')
@@ -414,8 +417,121 @@ function qty(v){var n=Number(String(v).replace(',','.'));if(!Number.isFinite(n)|
 function uuid(){return crypto.randomUUID();}
 function newCampaign(){if(!isAdmin())return;mutate(function(){return api('campaigns','', 'POST',{name:required(val('campName'),'nombre'),kind:val('campKind'),status:'draft',created_by:getId()});},'Campaña creada en borrador.');}
 function setCampaign(id,status){if(!isAdmin())return;if(!confirm('¿Confirmar cambio de campaña a '+status+'?'))return;mutate(function(){var body={status:status};if(status==='active')body.starts_at=new Date().toISOString();if(status==='closed')body.closed_at=new Date().toISOString();return api('campaigns','id=eq.'+id,'PATCH',body);},'Estado de campaña actualizado.');}
-function newAssignment(){mutate(function(){return api('assignments','', 'POST',{campaign_id:required(val('assCamp'),'campaña'),location_code:required(val('assLoc'),'ubicación'),operator_id:required(val('assUser'),'operario'),assigned_by:getId()});},'Asignación registrada.');}
 function updateAssignment(id){mutate(function(){return api('assignments','id=eq.'+id,'PATCH',{status:val('assStatus_'+id)});},'Estado de asignación actualizado.');}
+/* ── Fase B · Tramos: rango de ubicaciones asignado en un paso a una o dos personas.
+   El servidor (RPC preview_segment/assign_segment/reassign_segment/release_segment/list_segments)
+   valida permisos, formato, solapes y versión; aquí solo se recogen datos y se muestran avisos. */
+var SEG_STATUS={pending:'Pendiente',in_progress:'En curso',completed:'Contada',review:'En revisión'};
+function hasField(id){return !!(typeof document!=='undefined'&&document.getElementById&&document.getElementById(id));}
+function readSegForm(){
+ if(hasField('segCampaign'))segState.campaign=val('segCampaign');
+ if(hasField('segCycle'))segState.cycle=val('segCycle')==='2'?'2':'1';
+ if(hasField('segFrom'))segState.from=val('segFrom');
+ if(hasField('segTo'))segState.to=val('segTo');
+ if(hasField('segOp'))segState.op=val('segOp');
+ if(hasField('segPartner'))segState.partner=val('segPartner');
+}
+function segKey(){return [segState.campaign,segState.cycle,segState.from.toUpperCase(),segState.to.toUpperCase()].join('|');}
+/* Identificador de orden (idea de F2 CP012): se reutiliza si hay que reintentar, para no duplicar. */
+function newMutationId(){return crypto.randomUUID();}
+function cycleLabel(c){return Number(c)===2?'Segundo recuento':'Primer recuento';}
+function segPeople(d,selected,blank){return (blank?'<option value="">'+safe(blank)+'</option>':'<option value="">Seleccionar…</option>')+d.profiles.map(function(p){return '<option value="'+safe(p.user_id)+'"'+(p.user_id===selected?' selected':'')+'>'+safe(p.display_name||'Sin nombre')+'</option>';}).join('');}
+function segSelect(id,label,inner,extra){return '<div class="vis-field"><label for="'+id+'">'+safe(label)+'</label><select class="vis-control" id="'+id+'"'+(extra||'')+'>'+inner+'</select></div>';}
+function segInput(id,label,value,placeholder){return '<div class="vis-field"><label for="'+id+'">'+safe(label)+'</label><input class="vis-control" id="'+id+'" list="segLocations" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="'+safe(placeholder)+'" value="'+safe(value)+'"></div>';}
+function segPercent(s){return s.total?Math.round(s.counted*100/s.total):0;}
+function segmentPreviewCard(){
+ var pv=segState.preview;if(!pv||pv.key!==segKey())return '';
+ var p=pv.result||{},ex=p.excluded_format||{count:0,codes:[]},cf=p.conflicts||{count:0,items:[]},sample=p.sample||[];
+ var body=row(cycleLabel(p.cycle)+' · '+(p.total||0)+' ubicaciones',p.total?'De '+p.first+' a '+p.last:'No hay ubicaciones habilitadas en ese rango')
+  +(Number(p.cycle)===2?small('Recuento ciego: no pueden hacerlo quienes participaron en el primero, y no verán sus cantidades.'):'')
+  +(sample.length?small('Orden de recorrido: '+sample.join(', ')+(p.total>sample.length?'…':'')):'');
+ if(ex.count)body+='<p class="vis-help management-warning" role="note">'+safe(ex.count+(ex.count===1?' con otro formato queda fuera: ':' con otro formato quedan fuera: ')+ex.codes.join(', ')+(ex.count>ex.codes.length?'…':''))+'</p>';
+ var nf=p.without_first_count||{count:0,codes:[]};
+ if(nf.count)body+='<p class="vis-help management-warning" role="note">'+safe(nf.count+(nf.count===1?' sin primer recuento queda fuera: ':' sin primer recuento quedan fuera: ')+nf.codes.join(', ')+(nf.count>nf.codes.length?'…':''))+'</p>';
+ if(p.disabled)body+='<p class="vis-help management-warning" role="note">'+safe(p.disabled+(p.disabled===1?' deshabilitada queda fuera.':' deshabilitadas quedan fuera.'))+'</p>';
+ if(cf.count)body+='<div class="vis-notice management-error" role="alert">'+safe(cf.count+' ubicaciones ya están asignadas en este recuento: '+cf.items.slice(0,8).map(function(c){return c.location_code+' ('+c.people+')';}).join(', ')+(cf.count>8?'…':'')+'. Ajusta el rango, o libera o reasigna ese tramo antes.')+'</div>';
+ var ok=p.total>0&&!cf.count;
+ return mgmtCard('Vista previa del tramo',body+(ok?mgmtButton('Asignar tramo ('+p.total+' ubicaciones)','confirmSegment()',true):'')+mgmtButton('Descartar vista previa','discardSegmentPreview()'));
+}
+function segmentRow(d,s){
+ var active=s.status==='active',pct=segPercent(s);
+ var people=(s.operator_name||'Sin nombre')+(s.partner_name?' + '+s.partner_name:'');
+ var html='<div class="management-row segment-row'+(active?'':' segment-row--released')+'"><div class="management-between"><div><b>'+safe(s.from_code+' → '+s.to_code)+'</b><div class="vis-help">'+safe(cycleLabel(s.cycle)+' · '+people)+'</div></div><span class="management-campaign-state'+(active?' management-campaign-state--active':'')+'">'+(active?'Activo':'Liberado')+'</span></div>'
+  +'<progress class="segment-progress" max="'+safe(s.total)+'" value="'+safe(s.counted)+'" aria-label="'+safe('Avance de '+s.from_code+' a '+s.to_code)+'"></progress>'
+  +small(s.counted+' de '+s.total+' ubicaciones con algún recuento ('+pct+' %)'+(active?'':' · liberado '+ftime(s.released_at)))
+  +(s.last_change_reason?small('Último cambio: '+s.last_change_reason):'');
+ var act=segState.action&&segState.action.id===s.id?segState.action.kind:'';
+ if(active&&act==='reassign')html+=segSelect('segOp_'+s.id,'Persona 1',segPeople(d,s.operator_id))+segSelect('segPartner_'+s.id,'Persona 2 (pareja, opcional)',segPeople(d,s.partner_id||'','Sin pareja'))
+  +mgmtField('segReason_'+s.id,'Motivo del cambio','Ej.: cambio de turno')+mgmtButton('Guardar reasignación',"reassignSegment('"+s.id+"')",true)+mgmtButton('Cancelar',"segmentAction('','')");
+ else if(active&&act==='release')html+=small('Las personas dejarán de poder contar en este tramo. Lo ya contado se conserva.')
+  +mgmtField('segReason_'+s.id,'Motivo','Ej.: partir en dos tramos')+mgmtButton('Liberar tramo',"releaseSegment('"+s.id+"')",true)+mgmtButton('Cancelar',"segmentAction('','')");
+ else if(active)html+='<div class="management-between">'+mgmtButton('Reasignar',"segmentAction('"+s.id+"','reassign')")+mgmtButton('Liberar',"segmentAction('"+s.id+"','release')")+'</div>';
+ return html+'</div>';
+}
+function segmentsView(d){
+ if(!d.campaigns.length)return mgmtCard('Tramos','<div class="vis-empty">No hay campañas abiertas. Crea una campaña antes de asignar tramos.</div>');
+ var form=segSelect('segCampaign','Campaña',d.campaigns.map(function(c){return '<option value="'+safe(c.id)+'"'+(c.id===segState.campaign?' selected':'')+'>'+safe(c.name+(c.status==='active'?' · activa':' · borrador'))+'</option>';}).join(''),' onchange="INVENTA_MGMT.segmentCampaign()"')
+  +segSelect('segCycle','Recuento','<option value="1"'+(segState.cycle!=='2'?' selected':'')+'>Primer recuento</option><option value="2"'+(segState.cycle==='2'?' selected':'')+'>Segundo recuento (ciego, otras personas)</option>',' onchange="INVENTA_MGMT.segmentCampaign()"')
+  +'<datalist id="segLocations">'+d.locations.map(function(l){return '<option value="'+safe(l.code)+'"></option>';}).join('')+'</datalist>'
+  +'<div class="management-between">'+segInput('segFrom','Desde',segState.from,'K00-P01')+segInput('segTo','Hasta',segState.to,'K09-P08')+'</div>'
+  +segSelect('segOp','Persona 1',segPeople(d,segState.op))
+  +segSelect('segPartner','Persona 2 (pareja, opcional)',segPeople(d,segState.partner,'Sin pareja'))
+  +mgmtButton('Ver ubicaciones del tramo','previewSegment()',true);
+ var activeSegs=d.segments.filter(function(s){return s.status==='active';}),released=d.segments.filter(function(s){return s.status!=='active';});
+ var html=mgmtCard('Asignar un tramo',small('Se incluyen todas las ubicaciones habilitadas entre «Desde» y «Hasta», en orden natural. Una ubicación solo puede estar en un tramo activo por campaña.')+form)
+  +segmentPreviewCard()
+  +mgmtCard('Tramos activos ('+activeSegs.length+')',empty(activeSegs.map(function(s){return segmentRow(d,s);}),'Todavía no hay tramos en esta campaña.'));
+ if(released.length)html+=mgmtCard('Tramos liberados ('+released.length+')',released.map(function(s){return segmentRow(d,s);}).join(''));
+ if(d.loose.length)html+=mgmtCard('Asignaciones anteriores sin tramo ('+d.loose.length+')',small('Creadas con el sistema anterior, ubicación a ubicación. Siguen permitiendo contar y bloquean esas ubicaciones para nuevos tramos.')
+  +d.loose.map(function(a){var who=d.profiles.find(function(p){return p.user_id===a.operator_id;});return row(a.location_code+' · '+(who?who.display_name:short(a.operator_id)),(SEG_STATUS[a.status]||a.status)+' · '+ftime(a.created_at))
+   +'<select class="vis-control" aria-label="Estado de asignación" id="assStatus_'+a.id+'">'+Object.keys(SEG_STATUS).map(function(k){return '<option value="'+k+'"'+(k===a.status?' selected':'')+'>'+SEG_STATUS[k]+'</option>';}).join('')+'</select>'+mgmtButton('Actualizar estado',"updateAssignment('"+a.id+"')");}).join(''));
+ return html;
+}
+function segmentCampaign(){readSegForm();segState.preview=null;segState.action=null;return render();}
+async function previewSegment(){
+ if(pending)return;readSegForm();
+ if(!segState.campaign||!segState.from||!segState.to){notice='No se ha podido guardar: indica campaña, «Desde» y «Hasta».';return render();}
+ pending=true;notice='';
+ try{var r=await api('rpc/preview_segment','', 'POST',{p_campaign:segState.campaign,p_from:segState.from,p_to:segState.to,p_cycle:Number(segState.cycle)});segState.preview={key:segKey(),result:r||{},mutationId:newMutationId()};}
+ catch(e){segState.preview=null;notice='No se ha podido guardar: '+e.message;}
+ finally{pending=false;}
+ await render();
+}
+function discardSegmentPreview(){readSegForm();segState.preview=null;return render();}
+function confirmSegment(){
+ readSegForm();var pv=segState.preview;
+ if(!pv||pv.key!==segKey()){segState.preview=null;notice='No se ha podido guardar: el rango ha cambiado; vuelve a ver las ubicaciones del tramo.';return render();}
+ if(!segState.op){notice='No se ha podido guardar: elige la persona 1.';return render();}
+ if(segState.partner&&segState.partner===segState.op){notice='No se ha podido guardar: la pareja debe ser otra persona.';return render();}
+ var p=pv.result;
+ return mutate(async function(){
+  await api('rpc/assign_segment','', 'POST',{p_mutation_id:pv.mutationId,p_campaign:segState.campaign,p_from:segState.from,p_to:segState.to,p_cycle:Number(segState.cycle),p_operator:segState.op,p_partner:segState.partner||null,p_fingerprint:p.fingerprint});
+  segState.preview=null;segState.from='';segState.to='';segState.op='';segState.partner='';
+ },'Tramo asignado: '+p.total+' ubicaciones de '+p.first+' a '+p.last+'.');
+}
+function segmentAction(id,kind){readSegForm();segState.action=id?{id:id,kind:kind,mutationId:newMutationId()}:null;return render();}
+function segActionId(id){if(!segState.action||segState.action.id!==id)segState.action={id:id,kind:'',mutationId:newMutationId()};return segState.action.mutationId;}
+function findSegment(id){var s=segState.list.find(function(x){return x.id===id;});if(!s)throw Error('El tramo ya no está en la lista. Recarga.');return s;}
+function reassignSegment(id){
+ var op=val('segOp_'+id),partner=val('segPartner_'+id),reason=val('segReason_'+id);readSegForm();
+ return mutate(async function(){
+  var s=findSegment(id);
+  if(!op)throw Error('Elige la persona 1.');
+  if(partner&&partner===op)throw Error('La pareja debe ser otra persona.');
+  if(reason.length<5)throw Error('Explica el motivo con al menos cinco caracteres.');
+  await api('rpc/reassign_segment','', 'POST',{p_mutation_id:segActionId(id),p_segment:id,p_operator:op,p_partner:partner||null,p_reason:reason,p_version:s.version});
+  segState.action=null;
+ },'Tramo reasignado. Las personas anteriores ya no pueden contar en él.');
+}
+function releaseSegment(id){
+ var reason=val('segReason_'+id);readSegForm();
+ return mutate(async function(){
+  var s=findSegment(id);
+  if(reason.length<5)throw Error('Explica el motivo con al menos cinco caracteres.');
+  await api('rpc/release_segment','', 'POST',{p_mutation_id:segActionId(id),p_segment:id,p_reason:reason,p_version:s.version});
+  segState.action=null;
+ },'Tramo liberado. Lo ya contado se conserva.');
+}
 function newIncident(){mutate(function(){return api('incidents','', 'POST',{campaign_id:val('incCamp')||null,location_code:val('incLoc')||null,category:val('incType'),description:required(val('incDesc'),'descripción'),reported_by:getId()});},'Incidencia registrada.');}
 function resolveIncident(id){var resolution=val('incResolution_'+id);if(resolution.length<5){notice='Explica la solución con al menos cinco caracteres.';render();return;}mutate(function(){return api('incidents','id=eq.'+id,'PATCH',{status:'resolved',resolution:resolution,resolved_by:getId(),resolved_at:new Date().toISOString()});},'Incidencia resuelta con historial.');}
 function newLocation(){mutate(function(){return api('locations','', 'POST',{code:required(val('locCode'),'código').toUpperCase(),aisle:required(val('locAisle'),'pasillo').toUpperCase(),zone:val('locZone'),description:val('locDescription')});},'Ubicación creada.');}
@@ -522,7 +638,7 @@ async function importCSV(){
 }
 function newMovement(){mutate(function(){return api('movements','', 'POST',{campaign_id:required(val('moveCamp'),'campaña abierta'),source_location:required(val('moveSource'),'origen'),destination_location:required(val('moveDestination'),'destino'),product_code:required(val('moveProduct'),'artículo'),lot:val('moveLot'),quantity:qty(val('moveQty')),reason:required(val('moveReason'),'motivo'),actor_id:getId(),client_mutation_id:uuid()});},'Movimiento interno registrado sin escribir en BC.');}
 function updateUser(id){if(!isAdmin())return;if(id===getId()&&(!document.getElementById('enabled_'+id).checked||val('role_'+id)!=='admin')){notice='Para evitar bloquear el único administrador, no puedes quitarte el rol ni desactivar tu propia cuenta desde esta pantalla.';render();return;}mutate(function(){var reason=val('reason_'+id);if(reason.length<5)throw Error('Explica el motivo con al menos cinco caracteres.');return api('profiles','user_id=eq.'+id+'&version=eq.'+permissionVersions[id],'PATCH',{role:val('role_'+id),enabled:document.getElementById('enabled_'+id).checked,permission_reason:reason}).then(function(rows){if(!rows.length)throw Error('El perfil cambió en otro dispositivo. Recarga y revisa los permisos.');});},'Permisos actualizados y registrados.');}
-var apiObject={refreshBCStatus:refreshBCStatus,isSaving:function(){return pending;},changeFixedPosition:changeFixedPosition,toggleCatalogFixed:toggleCatalogFixed,filterFixedReport:filterFixedReport,exportFixedReport:exportFixedReport,printFixedReport:printFixedReport,cancelView:function(){renderSerial++;},isAuthenticated:function(){return !!(session&&profile&&profile.enabled);},openCounts:function(){window.INVENTA_REAL.open();},realApi:api,refreshProfile:loadProfile,getUserId:getId,openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,newAssignment:newAssignment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
+var apiObject={refreshBCStatus:refreshBCStatus,isSaving:function(){return pending;},changeFixedPosition:changeFixedPosition,toggleCatalogFixed:toggleCatalogFixed,filterFixedReport:filterFixedReport,exportFixedReport:exportFixedReport,printFixedReport:printFixedReport,cancelView:function(){renderSerial++;},isAuthenticated:function(){return !!(session&&profile&&profile.enabled);},openCounts:function(){window.INVENTA_REAL.open();},realApi:api,refreshProfile:loadProfile,getUserId:getId,openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,segmentCampaign:segmentCampaign,previewSegment:previewSegment,discardSegmentPreview:discardSegmentPreview,confirmSegment:confirmSegment,segmentAction:segmentAction,reassignSegment:reassignSegment,releaseSegment:releaseSegment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
 Object.defineProperty(apiObject,'profile',{get:function(){return profile;}});
 window.INVENTA_MGMT=apiObject;
 window.addEventListener('storage',function(e){if(e.key===STORE){session=null;profile=null;renderSerial++;restore().then(function(){if(typeof go==='function')go('home');});}});

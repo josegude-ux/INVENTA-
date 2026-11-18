@@ -7,7 +7,7 @@ function fixture(){
  const management={profile:{display_name:'SIM'},getUserId:()=>uid,isAuthenticated:()=>enabled,refreshProfile:async()=>{if(afterRefresh)afterRefresh();},
   realApi:async(table,params,method)=>{calls.push({table,params,method});if(method==='POST'){posts++;throw Error('Prohibido en diagnóstico');}if(table==='assignments')return Array.from({length:assignmentCount},(_,i)=>({id:'A'+i}));return []; }};
  const w={INVENTA_MGMT:management,navigator:{},addEventListener(){}};
- vm.runInNewContext(src,{window:w,document:{getElementById:id=>elements.get(id)||null},localStorage:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)},crypto:{randomUUID:()=> 'mock-mutation'},place(){},go(){}});
+ vm.runInNewContext(src,{window:w,document:{getElementById:id=>elements.get(id)||null},localStorage:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)},crypto:{randomUUID:()=> 'mock-mutation'},place(){},go(){},homeIcon:name=>'<svg class="vis-icon" data-icon="'+name+'"></svg>'});
  return {api:w.INVENTA_REAL,memory,elements,calls,posts:()=>posts,setAssignments:n=>assignmentCount=n,setEnabled:b=>enabled=b,setUser:u=>uid=u,onRefresh:f=>afterRefresh=f};
 }
 test('read-only diagnosis authenticates and never writes',async()=>{

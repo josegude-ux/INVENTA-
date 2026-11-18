@@ -54,7 +54,7 @@ function findHeaderRow(matrix){
 function parseRows(matrix,fileName){
  if(!Array.isArray(matrix)||!matrix.length)throw Error('El libro no contiene cabecera.');
  var headerAt=findHeaderRow(matrix),indices=columns(matrix[headerAt]);
- var result=[],errors=[],warnings=[],keys=new Set(),products=new Set(),locations=new Set(),warehouses=new Set(),negative=0,zero=0,example=[];
+ var blankLines=0,result=[],errors=[],warnings=[],keys=new Set(),products=new Set(),locations=new Set(),warehouses=new Set(),negative=0,zero=0,example=[];
  function error(t){if(errors.length<30)errors.push(t);}
  function warning(t){if(warnings.length<30)warnings.push(t);}
  if(indices.physical>=0)warning('Se detectó «Cant. (stock físico)»: se ignora. Solo se importa Stock calculado.');
@@ -66,6 +66,7 @@ function parseRows(matrix,fileName){
    desc=str(row[indices.description]),lot=str(row[indices.lot]),unit=str(row[indices.unit]),
    warehouse=str(row[indices.warehouse]),zone=indices.zone>=0?str(row[indices.zone]):'',
    q=quantity(row[indices.stock]),exp=indices.expiry>=0?date(row[indices.expiry]):null,sourceRow=i+1;
+  if(!code&&!location&&!desc&&!lot&&!unit&&(!Number.isFinite(q)||q===0)){blankLines++;continue;}
   if(!code||!location||!desc||!unit||!warehouse||!Number.isFinite(q)){error('Fila '+sourceRow+': artículo, ubicación, descripción, unidad, almacén o stock calculado inválidos.');continue;}
   var key=JSON.stringify([code,location,lot]);if(keys.has(key)){error('Fila '+sourceRow+': se repite artículo + ubicación + lote ('+code+' · '+location+' · '+lot+').');continue;}keys.add(key);
   if(Math.abs(q)>=1e12){error('Fila '+sourceRow+': stock fuera de rango.');continue;}
@@ -78,6 +79,7 @@ function parseRows(matrix,fileName){
   result.push(item);
  }
  if(result.length===0)error('El archivo no contiene líneas válidas.');
+ if(blankLines)warning((blankLines===1?'Se ignoró 1 línea vacía':'Se ignoraron '+blankLines+' líneas vacías')+' del diario de BC (sin artículo ni ubicación y con stock 0).');
  if(warehouses.size>1)error('La exportación mezcla almacenes: '+Array.from(warehouses).join(', ')+'. Sube un almacén completo cada vez.');
  return {fileName:fileName||'inventario.xlsx',headerRow:headerAt+1,rows:result,errors:errors,warnings:warnings,negative:negative,zero:zero,
   products:products.size,locations:locations.size,warehouse:Array.from(warehouses)[0]||'',example:example};
@@ -166,7 +168,7 @@ async function analyse(){
  busy=true;state=null;status('Leyendo Excel y comprobando líneas…');
  try{
   var ExcelJS=await loadExcelJS(),book=new ExcelJS.Workbook();
-  await book.xlsx.load(await f.arrayBuffer());
+  var raw=await f.arrayBuffer();if(root.INVENTA_XLSX)raw=(await root.INVENTA_XLSX.normalize(raw)).buffer;await book.xlsx.load(raw);
   var sheet=book.worksheets[0];if(!sheet)throw Error('No hay ninguna hoja en este Excel.');
   state=parseRows(sheetToMatrix(sheet),f.name);renderPreview();
  }catch(e){status('No se pudo analizar: '+e.message,'error');}
