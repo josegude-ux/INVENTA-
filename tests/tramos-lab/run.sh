@@ -15,7 +15,7 @@ for m in 20261118004914_visura_acceso_comun 20261118005010_inventa_estructura_un
          20261118083051_inventa_retirada_f2; do
  mig "$ROOT/supabase/visura-unificado/$m.sql"
 done
-mig "$ROOT/supabase/visura-unificado-pendiente/20261118140000_inventa_tramos.sql"
+mig "$ROOT/supabase/visura-unificado/20261118221403_inventa_tramos.sql"
 run "$LAB/010_fixtures.sql"
 run "$LAB/020_tramos_tests.sql" 2>&1 | grep -E 'OK:|FALLO|ERROR|TRAMOS LAB|▶' 
 bash "$LAB/030_concurrent_assign.sh"

@@ -25,7 +25,7 @@ Asignar, reasignar y liberar llevan `p_mutation_id`. Si se pierde la respuesta y
 4. Seguimiento por tramo: avance «ubicaciones con algún recuento», sin cantidades.
 5. **Reasignar** o **Liberar** con motivo y control de versión. Nada se borra: las asignaciones antiguas pasan a `active=false` y lo contado se conserva. Partir un tramo = liberar y crear dos.
 
-## Servidor (migración pendiente `supabase/visura-unificado-pendiente/20261118140000_inventa_tramos.sql`, esquema `inventa`)
+## Servidor (migración APLICADA el 18/11/2026: `supabase/visura-unificado/20261118221403_inventa_tramos.sql`, esquema `inventa`)
 - Tablas `segments` y `segment_locations`; columnas `assignments.segment_id` y `assignments.active`.
 - RPC solo para Supervisor/Administrador: `preview_segment`, `assign_segment`, `reassign_segment`, `release_segment`, `list_segments`.
 - Las asignaciones ya no se insertan a mano; solo su estado es editable. `counts_insert` exige asignación activa.

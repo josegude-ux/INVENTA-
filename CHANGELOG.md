@@ -1,5 +1,10 @@
 # Registro de cambios · VISURA INVENTA
 
+## Sin cambio de versión · 2026-11-18 · migración de tramos APLICADA en el Supabase unificado (línea 100)
+
+- `inventa_tramos` aplicada en `oevetnszmfxeukcncwji` como versión `20261118221403`. Resuelve la incidencia CP100-012: la 0.32.1 publicada ya tiene su servidor.
+- El archivo pasa de `supabase/visura-unificado-pendiente/` a `supabase/visura-unificado/20261118221403_inventa_tramos.sql`, idéntico (MD5 `b557dddca46e6c87e1ca16d57132a537`).
+
 ## 0.32.1 · 2026-11-18 · PROBADO LAB (rama lab/100-pareja-20261118, línea 100)
 
 - «Mi tramo» en Mis recuentos: tramo, recuento (primero o segundo ciego), pareja con nombres, avance «N de M», siguientes ubicaciones en orden de recorrido y preselección de la siguiente pendiente.
