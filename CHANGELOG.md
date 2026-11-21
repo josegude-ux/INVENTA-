@@ -9,6 +9,10 @@
 - Mensajes en castellano para el enlace caducado, la contraseña repetida o débil, el límite de correos y la dirección no autorizada. Si fallan las credenciales, se indica cómo recuperarlas.
 - Pendiente en Supabase (decide 000): añadir la dirección de INVENTA a Redirect URLs y configurar un servidor de correo propio (SMTP). Ver `docs/RECUPERAR_CONTRASENA.md`.
 - Pruebas: 88/88 (16 nuevas) y recorrido en el navegador con Supabase simulado.
+## Sin cambio de versión · 2026-11-18 · migración de tramos APLICADA en el Supabase unificado (línea 100)
+
+- `inventa_tramos` aplicada en `oevetnszmfxeukcncwji` como versión `20261118221403`. Resuelve la incidencia CP100-012: la 0.32.1 publicada ya tiene su servidor.
+- El archivo pasa de `supabase/visura-unificado-pendiente/` a `supabase/visura-unificado/20261118221403_inventa_tramos.sql`, idéntico (MD5 `b557dddca46e6c87e1ca16d57132a537`).
 
 ## 0.32.1 · 2026-11-18 · PROBADO LAB (rama lab/100-pareja-20261118, línea 100)
 
