@@ -1,6 +1,8 @@
 # Registro de cambios · VISURA INVENTA
 
-## 0.32.2 · 2026-11-19 · PROBADO LAB (rama lab/100-recuperar-contrasena-20261119, línea 100)
+## 0.32.3 · 2026-11-21 · PROBADO LAB (rama lab/100-recuperar-contrasena-20261119, línea 100)
+
+- Renumerada desde 0.32.2 por decisión del usuario (CP000-030): la 0.32.2 queda reservada al recuento ciego. Mismo contenido funcional.
 
 - Acceso seguro: botón **He olvidado mi contraseña**. Supabase envía un enlace y, al abrirlo, INVENTA pide la contraseña nueva dos veces y deja a la persona dentro.
 - El aviso es igual exista o no la cuenta. Los códigos del enlace se borran de la barra de direcciones y la contraseña nunca se guarda en el móvil.

@@ -56,7 +56,7 @@ async function register(){
 async function loadProfile(){var u=session&&session.user;if(!u)return;var arr=await api('profiles','user_id=eq.'+encodeURIComponent(u.id)+'&select=*');profile=arr&&arr[0]||null;}
 async function restore(){try{session=JSON.parse(localStorage.getItem(STORE)||'null');if(!session)return;if(session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();if(session)await loadProfile();if(isManager()&&typeof managerUser!=='undefined')managerUser=profile.display_name||profile.role;}catch(e){session=null;profile=null;}}
 async function logout(){fixedReportRows=[];segState={campaign:'',cycle:'1',from:'',to:'',op:'',partner:'',preview:null,action:null,list:[]};try{if(session)await request('/auth/v1/logout',{method:'POST'});}catch(e){}session=null;profile=null;localStorage.removeItem(STORE);if(typeof managerUser!=='undefined')managerUser='';if(typeof consultUser!=='undefined')consultUser='';notice='';go('home');}
-/* Recuperar contraseña (0.32.2). El correo lo envía Supabase Auth; el enlace vuelve a INVENTA
+/* Recuperar contraseña (0.32.3). El correo lo envía Supabase Auth; el enlace vuelve a INVENTA
    con una sesión de recuperación que solo sirve para fijar la contraseña nueva. Los códigos del
    enlace se borran de la barra de direcciones en cuanto se leen y nunca se guardan en el móvil. */
 var RECOVERY_REDIRECT='https://josegude-ux.github.io/INVENTA-/';

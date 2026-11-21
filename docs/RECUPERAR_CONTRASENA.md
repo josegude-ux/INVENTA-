@@ -1,4 +1,4 @@
-# «He olvidado mi contraseña» · INVENTA 0.32.2
+# «He olvidado mi contraseña» · INVENTA 0.32.3
 
 Línea 100 · rama `lab/100-recuperar-contrasena-20261119` · PROBADO LAB (sin publicar).
 

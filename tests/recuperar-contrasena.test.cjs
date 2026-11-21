@@ -1,5 +1,5 @@
 'use strict';
-// 0.32.2 · «He olvidado mi contraseña»: Supabase Auth simulado, datos ficticios, sin red.
+// 0.32.3 · «He olvidado mi contraseña»: Supabase Auth simulado, datos ficticios, sin red.
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -182,4 +182,16 @@ test('correo sin servidor propio (email_address_not_authorized): explica qué fa
  const h=harness({auth:{recover:()=>({ok:false,status:400,text:async()=>JSON.stringify({code:400,error_code:'email_address_not_authorized',msg:'Email address not authorized'})})}});
  await h.obj.forgotPassword();
  assert.match(h.msg('managerError'),/servidor de correo.*Administrador/);
+});
+
+test('versión coherente: version.json, APP_VERSION, scripts y caché del service worker',()=>{
+ const v=JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).version;
+ const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ const sw=fs.readFileSync(path.join(root,'service-worker.js'),'utf8');
+ assert.equal(v,'0.32.3','«He olvidado mi contraseña» sale como 0.32.3 (0.32.2 reservada al recuento ciego)');
+ assert.equal(/APP_VERSION='([^']+)'/.exec(index)[1],v);
+ assert.match(index,/warehouse-management\.js\?v=0\.32\.3"/);
+ assert.match(sw,/warehouse-management\.js\?v=0\.32\.3'/);
+ assert.match(sw,/const CACHE='inventa-demo-v0323-01'/);
+ assert.match(fs.readFileSync(path.join(root,'CHANGELOG.md'),'utf8'),/^## 0\.32\.3 · /m);
 });

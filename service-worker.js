@@ -1,6 +1,6 @@
 /* INVENTA: versioned offline shell with network-first navigation. */
-const CACHE='inventa-demo-v0322-01';
-const FILES=['./','./index.html','./assets/css/visura-base.css?v=0.30.11','./assets/home-compact/consultation-visible-800.webp','./warehouse-management.js?v=0.32.2','./xlsx-normalize.js?v=0.31.1','./bc-excel-import.js?v=0.31.2','./fixed-positions-import.js?v=0.31.1','./real-counts.js?v=0.32.1','./consultation-core.js?v=0.30.5','./consultation-ui.js?v=0.30.11','./manifest.webmanifest','./assets/menu/settings-3d.webp','./assets/brand/inventa-warehouse.webp','./assets/brand/inventa-logo.svg','./assets/brand/app-icon-192.png','./assets/brand/app-icon-512.png','./assets/menu/inventory-3d.webp','./assets/menu/consult-3d.webp','./assets/menu/management-3d.webp',
+const CACHE='inventa-demo-v0323-01';
+const FILES=['./','./index.html','./assets/css/visura-base.css?v=0.30.11','./assets/home-compact/consultation-visible-800.webp','./warehouse-management.js?v=0.32.3','./xlsx-normalize.js?v=0.31.1','./bc-excel-import.js?v=0.31.2','./fixed-positions-import.js?v=0.31.1','./real-counts.js?v=0.32.1','./consultation-core.js?v=0.30.5','./consultation-ui.js?v=0.30.11','./manifest.webmanifest','./assets/menu/settings-3d.webp','./assets/brand/inventa-warehouse.webp','./assets/brand/inventa-logo.svg','./assets/brand/app-icon-192.png','./assets/brand/app-icon-512.png','./assets/menu/inventory-3d.webp','./assets/menu/consult-3d.webp','./assets/menu/management-3d.webp',
   /* Maquetación A / 3 imágenes aprobadas: cacheadas SOLO en laboratorio R1/L3. */
   './assets/css/visura-operativo-3d-lab.css?v=0.30.11',
   './assets/css/visura-maquetacion-a-v1-lab.css?v=0.30.11',
