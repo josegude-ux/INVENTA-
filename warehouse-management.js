@@ -18,7 +18,7 @@ function select(id,label,rows,valueField,labelField){return '<div class="field">
 function alertBox(){return notice?'<div class="alert" role="status">'+safe(notice)+'</div>':'';}
 function activity(k){notice=k;return k;}
 function authHeaders(){var headers={'apikey':KEY,'Content-Type':'application/json'};if(session&&session.access_token)headers.Authorization='Bearer '+session.access_token;return headers;}
-async function request(url,options){var o=options||{};var headers=authHeaders();if(url.indexOf('/auth/v1/token')===0||url.indexOf('/auth/v1/signup')===0)delete headers.Authorization;o.headers=Object.assign(headers,o.headers||{});var res=await fetch(BASE+url,o);var data=await res.text(),obj;try{obj=JSON.parse(data);}catch(e){obj=data;}if(!res.ok){var msg=obj&&typeof obj==='object'?(obj.message||obj.msg||obj.error_description||obj.error||obj.hint||obj.code):obj;var err=Error(String(msg||'Error '+res.status));err.status=res.status;err.code=obj&&obj.code;throw err;}return obj;}
+async function request(url,options){var o=options||{};var headers=authHeaders();if(url.indexOf('/auth/v1/token')===0||url.indexOf('/auth/v1/signup')===0||url.indexOf('/auth/v1/recover')===0||url.indexOf('/auth/v1/verify')===0)delete headers.Authorization;o.headers=Object.assign(headers,o.headers||{});var res=await fetch(BASE+url,o);var data=await res.text(),obj;try{obj=JSON.parse(data);}catch(e){obj=data;}if(!res.ok){var msg=obj&&typeof obj==='object'?(obj.message||obj.msg||obj.error_description||obj.error||obj.hint||obj.code):obj;var err=Error(String(msg||'Error '+res.status));err.status=res.status;err.code=obj&&obj.code;err.errorCode=obj&&typeof obj==='object'?(obj.error_code||null):null;throw err;}return obj;}
 function saveSession(s){if(s&&!s.expires_at)s.expires_at=Math.floor(Date.now()/1000)+(s.expires_in||3600);session=s;localStorage.setItem(STORE,JSON.stringify(s));}
 async function refresh(){
  if(!session||!session.refresh_token)return false;
@@ -41,7 +41,7 @@ async function signIn(){
  await loadProfile();
  if(!profile||!profile.enabled){if(error)error.textContent='Cuenta identificada. Pendiente de aprobación por un Administrador.';return;}
  notice='Sesión iniciada. Los permisos se verifican también en Supabase.';if(typeof managerUser!=='undefined')managerUser=profile.display_name||profile.role;go('home');
- }catch(e){if(error)error.textContent=e.message;}
+ }catch(e){if(error)error.textContent=loginMessage(e);}
 }
 async function register(){
  var error=document.getElementById('managerError');try{
@@ -56,7 +56,96 @@ async function register(){
 async function loadProfile(){var u=session&&session.user;if(!u)return;var arr=await api('profiles','user_id=eq.'+encodeURIComponent(u.id)+'&select=*');profile=arr&&arr[0]||null;}
 async function restore(){try{session=JSON.parse(localStorage.getItem(STORE)||'null');if(!session)return;if(session.expires_at&&session.expires_at*1000<Date.now()+90000)await refresh();if(session)await loadProfile();if(isManager()&&typeof managerUser!=='undefined')managerUser=profile.display_name||profile.role;}catch(e){session=null;profile=null;}}
 async function logout(){fixedReportRows=[];segState={campaign:'',cycle:'1',from:'',to:'',op:'',partner:'',preview:null,action:null,list:[]};try{if(session)await request('/auth/v1/logout',{method:'POST'});}catch(e){}session=null;profile=null;localStorage.removeItem(STORE);if(typeof managerUser!=='undefined')managerUser='';if(typeof consultUser!=='undefined')consultUser='';notice='';go('home');}
+/* Recuperar contraseña (0.32.3). El correo lo envía Supabase Auth; el enlace vuelve a INVENTA
+   con una sesión de recuperación que solo sirve para fijar la contraseña nueva. Los códigos del
+   enlace se borran de la barra de direcciones en cuanto se leen y nunca se guardan en el móvil. */
+var RECOVERY_REDIRECT='https://josegude-ux.github.io/INVENTA-/';
+var recovery=null,recoveryBusy=false;
+function loginMessage(e){
+ var m=String(e&&e.message||'');
+ if(/invalid login credentials/i.test(m))return 'Correo o contraseña incorrectos. Si no la recuerdas, pulsa «He olvidado mi contraseña».';
+ if(/email not confirmed/i.test(m))return 'Tu correo aún no está confirmado. Abre el enlace que te envió Supabase al darte de alta.';
+ if(e&&e.status===429)return 'Demasiados intentos seguidos. Espera unos minutos y vuelve a probar.';
+ return m||'No se pudo conectar.';
+}
+function recoveryLinkError(code,description){
+ if(code==='otp_expired')return 'El enlace ha caducado o ya se usó. Pide otro con «He olvidado mi contraseña».';
+ return 'El enlace de recuperación no es válido'+(description?' ('+description+')':'')+'. Pide otro con «He olvidado mi contraseña».';
+}
+function readRecoveryLink(href){
+ var u;try{u=new URL(href);}catch(e){return null;}
+ var h=new URLSearchParams((u.hash||'').replace(/^#/,'')),q=u.searchParams;
+ var errCode=h.get('error_code')||q.get('error_code'),err=h.get('error')||q.get('error');
+ if(errCode||err)return {error:recoveryLinkError(errCode||err,h.get('error_description')||q.get('error_description')||'')};
+ if(h.get('type')==='recovery'&&h.get('access_token'))return {tokens:{access_token:h.get('access_token'),refresh_token:h.get('refresh_token')||'',expires_in:Number(h.get('expires_in'))||3600,expires_at:Number(h.get('expires_at'))||0}};
+ if(q.get('type')==='recovery'&&q.get('token_hash'))return {tokenHash:q.get('token_hash')};
+ return null;
+}
+function cleanRecoveryUrl(){
+ try{var loc=window.location,u=new URL(loc.href);['token_hash','type','error','error_code','error_description'].forEach(function(k){u.searchParams.delete(k);});
+ window.history.replaceState(null,'',u.pathname+(u.search||''));}catch(e){}
+}
+async function startRecovery(){
+ var info=null;try{info=readRecoveryLink(window.location&&window.location.href);}catch(e){}
+ if(!info)return false;
+ cleanRecoveryUrl();
+ if(info.error)recovery={error:info.error};
+ else if(info.tokens)recovery={session:info.tokens};
+ else{try{recovery={session:await request('/auth/v1/verify',{method:'POST',body:JSON.stringify({type:'recovery',token_hash:info.tokenHash})})};}
+  catch(e){recovery={error:recoveryLinkError(e&&e.errorCode,'')};}}
+ if(recovery.session&&!recovery.session.expires_at)recovery.session.expires_at=Math.floor(Date.now()/1000)+(recovery.session.expires_in||3600);
+ return true;
+}
+async function forgotPassword(){
+ var error=document.getElementById('managerError');
+ if(recoveryBusy)return;
+ var email=val('managerEmail');
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){if(error)error.textContent='Escribe arriba tu correo y vuelve a pulsar «He olvidado mi contraseña».';return;}
+ recoveryBusy=true;if(error)error.textContent='Enviando…';
+ try{await request('/auth/v1/recover?redirect_to='+encodeURIComponent(RECOVERY_REDIRECT),{method:'POST',body:JSON.stringify({email:email})});
+  if(error)error.textContent='Si ese correo tiene cuenta, recibirás un enlace para elegir una contraseña nueva. Revisa también el correo no deseado y úsalo cuanto antes: caduca.';}
+ catch(e){if(error)error.textContent=e&&e.errorCode==='email_address_not_authorized'?'Supabase aún no puede enviar correos a esta dirección (falta configurar el servidor de correo del proyecto). Pide a un Administrador que te cambie la contraseña.':e&&e.status===429?'Ya se han pedido varios correos. Espera unos minutos antes de pedir otro.':'No se pudo pedir el correo: '+loginMessage(e);}
+ finally{recoveryBusy=false;}
+}
+async function savePassword(){
+ var error=document.getElementById('recoveryError');
+ if(recoveryBusy||!recovery||!recovery.session)return;
+ var p1=val('newPassword'),p2=val('newPassword2');
+ if(p1.length<8){if(error)error.textContent='La contraseña debe tener al menos ocho caracteres.';return;}
+ if(p1!==p2){if(error)error.textContent='Las dos contraseñas no coinciden.';return;}
+ if(recovery.session.expires_at*1000<Date.now()){recovery={error:recoveryLinkError('otp_expired','')};renderLogin();return;}
+ recoveryBusy=true;if(error)error.textContent='Guardando…';
+ try{
+  var user=await request('/auth/v1/user',{method:'PUT',headers:{Authorization:'Bearer '+recovery.session.access_token},body:JSON.stringify({password:p1})});
+  var s=recovery.session;recovery=null;
+  saveSession({access_token:s.access_token,refresh_token:s.refresh_token,expires_at:s.expires_at,expires_in:s.expires_in,user:user&&user.id?user:(s.user||null)});
+  try{await loadProfile();}catch(e){profile=null;}
+  notice='Contraseña cambiada. Si usas INVENTA instalada en la pantalla de inicio, ábrela y entra con la contraseña nueva.';
+  if(isManager()&&typeof managerUser!=='undefined')managerUser=profile.display_name||profile.role;
+  if(typeof go==='function')go('home');
+ }catch(e){
+  if(e&&e.errorCode==='same_password'){if(error)error.textContent='La contraseña nueva debe ser distinta de la anterior.';}
+  else if(e&&e.errorCode==='weak_password'){if(error)error.textContent='Supabase considera esa contraseña débil. Usa una más larga o con letras, números y símbolos.';}
+  else if(e&&(e.status===401||e.status===403)){recovery={error:recoveryLinkError('otp_expired','')};renderLogin();}
+  else if(error)error.textContent='No se pudo guardar: '+loginMessage(e);
+ }finally{recoveryBusy=false;}
+}
+function cancelRecovery(){recovery=null;notice='';restore().then(renderLogin,renderLogin);}
+function renderRecovery(){
+ if(recovery.error){
+  show('<div class="vis-title"><h1>Recuperar contraseña</h1></div>'+mgmtCard('Enlace no válido','<p class="vis-help" role="alert">'+safe(recovery.error)+'</p>'+mgmtButton('Volver a iniciar sesión','cancelRecovery()')));
+  return;
+ }
+ show('<div class="vis-title"><h1>Elige una contraseña nueva</h1><p>Solo tú la conoces. INVENTA no la guarda en el móvil.</p></div>'
+  +mgmtCard('Contraseña nueva',
+  '<div class="vis-field"><label for="newPassword">Contraseña nueva (mínimo 8 caracteres)</label><input class="vis-control" id="newPassword" type="password" autocomplete="new-password" placeholder="Contraseña nueva"></div>'
+  +'<div class="vis-field"><label for="newPassword2">Repite la contraseña nueva</label><input class="vis-control" id="newPassword2" type="password" autocomplete="new-password" placeholder="Repite la contraseña"></div>'
+  +'<button class="vis-button-primary" onclick="INVENTA_MGMT.savePassword()">Guardar contraseña nueva</button>'
+  +'<p id="recoveryError" class="vis-help" role="status"></p>'
+  +mgmtButton('Cancelar','cancelRecovery()')));
+}
 function renderLogin(){
+ if(recovery){renderRecovery();return;}
  show('<div class="vis-title"><h1>Acceso seguro</h1><p>INVENTA usa cuentas personales y permisos de Supabase.</p></div>'
   +mgmtCard('Iniciar sesión',
   mgmtField('managerName','Nombre visible (para solicitar alta)','Tu nombre')
@@ -64,7 +153,7 @@ function renderLogin(){
   +mgmtField('managerPassword','Contraseña','Contraseña','password')
   +'<button class="vis-button-primary" onclick="INVENTA_MGMT.signIn()">Entrar <svg class="vis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href="#vis-icon-arrow-right"/></svg></button>'
   +'<p id="managerError" class="vis-help" role="status"></p>'
-  +mgmtButton('Solicitar alta (pendiente de aprobación)','register()')+(session?mgmtButton('Cerrar esta sesión','logout()'):''))
+  +mgmtButton('He olvidado mi contraseña','forgotPassword()')+mgmtButton('Solicitar alta (pendiente de aprobación)','register()')+(session?mgmtButton('Cerrar esta sesión','logout()'):''))
   +'<div class="vis-notice">El PIN 1234 solo pertenece a la demostración antigua. Las cuentas reales necesitan confirmar correo y aprobación; empiezan como Operario deshabilitado; el primer Administrador debe habilitarse de forma controlada en Supabase.</div>');
 }
 function mgmtField(id,label,placeholder,type){return '<div class="vis-field"><label for="'+id+'">'+safe(label)+'</label><input class="vis-control" id="'+id+'" type="'+(type||'text')+'" placeholder="'+safe(placeholder||'')+'"></div>';}
@@ -638,9 +727,9 @@ async function importCSV(){
 }
 function newMovement(){mutate(function(){return api('movements','', 'POST',{campaign_id:required(val('moveCamp'),'campaña abierta'),source_location:required(val('moveSource'),'origen'),destination_location:required(val('moveDestination'),'destino'),product_code:required(val('moveProduct'),'artículo'),lot:val('moveLot'),quantity:qty(val('moveQty')),reason:required(val('moveReason'),'motivo'),actor_id:getId(),client_mutation_id:uuid()});},'Movimiento interno registrado sin escribir en BC.');}
 function updateUser(id){if(!isAdmin())return;if(id===getId()&&(!document.getElementById('enabled_'+id).checked||val('role_'+id)!=='admin')){notice='Para evitar bloquear el único administrador, no puedes quitarte el rol ni desactivar tu propia cuenta desde esta pantalla.';render();return;}mutate(function(){var reason=val('reason_'+id);if(reason.length<5)throw Error('Explica el motivo con al menos cinco caracteres.');return api('profiles','user_id=eq.'+id+'&version=eq.'+permissionVersions[id],'PATCH',{role:val('role_'+id),enabled:document.getElementById('enabled_'+id).checked,permission_reason:reason}).then(function(rows){if(!rows.length)throw Error('El perfil cambió en otro dispositivo. Recarga y revisa los permisos.');});},'Permisos actualizados y registrados.');}
-var apiObject={refreshBCStatus:refreshBCStatus,isSaving:function(){return pending;},changeFixedPosition:changeFixedPosition,toggleCatalogFixed:toggleCatalogFixed,filterFixedReport:filterFixedReport,exportFixedReport:exportFixedReport,printFixedReport:printFixedReport,cancelView:function(){renderSerial++;},isAuthenticated:function(){return !!(session&&profile&&profile.enabled);},openCounts:function(){window.INVENTA_REAL.open();},realApi:api,refreshProfile:loadProfile,getUserId:getId,openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,segmentCampaign:segmentCampaign,previewSegment:previewSegment,discardSegmentPreview:discardSegmentPreview,confirmSegment:confirmSegment,segmentAction:segmentAction,reassignSegment:reassignSegment,releaseSegment:releaseSegment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
+var apiObject={refreshBCStatus:refreshBCStatus,isSaving:function(){return pending;},changeFixedPosition:changeFixedPosition,toggleCatalogFixed:toggleCatalogFixed,filterFixedReport:filterFixedReport,exportFixedReport:exportFixedReport,printFixedReport:printFixedReport,cancelView:function(){renderSerial++;},isAuthenticated:function(){return !!(session&&profile&&profile.enabled);},openCounts:function(){window.INVENTA_REAL.open();},realApi:api,refreshProfile:loadProfile,getUserId:getId,openCatalogAisle:openCatalogAisle,openCatalogLocation:openCatalogLocation,backCatalog:backCatalog,filterCatalogLocations:filterCatalogLocations,readConsultData:readConsultData,isManager:isManager,isAdmin:isAdmin,signIn:signIn,register:register,forgotPassword:forgotPassword,savePassword:savePassword,cancelRecovery:cancelRecovery,startRecovery:startRecovery,readRecoveryLink:readRecoveryLink,logout:logout,renderLogin:renderLogin,render:render,open:open,newCampaign:newCampaign,setCampaign:setCampaign,segmentCampaign:segmentCampaign,previewSegment:previewSegment,discardSegmentPreview:discardSegmentPreview,confirmSegment:confirmSegment,segmentAction:segmentAction,reassignSegment:reassignSegment,releaseSegment:releaseSegment,updateAssignment:updateAssignment,newIncident:newIncident,resolveIncident:resolveIncident,newLocation:newLocation,newProduct:newProduct,newFixed:newFixed,newSnapshot:newSnapshot,importCSV:importCSV,newMovement:newMovement,updateUser:updateUser};
 Object.defineProperty(apiObject,'profile',{get:function(){return profile;}});
 window.INVENTA_MGMT=apiObject;
 window.addEventListener('storage',function(e){if(e.key===STORE){session=null;profile=null;renderSerial++;restore().then(function(){if(typeof go==='function')go('home');});}});
-window.addEventListener('DOMContentLoaded',function(){restore().then(function(){if(typeof screen!=='undefined'&&screen==='home'&&typeof render==='function')window.render&&window.render();}).catch(function(){});});
+window.addEventListener('DOMContentLoaded',function(){startRecovery().then(function(r){if(r){if(typeof go==='function')go('manager-login');return;}return restore().then(function(){if(typeof screen!=='undefined'&&screen==='home'&&typeof render==='function')window.render&&window.render();});}).catch(function(){});});
 })();

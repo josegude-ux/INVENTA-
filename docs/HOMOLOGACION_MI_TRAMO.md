@@ -1,16 +1,20 @@
 # Guion de homologación en móvil · «Mi tramo» (pareja, relevo y segundo recuento)
 
-**VISURA-100-GUION-HOMOLOGACION-MI-TRAMO-0.32.1-R1** · línea 100 · datos ficticios.
+**VISURA-100-GUION-HOMOLOGACION-MI-TRAMO-0.32.3-R2** · línea 100 · datos ficticios · normas R10.
 
-Versión a homologar: **INVENTA 0.32.1**, commit `958ac9a` (PR #30). Cómo saber que estás en la versión de prueba: en **Ajustes** debe aparecer **0.32.1**. La versión publicada muestra 0.30.12 o 0.31.x.
+_R2 (21/11/2026): referencia a la versión publicada 0.32.3, rutas de migración actuales y comprobación parcial R1–R5 ya hecha. Los pasos H02–H16 no cambian._
+
+Versión a homologar: **INVENTA 0.32.3**, publicada en main (`a1b822b`, PR #33). «Mi tramo» y Tramos llegaron en la 0.32.1 (PR #30) y la 0.32.3 solo añade «He olvidado mi contraseña». Cómo saberlo: en **Ajustes** debe aparecer **0.32.3**.
+
+Migración de servidor: `supabase/visura-unificado/20261118221403_inventa_tramos.sql`, **aplicada** en el Supabase unificado el 18/11/2026 (versión `20261118221403`, MD5 `b557dddca46e6c87e1ca16d57132a537`). Reversión: `supabase/visura-unificado-pendiente/reversion_tramos.sql`.
 
 Cada paso de este guion se ha ensayado en PostgreSQL desechable (`tests/tramos-lab/050_ensayo_homologacion.sql`, H02–H16 superados). El ensayo no sustituye la prueba en el móvil, que es lo que da el estado HOMOLOGADO.
 
 ## 1. Entorno (decide 000)
 
-Solo puede haber **una campaña activa** (`one_active_inventa_campaign`), y en el Supabase unificado ya está activa la campaña real «Inventario». Por eso:
+Solo puede haber **una campaña activa** (`one_active_inventa_campaign`). El 21/11/2026 seguía activa en el unificado la campaña real, sin datos ficticios ni cuentas de prueba (comprobación de estructura y recuentos, CP100-023). Por eso:
 
-- ☑ **LAB (D3), recomendado:** el proyecto INVENTA antiguo, convertido en LAB con datos ficticios, con las 5 migraciones de la unificación más la de tramos, y una vista previa de la 0.32.1 que apunte al LAB. Requiere «AUTORIZO» y preparar esa vista previa.
+- ☑ **LAB (D3), recomendado:** el proyecto INVENTA antiguo, convertido en LAB con datos ficticios, con las 5 migraciones de la unificación más la de tramos, y una vista previa de la versión publicada (0.32.3) que apunte al LAB. Requiere «AUTORIZO» y preparar esa vista previa.
 - ☐ Unificado, cuando no haya ninguna campaña real activa.
 - ☐ Unificado usando la campaña real: no recomendado, porque los recuentos ficticios quedarían para siempre en el inventario real.
 
@@ -20,17 +24,31 @@ El script de datos ficticios **se niega a ejecutarse si hay otra campaña activa
 
 | | Quién | Qué |
 |---|---|---|
-| P1 | 000 | Entorno elegido con las migraciones aplicadas («AUTORIZO»). |
+| P1 | 000 | Entorno elegido con las migraciones aplicadas («AUTORIZO»). En el unificado ya están aplicadas; en el LAB hay que aplicar las 5 de `supabase/visura-unificado/` y la de tramos `20261118221403`. |
 | P2 | 000 | Ejecutar `supabase/homologacion/ficticio_mi_tramo.sql` («AUTORIZO»). Crea 10 ubicaciones ZZH01-P01…P06 y ZZH02-P01…P04, los artículos ZZHOM-001 y ZZHOM-002, la campaña en borrador «HOMOLOGACIÓN 100 · DATOS FICTICIOS» y un teórico ficticio de 7 en ZZH01-P01. |
 | P3 | Usuario | Crear 4 cuentas de prueba con correos de pruebas propios. Nombres visibles: **Prueba Supervisión** (Supervisor), **Prueba Uno**, **Prueba Dos** y **Prueba Tres** (Operario). Administración las habilita con el motivo «homologación». |
 | P4 | Usuario | Dispositivos: móvil A (pareja y relevo), móvil B o el mismo (Prueba Tres) y un PC o tableta (Supervisión y Administración). |
 | P5 | Usuario | Capturas con el nombre del paso (H05.png…), sin datos personales; se suben a la carpeta 100. |
 
+## 2 bis. Comprobación parcial ya hecha (solo lectura, app publicada)
+
+Hecha el 21/11/2026 por el usuario en el móvil, con la cuenta de administrador y **sin escribir nada** (CP100-023). Después se verificó que el unificado seguía con 0 tramos y 0 acciones.
+
+| Nº | Qué | Resultado |
+|---|---|---|
+| R1 | Ajustes muestra 0.32.3 | ✔ OK |
+| R2 | Mis recuentos sin tarjeta «Mi tramo» y sin errores | ✔ OK |
+| R3 | Gestión almacén → Tramos carga sin errores | ✔ OK |
+| R4 | Vista previa de un rango corto (`preview_segment`, solo lectura) y descartar, sin pulsar «Asignar tramo» | ✔ OK |
+| R5 | Mis recuentos y Tramos legibles en el móvil | ✔ OK |
+
+Cubre H01 y parte de H17 en la versión publicada. **No sustituye a H02–H16**, que escriben datos y solo se hacen en un entorno con datos ficticios.
+
 ## 3. Pasos
 
 | Nº | Quién · dónde | Acción | Resultado esperado | ✔ |
 |---|---|---|---|---|
-| H01 | Todos | Ajustes | Se ve la versión **0.32.1** | ☐ |
+| H01 | Todos | Ajustes | Se ve la versión **0.32.3** | ☐ |
 | H02 | Supervisión · PC | Gestión almacén → Tramos. Campaña: HOMOLOGACIÓN 100. Recuento: Primer recuento. Desde ZZH01-P01, hasta ZZH01-P06. Persona 1: Prueba Uno; persona 2: Prueba Dos. «Ver ubicaciones del tramo» → «Asignar tramo» | Vista previa «Primer recuento · 6 ubicaciones · De ZZH01-P01 a ZZH01-P06». Aviso «Tramo asignado: 6 ubicaciones…». En Tramos activos, 0 de 6 | ☐ |
 | H03 | Supervisión · PC | Desde ZZH01-P05, hasta ZZH02-P02 → Ver | «2 ubicaciones ya están asignadas en este recuento: ZZH01-P05 (Prueba Uno + Prueba Dos)…» y **sin** botón Asignar. Descartar | ☐ |
 | H04 | Administración · PC | Activar la campaña ficticia | Queda activa. Supervisión no puede activarla | ☐ |
@@ -51,5 +69,5 @@ El script de datos ficticios **se niega a ejecutarse si hay otra campaña activa
 ## 4. Resultado
 
 - **HOMOLOGADO** si H01–H17 están todos en ✔. Se anota en el checkpoint de la línea con las capturas.
-- Si un paso falla: anotar el número, el resultado real y la captura. No repetir con datos reales. La reversión `supabase/visura-unificado-pendiente/reversion_tramos.sql` está preparada.
+- Si un paso falla: anotar el número, el resultado real y la captura. No repetir con datos reales. La reversión `supabase/visura-unificado-pendiente/reversion_tramos.sql` está preparada, pero en el unificado solo se aplicaría con decisión de 000 y «AUTORIZO».
 - Fuera de este guion: escáner, datos reales y apertura en frío sin conexión.

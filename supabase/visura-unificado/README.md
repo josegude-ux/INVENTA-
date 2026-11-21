@@ -25,3 +25,14 @@ Por eso el MD5 de esos dos archivos no coincide con el de la tabla. El resto es 
 
 - La tercera migración crea las tablas F2-K y la función `f2_k_command`. La quinta las retira (decisión D1 de 000, 18/11/2026) y se niega a ejecutarse si encuentra datos.
 - Las pruebas de la retirada se hicieron en PostgreSQL desechable (checkpoint VISURA-000-CP-RETIRADA-F2-UNIFICADO-20261118-012).
+
+## Línea 100 · inventa_tramos (aplicada el 18/11/2026)
+
+| Versión aplicada | Archivo | MD5 del texto aplicado |
+|---|---|---|
+| `20261118221403` | `20261118221403_inventa_tramos.sql` | `b557dddca46e6c87e1ca16d57132a537` (idéntico al archivo) |
+
+- Autorización del usuario (22:06–23:12): «AUTORIZO: aplicar la migración 20261118140000_inventa_tramos en el Supabase unificado (oevetnszmfxeukcncwji) y comprobar la web publicada».
+- Motivo: INVENTA 0.32.1 se publicó (fusión de #28–#30) sin esta migración (incidencia CP100-012).
+- Reversión: `supabase/visura-unificado-pendiente/reversion_tramos.sql`.
+- El comentario de cabecera del archivo dice «PENDIENTE» porque es el texto exacto que se aplicó; el estado real es este README.

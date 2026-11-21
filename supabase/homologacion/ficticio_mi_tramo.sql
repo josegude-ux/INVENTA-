@@ -1,8 +1,8 @@
--- INVENTA 0.32.1 · Línea 100 · Datos FICTICIOS para homologar «Mi tramo» en móvil.
+-- INVENTA 0.32.3 (tramos desde 0.32.1) · Línea 100 · Datos FICTICIOS para homologar «Mi tramo» en móvil.
 -- Solo crea elementos con prefijo ZZH / ZZHOM y una campaña en borrador. No toca nada más.
 -- Se puede ejecutar dos veces sin duplicar. No borra nada.
--- NO EJECUTAR en Supabase sin decisión de 000 y «AUTORIZO» (R6 §8-§9). Pensado para el entorno LAB (D3).
--- Requiere aplicada supabase/visura-unificado-pendiente/20261118140000_inventa_tramos.sql.
+-- NO EJECUTAR en Supabase sin decisión de 000 y «AUTORIZO» (R10 §8-§9). Pensado para el entorno LAB (D3).
+-- Requiere aplicada supabase/visura-unificado/20261118221403_inventa_tramos.sql (aplicada en el unificado el 18/11/2026).
 begin;
 do $$ begin
  if exists(select 1 from inventa.locations where code like 'ZZH%' and description not like 'FICTICIA%') then

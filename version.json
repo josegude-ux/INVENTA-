@@ -1,9 +1,9 @@
 {
   "app": "VISURA INVENTA",
-  "version": "0.32.1",
+  "version": "0.32.3",
   "estado": "PROBADO LAB",
-  "rama": "lab/100-pareja-20261118",
-  "fecha": "2026-11-18",
+  "rama": "lab/100-recuperar-contrasena-20261119",
+  "fecha": "2026-11-21",
   "supabase": {
     "proyecto": "oevetnszmfxeukcncwji",
     "esquema": "inventa"

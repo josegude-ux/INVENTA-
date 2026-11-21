@@ -16,5 +16,5 @@ eq "$(q -c "select count(*) from information_schema.columns where table_schema='
 eq "$(q -c "select count(*) from pg_policies where schemaname='inventa' and tablename='assignments' and policyname='assignments_manager_insert'")" "1" "política original de asignaciones restaurada"
 eq "$(q -c "select pg_get_expr(polwithcheck,polrelid) ~ 'a\.active' from pg_policy where polname='counts_insert'")" "f" "counts_insert vuelve a la versión de la unificación"
 eq "$(q -c "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('inventa','inventa_internal') and p.proname ~ 'segment|my_segments|location_sort_key|location_shape|counts_set_cycle|require_(person|blind)'")" "0" "funciones de tramos retiradas"
-q -f "$ROOT/supabase/visura-unificado-pendiente/20261118140000_inventa_tramos.sql" >/dev/null && echo "OK: la migración se puede volver a aplicar tras revertir"
+q -f "$ROOT/supabase/visura-unificado/20261118221403_inventa_tramos.sql" >/dev/null && echo "OK: la migración se puede volver a aplicar tras revertir"
 echo "REVERSIÓN: PRUEBAS COMPLETAS"
