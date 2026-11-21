@@ -1,5 +1,11 @@
 # Registro de cambios · VISURA INVENTA
 
+## Sin cambio de versión · 2026-11-21 · guion de homologación de «Mi tramo» R2 (rama lab/100-homologacion-mi-tramo-20261118, línea 100)
+
+- El guion apunta a la versión publicada 0.32.3 y a la migración aplicada `supabase/visura-unificado/20261118221403_inventa_tramos.sql`.
+- Se añade la comprobación parcial R1–R5, ya hecha (solo lectura, CP100-023). Los pasos H02–H16 no cambian.
+- Se fusiona el main actual en la rama. Nueva prueba `tests/homologacion-guion.test.cjs`. Pruebas: laboratorio de tramos 118 OK + ensayo H02–H16 + reversión 7/7 (PostgreSQL 16 desechable), interfaz 262/262.
+
 ## 0.32.3 · 2026-11-21 · PROBADO LAB (rama lab/100-recuperar-contrasena-20261119, línea 100)
 
 - Renumerada desde 0.32.2 por decisión del usuario (CP000-030): la 0.32.2 queda reservada al recuento ciego. Mismo contenido funcional.
@@ -13,6 +19,12 @@
 
 - `inventa_tramos` aplicada en `oevetnszmfxeukcncwji` como versión `20261118221403`. Resuelve la incidencia CP100-012: la 0.32.1 publicada ya tiene su servidor.
 - El archivo pasa de `supabase/visura-unificado-pendiente/` a `supabase/visura-unificado/20261118221403_inventa_tramos.sql`, idéntico (MD5 `b557dddca46e6c87e1ca16d57132a537`).
+## Sin cambio de versión · 2026-11-18 · guion de homologación de «Mi tramo» (rama lab/100-homologacion-mi-tramo-20261118, línea 100)
+
+- `docs/HOMOLOGACION_MI_TRAMO.md`: guion H01–H17 para el móvil (pareja, relevo, segundo recuento ciego, solapes, idempotencia, reasignación y cierre) con datos ficticios.
+- `supabase/homologacion/ficticio_mi_tramo.sql`: 10 ubicaciones ZZH, 2 artículos ZZHOM, campaña en borrador y teórico ficticio. Se puede repetir sin duplicar y **se niega si hay otra campaña activa**, para no mezclarse con un inventario real.
+- `tests/tramos-lab/050_ensayo_homologacion.sql`: ensayo de H02–H16 en PostgreSQL desechable (también en CI).
+- Hallazgo: solo puede haber una campaña activa. En el unificado ya está activa la real, así que la homologación va al entorno LAB (D3).
 
 ## 0.32.1 · 2026-11-18 · PROBADO LAB (rama lab/100-pareja-20261118, línea 100)
 
