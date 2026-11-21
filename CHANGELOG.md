@@ -1,5 +1,14 @@
 # Registro de cambios · VISURA INVENTA
 
+## 0.32.3 · 2026-11-21 · PROBADO LAB (rama lab/100-recuperar-contrasena-20261119, línea 100)
+
+- Renumerada desde 0.32.2 por decisión del usuario (CP000-030): la 0.32.2 queda reservada al recuento ciego. Mismo contenido funcional.
+
+- Acceso seguro: botón **He olvidado mi contraseña**. Supabase envía un enlace y, al abrirlo, INVENTA pide la contraseña nueva dos veces y deja a la persona dentro.
+- El aviso es igual exista o no la cuenta. Los códigos del enlace se borran de la barra de direcciones y la contraseña nunca se guarda en el móvil.
+- Mensajes en castellano para el enlace caducado, la contraseña repetida o débil, el límite de correos y la dirección no autorizada. Si fallan las credenciales, se indica cómo recuperarlas.
+- Pendiente en Supabase (decide 000): añadir la dirección de INVENTA a Redirect URLs y configurar un servidor de correo propio (SMTP). Ver `docs/RECUPERAR_CONTRASENA.md`.
+- Pruebas: 88/88 (16 nuevas) y recorrido en el navegador con Supabase simulado.
 ## Sin cambio de versión · 2026-11-18 · migración de tramos APLICADA en el Supabase unificado (línea 100)
 
 - `inventa_tramos` aplicada en `oevetnszmfxeukcncwji` como versión `20261118221403`. Resuelve la incidencia CP100-012: la 0.32.1 publicada ya tiene su servidor.
